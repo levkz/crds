@@ -1,10 +1,10 @@
-défi = challenge
-entraîner = lead / result
-étirer = stretch 
-étendre = extend / expand
-tronquer = truncate / cut / shorten / mutilate
-atteindre = reach
-étagère = shelf / bookshelf / rack
-éteindre = turn off
-vaisselle = dishes
-bouchée = bite
+défi => challenge => La pauvreté reste un défi important dans le monde malgré les progrès économiques.
+entraîner => lead / result => Un mauvais format d'image peut entraîner des visuels étirés ou tronqués.
+étirer => stretch => Un mauvais format d'image peut entraîner des visuels étirés ou tronqués.
+étendre => extend / expand => Le gouvernement local prévoit d'étendre la piste cyclable aux villes voisines.
+tronquer => truncate / cut / shorten / mutilate => Vous pouvez tronquer le texte à une longueur de votre choix.
+atteindre => reach => Les pompiers ont fait vite pour atteindre l'immeuble en feu au centre-ville.
+étagère => shelf / bookshelf / rack => Les livres sur l'étagère étaient disposés par ordre décroissant de hauteur.
+éteindre => turn off => La mise à jour du logiciel est en cours, veuillez ne pas éteindre votre ordinateur.
+vaisselle => dishes => Le couple a eu une énorme dispute pour savoir qui ferait la vaisselle.
+bouchée => bite => Mille saveurs ont explosé dans sa bouche à chaque bouchée du plat.

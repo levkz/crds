@@ -33,19 +33,36 @@ def shuffle_array(arr):
     return shuffled
 
 
+def get_filename():
+    filename = sys.argv[1] if len(sys.argv) > 1 else None
+
+    if filename is None:
+        files = [
+            file.replace(".txt", "")
+            for file in os.listdir("exercises")
+            if file.endswith(".txt")
+        ]
+        print("Available files:")
+        for fileIndex, file in enumerate(files):
+            print(f"- {fileIndex + 1}. {file}")
+        filename = input("Enter the name or the number of the file to use: ")
+        if filename.isdigit():
+            filename = files[(int(filename) % len(files)) - 1]
+        if filename not in files:
+            print(f"File '{filename}' not found. Using first file instead.")
+            filename = files[0]
+    return f"exercises/{filename}.txt"
+
+
+def ignore_comments(lines):
+    return [line for line in lines if line.strip() and not line.strip().startswith("#")]
+
+
 def main():
-    # Use command-line argument if provided, otherwise default to "text.txt"
-    filename = sys.argv[1] if len(sys.argv) > 1 else "text.txt"
-    if not os.path.exists(filename):
-        print(f"File '{filename}' not found.")
-        return
+    filename = get_filename()
 
     with open(filename, "r", encoding="utf-8") as file:
-        lines = [
-            line.strip()
-            for line in file
-            if line.strip() and not line.strip().startswith("#")
-        ]
+        lines = ignore_comments(file.readlines())
 
     original_entries = [parse_line(line) for line in lines]
     active_entries = original_entries[:]

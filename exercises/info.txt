@@ -1,0 +1,57 @@
+#INFORMATION / MEDIA
+la diffusion en direct / en streaming => live broadcast / streaming => J’ai regardé la conférence en diffusion directe.
+l’enquête => investigation / report => Ce journaliste a fait une enquête sur la pollution.
+le journalisme numérique => digital journalism => Le journalisme numérique attire de plus en plus de jeunes.
+la plateforme => platform => Cette plateforme diffuse les infos en continu.
+publier un article => to publish an article => Elle a publié un article sur la politique locale.
+la revue de presse => press review => Je lis la revue de presse chaque matin.
+
+#FOLLOWING NEWS / SUBSCRIPTIONS
+l’abonnement (à) => subscription => Mon abonnement au journal se termine ce mois-ci.
+être au courant (de) => to be informed / aware of => Il est toujours au courant des dernières nouvelles.
+suivre l’actualité => to follow the news => Je suis l’actualité sur Internet.
+
+#PRINT / PRESS
+le dessin de presse => editorial cartoon => Le dessin de presse critique souvent le pouvoir.
+le numéro => issue (of a magazine) => Le dernier numéro du magazine est passionnant.
+la presse en ligne => online press => La presse en ligne remplace peu à peu la presse papier.
+
+#TELEVISION
+le direct => live broadcast => Le concert passe en direct à la télévision.
+le JT (journal télévisé) => TV news => Je regarde le JT de 20 h chaque soir.
+le téléviseur => television set => Mon téléviseur est connecté à Internet.
+
+#MEDIA CATEGORIES
+actualité internationale / nationale / régionale => international / national / regional news => L’actualité internationale parle de la guerre et de la diplomatie.
+écologie => environment / ecology => Cette rubrique traite des solutions pour la planète.
+société => society / social issues => J’aime les articles de société sur les jeunes et le travail.
+
+#RADIO / PODCASTS
+le contenu sonore => audio content => J’écoute souvent des contenus sonores éducatifs.
+l’émission de radio => radio program => Cette émission de radio parle de culture.
+l’épisode => episode => J’ai téléchargé tous les épisodes de ce podcast.
+raconter => to tell / narrate => Il raconte son voyage en Afrique dans un podcast.
+
+#SOCIAL MEDIA
+les fausses nouvelles / les infox => fake news => Il ne faut pas croire toutes les infox sur Internet.
+un internaute => internet user => Les internautes commentent les articles en ligne.
+ouvrir un compte sur un réseau social => to open a social media account => Elle a ouvert un compte sur Instagram.
+suivre quelqu’un (sur un réseau) => to follow someone (online) => Je suis mon acteur préféré sur X.
+se désinscrire / quitter un réseau social => to unsubscribe / leave a social network => Il s’est désinscrit de Facebook.
+poster des photos => to post photos => Elle aime poster des photos de ses voyages.
+regarder une vidéo => to watch a video => Il regarde souvent des vidéos humoristiques.
+
+#COMMUNICATION
+diffuser une information => to broadcast information => Les médias diffusent l’information en continu.
+sensibiliser un public => to raise awareness among the public => Cette campagne sensibilise les jeunes au climat.
+transmettre des connaissances => to share / transmit knowledge => Ce podcast transmet des connaissances scientifiques.
+
+#CAUSE / CONSEQUENCE
+parce que => because (oral & written) => J’aime ce podcast parce qu’il est drôle.
+car => because (formal / written) => Il lit le journal, car il s’intéresse à la politique.
+à cause de => because of (negative cause) => À cause d’Internet, la presse papier diminue.
+grâce à => thanks to (positive cause) => Grâce aux réseaux sociaux, je suis bien informée.
+donc => therefore (mostly written) => Il aime la BD, donc il lit souvent des magazines illustrés.
+alors => so / then (oral) => Elle adore les infos, alors elle regarde le JT.
+c’est pourquoi / c’est pour cela que => that’s why (written) => Il s’informe en ligne, c’est pourquoi il lit peu de journaux.
+c’est pour ça que => that’s why (oral) => Il est fatigué, c’est pour ça qu’il n’écoute pas la radio.

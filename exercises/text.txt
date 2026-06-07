@@ -1,0 +1,95 @@
+#ACTIONS / VERBS
+échouer (I) => fail => Il faut parfois échouer pour progresser et apprendre de ses erreurs.
+subir (II)........ => undergo => Elle a dû subir une opération difficile.
+évider (I) => carve out => Il faut évider la citrouille pour Halloween.
+éviter => avoid => Tu dois éviter de manger trop de sucre.
+avouer (I) => confess / admit => Il a fini par avouer son erreur.
+empêcher => prevent => Rien ne peut m’empêcher de partir.
+raccrocherai au nez => hang up on (someone) => Si tu continues, je te raccrocherai au nez.
+paraître => seem => Tu parais triste.
+enseigner => teach => Mon professeur m'enseigne les maths.
+gaspiller => waste (verb) => Il est dommage de gaspiller des ingrédients.
+effondrer => collapse / fall apart => Le pont s’est effondré sous le poids.
+faire venir => bring => Il a fait venir un médecin.
+rallumer => rekindle => Elle a rallumé la flamme de leur amour.
+prévenir => prevent => Cette campagne vise à prévenir les accidents.
+montrer => show => Peux-tu me montrer ta maison ?
+manigancer => scheme (verb) => Il manigance quelque chose dans l’ombre.
+repousser => push / repel => Ils ont réussi à repousser l’attaque.
+dilater => expand / dilate => La chaleur dilate les métaux.
+brûler => burn => Le feu a brûlé toute la forêt.
+ravir => delight => Ce film a ravi les spectateurs.
+rater => miss => J’ai raté le train.
+tuer => kill => Il a tué le monstre.
+tirer => shoot => Le chasseur a tiré sur le cerf.
+veiller => ensure => Ton travail était de veiller à ce que tout se passe sans problème.
+décevoir => disappoint / deceive => Je ne veux pas te décevoir.
+suffire => be enough / suffice => Un mot ne suffit pas à expliquer.
+soupçonner => suspect => La police le soupçonne de vol.
+contenter => content / settle for => Elle s’est contentée de peu.
+sévir => crack down => La police va sévir contre les infractions.
+craindre / redoute => fear / dread => Je crains qu’il ne vienne pas.
+aérer => air out / ventilate => N’oublie pas d’aérer la pièce.
+prier => pray => Elle aime prier le soir.
+agacer => annoy / irritate => Ce bruit m’agace vraiment.
+couvrir => cover => La poussière couvrait tous les meubles.
+mener => lead => La police mène une enquête.
+
+#TIME / CONNECTORS
+pourtant => yet => Il faisait froid, pourtant il ne portait pas de manteau.
+tel => such => Je n’ai jamais vu un tel spectacle.
+lors => during => Il a dormi lors du film.
+presque => almost => J’ai presque fini mes devoirs.
+Dès lors => from then => Dès lors, tout a changé.
+alors => then - so => Il pleuvait, alors je suis resté chez moi.
+évidemment => obviously => Évidemment, il a encore oublié son sac.
+évident => obvious => C’est évident qu’il a menti.
+au tournant => turning point / milestone => Ce discours fut un tournant dans sa carrière.
+en train de => in the process of => Je suis en train de lire un livre.
+censé => supposed to => Tu es censé finir tes devoirs.
+anicroche => hitch / hiccup => Tout s’est bien passé, sans anicroche.
+tu as failli [...] => you almost [...] => Tu as failli tomber !
+parmi eux => among them => Il y avait un espion parmi eux.
+ce qui marque le plus (...avec) => what strikes you most => Ce qui marque le plus avec ce voyage, c’est la gentillesse des habitants.
+
+#EMOTIONS / FEELINGS
+aimer tant => love so much => J’aime tant cette chanson.
+on se fout => don't care => On s’en fout de ce qu’il pense.
+dégoût => disgust => Elle a montré son dégoût ouvertement.
+colère => anger => Il a crié de colère.
+amer => bitter => Ce café est trop amer.
+aigre => sour => Le lait est devenu aigre.
+ivrogne => a drunk / drunkard => L’ivrogne chantait dans la rue.
+chiant / barbant / ennuyeux => annoying / boring => Ce film est vraiment chiant.
+
+#CONFLICT / CRIME
+assaillir (III) => attack / assail => Le soldat a été assailli par ses ennemis.
+blessure => injury => Il a une blessure au bras.
+enquête => investigation / inquiry => La police mène une enquête.
+cible => target => Cette publicité vise une jeune cible.
+cibler => to target => Ils ont ciblé une clientèle plus jeune.
+infractions => offences / crimes => La police va sévir contre les infractions.
+
+#THINGS / OBJECTS
+poussière => dust => La poussière couvrait tous les meubles.
+éclaboussure de boue => mud splatter => Mon pantalon est sale à cause d’une éclaboussure de boue.
+bêtise/bêtises => nonsense / foolishness => Il ne faut pas dire de bêtises.
+foutoir => mess => Sa chambre est un vrai foutoir.
+toile d'araignée => spider web => Une toile d’araignée pendait du plafond.
+toile => canvas / web / fabric => J’ai peint ce tableau sur une grande toile.
+repos => rest => Il a besoin de repos.
+cerveau => brain => Le cerveau contrôle tout le corps.
+citrouille => pumpkin => Il faut évider la citrouille pour Halloween.
+chaleur => heat => La chaleur dilate les métaux.
+
+#MOVEMENT / SPACE
+partout => everywhere => Il y avait du sable partout.
+courir partout => run around => Les enfants couraient partout.
+va-t'en => go away => Va-t’en ! Je ne veux plus te voir.
+clin => wink => Elle m’a fait un clin d’œil.
+
+#FUTURE / PROGRESS
+avenir => future => Dans un avenir proche, la température moyenne de la Terre pourrait augmenter de quatre degrés.
+
+#LANGUAGE / COMMUNICATION
+ce qui marque le plus (...avec) => what strikes you most => Ce qui marque le plus avec ce livre, c’est la fin inattendue.

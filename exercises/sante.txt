@@ -1,0 +1,133 @@
+#PARTIES DU CORPS
+le bras => arm => Il se muscle le bras en soulevant des haltères.
+le dos => back => Elle a mal au dos après avoir porté les cartons.
+le genou => knee => Il s’est blessé le genou en jouant au foot.
+la gorge => throat => Sa gorge gratte depuis hier soir.
+la jambe => leg => Elle traverse la salle sur une jambe plâtrée.
+la main => hand => Il me serre la main pour me saluer.
+le pied => foot => Elle marche pieds nus sur le sable.
+la tête => head => La tête lui tourne après la course.
+le ventre => belly / abdomen => Il a mal au ventre depuis midi.
+le cerveau => brain => Le cerveau contrôle tous les mouvements.
+la cheville => ankle => Elle se tord la cheville en descendant l’escalier.
+la colonne vertébrale => spine => Sa colonne vertébrale est bien alignée après la séance.
+le cou => neck => Le médecin palpe le cou pour vérifier la tension.
+la cuisse => thigh => Il ressent une douleur dans la cuisse droite.
+l'épaule (f.) => shoulder => Elle se masse l’épaule après l’entraînement.
+l'œil (m.) / les yeux => eye / eyes => Ses yeux piquent à cause du pollen.
+la bouche => mouth => Ouvre la bouche pour que le dentiste examine tes dents.
+la dent => tooth => La dent de sagesse commence à pousser.
+le nez => nose => Son nez est bouché depuis trois jours.
+l'oreille (f.) => ear => L’oreille gauche réagit mal aux écouteurs.
+
+#TAILLE ET POIDS
+mesurer => measure (height) => L’infirmière mesure ta taille avant la visite.
+le mètre (= m) => meter => Il dépasse le mètre quatre-vingt.
+peser => weigh => Je me pèse chaque lundi matin.
+le kilo (= kg) => kilogram => Elle a pris deux kilos pendant les vacances.
+
+#SYMPTÔMES / MALADIES
+la fièvre => fever => La fièvre monte à trente-neuf degrés cette nuit.
+la grippe => flu => Toute la famille attrape la grippe en janvier.
+malade => sick / ill => Il se sent malade depuis le trajet en train.
+le rhume => cold => Ce rhume persiste malgré le remède.
+tousser => cough (verb) => Elle tousse sans arrêt pendant la réunion.
+la toux => cough (noun) => Sa toux sèche inquiète le médecin.
+l'allergie (f.) => allergy => L’allergie au pollen revient au printemps.
+l'anxiété (f.) => anxiety => Son anxiété augmente avant les examens.
+l'asthme (m.) => asthma => L’asthme se déclare lorsqu’il court trop vite.
+l'indigestion (f.) => indigestion => Une indigestion suit leur repas trop copieux.
+l'infection (f.) => infection => L’infection se propage au doigt blessé.
+l'insomnie (f.) => insomnia => L’insomnie l’empêche de travailler le matin.
+le mal de gorge => sore throat => Le mal de gorge disparaît avec une infusion chaude.
+la migraine => migraine => Sa migraine la force à éteindre les lumières.
+le nez bouché => stuffy nose => Mon nez bouché m’empêche de respirer correctement.
+le stress => stress => Le stress s’accumule avant la présentation.
+
+#LE SOMMEIL
+le bâillement => yawn => Son bâillement contagieux fait rire la classe.
+la fatigue (physique) => physical fatigue => La fatigue physique se ressent après huit kilomètres.
+manquer de sommeil => lack sleep => Je manque de sommeil depuis plusieurs semaines.
+le repos => rest => Le repos lui redonne de l’énergie.
+la respiration => breathing => Sa respiration devient régulière grâce aux exercices.
+le rêve => dream => Elle note chaque rêve dans son carnet.
+le réveil => alarm clock / waking => Le réveil sonne à six heures tous les jours.
+le rythme cardiaque => heart rate => Son rythme cardiaque ralentit avec la méditation.
+s'endormir => fall asleep => Il met longtemps à s’endormir quand il boit du café.
+se réveiller => wake up => Je me réveille avant le lever du soleil.
+la sieste => nap => Une sieste de vingt minutes lui suffit.
+
+#MOUVEMENTS ET POSITIONS
+allongé(e) => lying down => Elle reste allongée sur le canapé après l’opération.
+assis(e) => seated => Il reste assis pendant toute la conférence.
+debout => standing => Nous attendons debout dans la salle d’attente.
+s'étirer => to stretch => Ils s’étirent avant de courir.
+se lever => to get up => Il se lève dès que l’infirmière entre.
+
+#LA DOULEUR / SOINS
+avoir mal => to have pain => Elle dit avoir mal quand on touche son épaule.
+la courbature => muscle soreness => Les courbatures apparaissent après le marathon.
+souffrir => to suffer => Il souffre encore de l’ancienne fracture.
+soigner => to treat => Le médecin soigne la blessure avec soin.
+soulager => to relieve => Un bain chaud peut soulager les tensions.
+la tension => tension => Je contrôle la tension chaque matin.
+
+#LIEUX / MÉDICAMENTS / EXAMENS
+l'hôpital (m.) => hospital => L’hôpital accueille les patients en urgence.
+la pharmacie => pharmacy => Je vais à la pharmacie chercher l’ordonnance.
+le paracétamol => paracetamol => Le paracétamol soulage sa fièvre légère.
+la radio => x-ray => La radio confirme qu’il n’y a pas de fracture.
+le sirop => syrup => Le sirop apaise la toux nocturne.
+la visite à domicile => home visit => La docteure organise une visite à domicile pour le nourrisson.
+la vitamine C => vitamin C => Elle prend de la vitamine C chaque matin.
+l'antibiotique (m.) => antibiotic => L’antibiotique agit après deux jours.
+l'antiseptique (m.) => antiseptic => L’antiseptique nettoie la plaie sans douleur.
+les gouttes (f.) => drops => Les gouttes soulagent ses yeux irrités.
+le remède => remedy => Ce remède de grand-mère marche encore.
+le traitement => course of treatment => Elle suit le traitement complet sans l’interrompre.
+
+#LES URGENCES
+l'accident (m.) => accident => L’accident survient à l’angle de la rue.
+l'ambulance (f.) => ambulance => L’ambulance arrive en moins de cinq minutes.
+l'ambulancier, l'ambulancière => paramedic => L’ambulancière rassure le patient en route.
+l'appel (m.) => call => Son appel d’urgence déclenche l’intervention.
+le/la blessé(e) => injured person => Le blessé est transporté sur une civière.
+le numéro d'urgence => emergency number => Mémorise le numéro d’urgence avant de voyager.
+le policier, la policière => police officer => La policière sécurise la zone de l’accident.
+le pompier, la pompière => firefighter => Les pompiers libèrent le conducteur coincé.
+le SAMU => EMS => Le SAMU coordonne les soins sur place.
+la victime => victim => La victime reprend conscience à l’hôpital.
+
+#PROFESSIONS MÉDICALES
+le dentiste => dentist => Le dentiste conseille un détartrage annuel.
+le/la docteur(e) / le médecin => doctor => Le médecin explique le diagnostic avec clarté.
+l'infirmier (m.), l'infirmière (f.) => nurse => L’infirmière change le pansement chaque matin.
+le pharmacien, la pharmacienne => pharmacist => Le pharmacien vérifie les interactions des médicaments.
+
+#SE SENTIR BIEN
+adopter de bonnes habitudes => adopt good habits => Elle adopte de bonnes habitudes alimentaires.
+apaisé(e) => calm => Après le yoga, il se sent apaisé et détendu.
+être en pleine forme => be in great shape => Grâce à l’entraînement, elle est en pleine forme.
+masser => to massage => Il masse ses épaules pour détendre les muscles.
+récupérer => to recover => Elle récupère rapidement après la course.
+se remettre => to get better => Il se remet lentement de l’opération.
+relâcher ses muscles => relax one's muscles => La chaleur aide à relâcher ses muscles.
+relaxé(e) => relaxed => Elle se sent relaxée après le spa.
+reposé(e) => well rested => Je me sens reposé après une bonne nuit de sommeil.
+se sentir léger, légère => feel light => Après la séance, elle se sent légère comme une plume.
+la sérénité => serenity => La sérénité revient quand il médite chaque matin.
+
+#ÉMOTIONS
+content(e) => happy => Elle est contente d’entendre de bonnes nouvelles.
+fatigué(e) => tired => Il rentre fatigué après la garde de nuit.
+heureux, heureuse => happy => Ils sont heureux de retrouver leurs amis.
+malheureux, malheureuse => unhappy => Il reste malheureux malgré les progrès.
+inquiet, inquiète => worried => Elle se dit inquiète pour son père malade.
+stressé(e) => stressed => Il est stressé avant la visite du spécialiste.
+triste => sad => La patiente se sent triste pendant le traitement.
+
+#EXPRESSIONS
+donner du tonus => to boost energy => Ce jus frais donne du tonus le matin.
+être patraque => to feel under the weather => Je suis un peu patraque depuis hier.
+faire le plus grand bien => to do a lot of good => Une journée au repos lui a fait le plus grand bien.
+

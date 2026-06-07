@@ -1,0 +1,35 @@
+#L’INFORMATION
+la diffusion en direct / en streaming => live broadcast / streaming => Nous avons suivi la finale en diffusion en direct sur Internet.
+le documentaire => documentary => Ce documentaire raconte l’histoire d’un village isolé.
+l’enquête (f.) => investigation / inquiry => L’enquête révèle un scandale politique.
+le reportage => report / news story => Le reportage expose les conditions de travail dans l’usine.
+le journalisme numérique => digital journalism => Le journalisme numérique attire un public plus jeune.
+le / la journaliste => journalist => La journaliste pose des questions précises aux témoins.
+les médias => media => Les médias relaient la nouvelle en quelques minutes.
+la plateforme => platform => Cette plateforme héberge des émissions indépendantes.
+le(s) point(s) de vue => point(s) of view => Le débat présente plusieurs points de vue opposés.
+publier un article => to publish an article => Elle vient de publier un article sur l’énergie solaire.
+la revue de presse => press review => Je lis la revue de presse pour comparer les analyses.
+
+#S’INFORMER
+l’abonnement (à) (m.) => subscription (to) => Son abonnement au quotidien se renouvelle automatiquement.
+être au courant (de) => to be aware (of) / to be up to date (with) => Il est toujours au courant des dernières décisions.
+regarder les nouvelles / les informations (f.) => to watch the news => Nous regardons les nouvelles chaque soir après le dîner.
+s’abonner (à un média) => to subscribe (to a media outlet) => Elle s’est abonnée à un média indépendant.
+suivre l’actualité => to follow current events => Ils suivent l’actualité grâce aux alertes sur leur téléphone.
+
+#LA PRESSE ÉCRITE
+l’article (m.) => article => L’article analyse les causes de la crise économique.
+le dessinateur, la dessinatrice => cartoonist / illustrator => Le dessinateur publie une caricature dans chaque numéro.
+le journal => newspaper => Le journal du matin arrive avant sept heures.
+le magazine / la revue => magazine / journal => Ce magazine traite de sujets scientifiques.
+le numéro => issue (of a publication) => Le numéro de juin est consacré au cinéma.
+la presse en ligne / la presse papier => online press / print press => La presse en ligne complète la presse papier traditionnelle.
+le titre => headline / title => Le titre accrocheur attire immédiatement le lecteur.
+
+#LA TÉLÉVISION
+la chaîne => channel => Cette chaîne diffuse des séries étrangères.
+le direct => live broadcast => Le direct permet aux spectateurs de réagir en temps réel.
+l’émission (f.) => program / show => L’émission du soir invite un professeur d’histoire.
+le journal télévisé (le JT) => TV news => Le journal télévisé ouvre sur les élections municipales.
+le téléviseur / la télévision => television set / television => Le téléviseur du salon se connecte aux plateformes de streaming.

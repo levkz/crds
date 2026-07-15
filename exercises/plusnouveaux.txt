@@ -8,3 +8,4 @@ atteindre => reach => Les pompiers ont fait vite pour atteindre l'immeuble en fe
 éteindre => turn off => La mise à jour du logiciel est en cours, veuillez ne pas éteindre votre ordinateur.
 vaisselle => dishes => Le couple a eu une énorme dispute pour savoir qui ferait la vaisselle.
 bouchée => bite => Mille saveurs ont explosé dans sa bouche à chaque bouchée du plat.
+À peine => barely => À peine Ce coussin reste à peine en équilibre sur le dossier du canapé.

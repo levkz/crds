@@ -1,30 +1,13 @@
 package ui
 
-import "github.com/charmbracelet/lipgloss"
+import "crds/internal/ui/theme"
 
-var Theme = struct {
-	Primary lipgloss.Style
-	Success lipgloss.Style
-	Warning lipgloss.Style
-	Danger  lipgloss.Style
-	Muted   lipgloss.Style
-	Header  lipgloss.Style
-}{
-	Primary: lipgloss.NewStyle().
-		Foreground(lipgloss.Color("39")),
+var Theme = theme.Default
 
-	Success: lipgloss.NewStyle().
-		Foreground(lipgloss.Color("42")),
+func SetTheme(t theme.Theme) {
+	Theme = t
+}
 
-	Warning: lipgloss.NewStyle().
-		Foreground(lipgloss.Color("214")),
-
-	Danger: lipgloss.NewStyle().
-		Foreground(lipgloss.Color("196")),
-
-	Muted: lipgloss.NewStyle().
-		Foreground(lipgloss.Color("240")),
-
-	Header: lipgloss.NewStyle().
-		Bold(true),
+type ThemeSwitchMsg struct {
+	Name string
 }

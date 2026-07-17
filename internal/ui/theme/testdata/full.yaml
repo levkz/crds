@@ -1,0 +1,24 @@
+palette:
+  blue: "21"
+  green: "46"
+  orange: "208"
+  red: "160"
+  gray: "242"
+  white: "231"
+  background: "235"
+  selection: "25"
+  border: "237"
+  link: "33"
+  surface: "236"
+  primary: "green"
+  secondary: "orange"
+  accent: "red"
+icons: nerdfont
+typography:
+  title:
+    color: blue
+    bold: true
+  subtitle:
+    color: gray
+  caption:
+    italic: true

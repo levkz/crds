@@ -1,0 +1,9 @@
+typography:
+  title:
+    color: green
+    bold: false
+    italic: true
+  emphasis:
+    color: orange
+    bold: true
+    italic: false

@@ -1,0 +1,22 @@
+# French greetings
+
+id: french
+name: French
+language: fr
+translation_language: en
+
+entries:
+  # The most common greeting
+  - id: fr_bonjour
+    term: bonjour
+
+    translations:
+      - text: hello
+      - text: good morning
+
+    # Example sentence
+    examples:
+      - text: Bonjour, Marie.
+        translation: Hello, Marie.
+
+# End of deck

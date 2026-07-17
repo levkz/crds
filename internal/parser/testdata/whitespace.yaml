@@ -1,0 +1,21 @@
+id: "  french  "
+name: "  French  "
+language: "  fr "
+translation_language: " en  "
+
+entries:
+  - id: " fr_bonjour "
+    term: " bonjour "
+
+    translations:
+      - text: " hello "
+
+    examples:
+      - text: " Bonjour, Marie. "
+        translation: " Hello, Marie. "
+
+    tags:
+      - " greeting "
+      - " A1 "
+
+    notes: " Common greeting. "

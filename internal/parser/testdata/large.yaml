@@ -1,0 +1,15 @@
+id: benchmark
+name: Benchmark
+language: fr
+translation_language: en
+
+entries:
+  - id: fr_word_0001
+    term: word0001
+    translations:
+      - text: translation0001
+
+  - id: fr_word_0002
+    term: word0002
+    translations:
+      - text: translation0002

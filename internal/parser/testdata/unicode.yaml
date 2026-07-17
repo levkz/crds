@@ -1,0 +1,23 @@
+id: french
+name: Unicode
+language: fr
+translation_language: en
+
+entries:
+  - id: fr_eleve
+    term: élève
+
+    translations:
+      - text: student
+
+  - id: fr_ca
+    term: ça
+
+    translations:
+      - text: that
+
+  - id: fr_etre
+    term: être
+
+    translations:
+      - text: to be

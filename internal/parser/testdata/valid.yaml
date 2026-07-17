@@ -1,0 +1,32 @@
+id: french_a1
+name: French A1
+language: fr
+translation_language: en
+
+entries:
+  - id: fr_bonjour
+    term: bonjour
+
+    translations:
+      - text: hello
+      - text: good morning
+
+    examples:
+      - text: Bonjour, Marie.
+        translation: Hello, Marie.
+
+    tags:
+      - greeting
+      - A1
+
+    notes: Common greeting.
+
+  - id: fr_manger
+    term: manger
+
+    translations:
+      - text: eat
+
+    examples:
+      - text: Je vais manger.
+        translation: I am going to eat.

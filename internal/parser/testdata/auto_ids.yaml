@@ -1,0 +1,20 @@
+id: french
+name: French
+language: fr
+translation_language: en
+
+entries:
+  - term: bonjour
+
+    translations:
+      - text: hello
+
+  - term: bonjour
+
+    translations:
+      - text: good morning
+
+  - term: s'il vous plaît
+
+    translations:
+      - text: please

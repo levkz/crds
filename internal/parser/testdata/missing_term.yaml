@@ -1,0 +1,10 @@
+id: french
+name: French
+language: fr
+translation_language: en
+
+entries:
+  - id: fr_chat
+
+    translations:
+      - text: cat

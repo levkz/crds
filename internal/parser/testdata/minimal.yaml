@@ -1,0 +1,11 @@
+id: tiny
+name: Tiny Deck
+language: fr
+translation_language: en
+
+entries:
+  - id: fr_chat
+    term: chat
+
+    translations:
+      - text: cat

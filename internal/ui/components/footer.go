@@ -1,5 +1,7 @@
 package components
 
+import "crds/internal/ui/styles"
+
 func Footer(keys string) string {
-	return FooterStyle.Render(keys)
+	return styles.Footer(60).Render(keys)
 }

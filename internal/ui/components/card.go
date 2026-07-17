@@ -1,6 +1,10 @@
 package components
 
-import "strings"
+import (
+	"strings"
+
+	"crds/internal/ui/styles"
+)
 
 type Card struct {
 	Front string
@@ -9,12 +13,12 @@ type Card struct {
 }
 
 func RenderCard(c Card, revealed bool) string {
-
+	s := styles.Card(60)
 	if !revealed {
-		return cardStyle.Render(c.Front)
+		return s.Render(c.Front)
 	}
 
-	return cardStyle.Render(
+	return s.Render(
 		c.Front +
 			"\n\n" +
 			strings.Join(c.Back, "\n") +

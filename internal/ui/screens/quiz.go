@@ -1,10 +1,11 @@
 package screens
 
 import (
-	"crds/internal/ui/components"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"crds/internal/ui"
+	"crds/internal/ui/components"
 )
 
 type QuizModel struct {
@@ -14,8 +15,14 @@ type QuizModel struct {
 
 	Progress int
 
-	Cards []Card
+	Cards []components.Card
 }
+
+func NewQuiz() QuizModel {
+	return QuizModel{}
+}
+
+func (m QuizModel) Init() tea.Cmd { return nil }
 
 type Grade int
 
@@ -30,8 +37,7 @@ func (m *QuizModel) grade(g Grade) (QuizModel, tea.Cmd) {
 	return *m, nil
 }
 
-func (m QuizModel) Update(msg tea.Msg) (QuizModel, tea.Cmd) {
-
+func (m QuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
@@ -42,16 +48,20 @@ func (m QuizModel) Update(msg tea.Msg) (QuizModel, tea.Cmd) {
 			m.Revealed = true
 
 		case "1":
-			return m.grade(Again)
+			updated, cmd := m.grade(Again)
+			return updated, cmd
 
 		case "2":
-			return m.grade(Hard)
+			updated, cmd := m.grade(Hard)
+			return updated, cmd
 
 		case "3":
-			return m.grade(Good)
+			updated, cmd := m.grade(Good)
+			return updated, cmd
 
 		case "4":
-			return m.grade(Easy)
+			updated, cmd := m.grade(Easy)
+			return updated, cmd
 		}
 	}
 
@@ -59,7 +69,6 @@ func (m QuizModel) Update(msg tea.Msg) (QuizModel, tea.Cmd) {
 }
 
 func (m QuizModel) View() string {
-
 	var b strings.Builder
 
 	b.WriteString(components.Header("French A1"))
@@ -67,7 +76,7 @@ func (m QuizModel) View() string {
 	b.WriteString("\n\n")
 
 	b.WriteString(
-		RenderCard(
+		components.RenderCard(
 			m.Cards[m.CardIndex],
 			m.Revealed,
 		),
@@ -76,7 +85,7 @@ func (m QuizModel) View() string {
 	b.WriteString("\n\n")
 
 	b.WriteString(
-		ProgressBar(
+		components.ProgressBar(
 			m.Progress,
 		),
 	)

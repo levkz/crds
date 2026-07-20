@@ -168,28 +168,25 @@ The root model owns:
 
 # Components
 
-Current implemented components (8):
+All 29 components are implemented, split across two subpackages:
 
-Header
-Footer
-Card
-Progress
-List
-Modal
-Notification
-Text
+**`display/`** (20 stateless): Header, Footer, Card, Progress, List, Table,
+Modal, Notification, Text, Label, Badge, Paragraph, Divider, Panel, Section,
+Group, Window, StatusBar, ConfirmDialog, ErrorDialog
 
-Future components may include:
+**`interactive/`** (9 stateful sub-models): TextInput, SearchInput, Checkbox,
+RadioGroup, Select, MultiSelect, SelectableList, Tree, Spinner
 
-Table
-Tabs
-Input
-Viewport
-Tree
+Interactive components accept optional key config structs for configurable
+vim-style keybindings. See `components/CONTEXT.md` for details.
 
 ---
 
 # File Organization
+
+Related packages outside `ui/`:
+
+- **`internal/config/`** — User configuration from `~/.config/crds/`: directory creation, `config.yaml`, `keymaps.yaml`, `themes/*.yaml` discovery
 
 ```
 ui/
@@ -197,14 +194,14 @@ ui/
 ├── theme.go            Semantic color theme (re-exports theme.Default)
 
 ├── app/                Root model (Bubble Tea entry point)
-│   ├── app.go          New() + Run()
+│   ├── app.go          New() + Run() + config/keymap/theme init
 │   ├── model.go        Root Model struct, GlobalState, messages
 │   ├── events.go       dispatchEvent + dispatchKeyEvent + forwardToScreen
-│   ├── view.go         Root View()
+│   ├── view.go         Root View() + help overlay using keymap.Registry
 │   ├── update.go       Root Update()
 │   ├── lifecycle.go    Lifecycle hooks, transitionTo, popToPrevious
 │   ├── commands.go     NavigateToMsg, Dispatcher, config update
-│   ├── config.go       Config + DefaultConfig
+│   ├── config.go       Config + DefaultConfig + ApplyYAML
 │   ├── dependencies.go DeckProvider, ProgressRecorder interfaces
 │   └── tick.go         Tick loop
 
@@ -223,15 +220,39 @@ ui/
 │   ├── settings.go     SettingsModel — theme switching
 │   └── detail.go       DetailModel — entry detail view
 
-├── components/         Reusable components
-│   ├── header.go       Header component
-│   ├── footer.go       Footer component
-│   ├── card.go         Card component
-│   ├── progress.go     Progress bar component
-│   ├── list.go         List component (selected-item aware)
-│   ├── modal.go        Modal/dialog component
-│   ├── notification.go Notification component
-│   └── text.go         Text component
+├── components/         Reusable components (29 total)
+│   ├── display/        20 stateless render functions
+│   │   ├── text.go           Text(content)
+│   │   ├── label.go          Label(text)
+│   │   ├── paragraph.go      Paragraph(content, width)
+│   │   ├── divider.go        Divider(width)
+│   │   ├── badge.go          Badge(text, variant)
+│   │   ├── header.go         Header(title, width)
+│   │   ├── footer.go         Footer(keys, width)
+│   │   ├── card.go           Card struct + RenderCard(c, revealed, width)
+│   │   ├── panel.go          Panel(content, width)
+│   │   ├── section.go        Section(title, content, width)
+│   │   ├── group.go          Group(title, content, width)
+│   │   ├── window.go         Window(title, content, footer, width)
+│   │   ├── list.go           RenderList(items, selected, width)
+│   │   ├── table.go          Table(headers, rows, width)
+│   │   ├── progress.go       ProgressBar(progress)
+│   │   ├── notification.go   RenderNotification(text)
+│   │   ├── status_bar.go     StatusBar(left, right, width)
+│   │   ├── modal.go          RenderModal(title, content, width, height)
+│   │   ├── confirm_dialog.go ConfirmDialog(title, msg, confirm, cancel, w, h)
+│   │   └── error_dialog.go   ErrorDialog(title, msg, width, height)
+│   └── interactive/    9 stateful Bubble Tea sub-models
+│       ├── input_keys.go     Key config structs + keyIn() helper
+│       ├── text_input.go     TextInputModel (cursor, focus)
+│       ├── search_input.go   SearchInputModel (extends TextInput)
+│       ├── checkbox.go       CheckboxModel (toggle, focus)
+│       ├── radio_group.go    RadioGroupModel (single select)
+│       ├── select.go         SelectModel (dropdown)
+│       ├── multi_select.go   MultiSelectModel (checkbox dropdown)
+│       ├── selectable_list.go SelectableListModel (multi-select)
+│       ├── tree.go           TreeModel (expand/collapse)
+│       └── spinner.go        SpinnerModel (animation frames)
 
 ├── styles/             Semantic style definitions
 │   ├── header.go       Header(width int)
@@ -265,13 +286,40 @@ ui/
 │   ├── theme_test.go   54 tests
 │   └── testdata/       6 YAML fixtures
 
-├── layout/             Layout helpers (empty)
-├── events/             Event types (empty)
-├── keymap/             Keybinding types (empty)
+├── keymap/             Centralized keybinding definitions
+│   ├── keymap.go       Binding, BindingList, Global, List, Quiz, Search,
+│   │                   Registry, NamedBinding, KeymapConfig, ApplyDefaultOverrides
+│   ├── keymap_test.go  16 tests
+│   ├── CONTEXT.md      Package context
+│   └── TODO.md         Progress tracker
+
+├── layout/             Layout helpers
+│   ├── page.go         Page(header, content, footer)
+│   ├── column.go       Column(items...)
+│   ├── row.go          Row(items...)
+│   ├── center.go       Center(content, width, height)
+│   ├── align.go        Align direction enum
+│   ├── grid.go         Grid(items, columns, width)
+│   ├── stack.go        Stack(items...)
+│   ├── spacer.go       Spacer(n)
+│   ├── layout_test.go  Tests
+│   └── CONTEXT.md
+
+├── events/             Centralized event types
+│   ├── events.go       TickMsg, ThemeSwitchMsg, ShowNotificationMsg,
+│   │                   HideNotificationMsg
+│   └── TODO.md
+
+├── renderer/           Text rendering utilities
+│   ├── wrap.go         Wrap(content, width)
+│   ├── width.go        VisibleWidth(s), Truncate(s, max)
+│   ├── ansi.go         AnsiWidth(s) — strips ANSI for width calc
+│   ├── renderer_test.go Tests
+│   └── CONTEXT.md
+
 ├── actions/            Action types (empty)
-├── debug/              Debug utilities (empty)
 ├── animations/         Animation helpers (empty)
-├── renderer/           Custom renderer (empty)
+├── debug/              Debug utilities (empty)
 └── testdata/           Test fixtures (empty)
 ```
 
@@ -305,7 +353,8 @@ Keep rendering code readable.
 
 Rendering should avoid unnecessary allocations.
 
-Reuse strings.Builder where appropriate.
+Use `layout.Page()` and `layout.Column()` for view composition
+instead of manual `strings.Builder` concatenation.
 
 Do not prematurely optimize.
 
@@ -329,20 +378,18 @@ Navigation should be testable through emitted events.
 
 - **Theme** (`theme/`): Full implementation with 54 tests, including 11-color palette, 10 semantic styles, typography, borders, 10-slot icons (4 icon sources), spacing scale, border roles, YAML loading with style overrides, and theme switching
 - **Styles** (`styles/`): All 12 style definitions implemented with 60 tests — Header, Footer, SelectedItem, FocusedInput, Error, Warning, Success, Hint, MutedText, Card, Panel, Modal
-- **Components** (`components/`): All 8 components implemented — Header, Footer, Card, Progress, List, Modal, Notification, Text
+- **Components** (`components/`): All 29 components implemented — 20 in `display/` (Header, Footer, Card, Progress, List, Table, Modal, Notification, Text, Label, Badge, Paragraph, Divider, Panel, Section, Group, Window, StatusBar, ConfirmDialog, ErrorDialog) and 9 in `interactive/` (TextInput, SearchInput, Checkbox, RadioGroup, Select, MultiSelect, SelectableList, Tree, Spinner)
 - **Screens** (`screens/`): All 6 screens implemented — Home (activity menu), Quiz (flashcard), Search (text input + results), Statistics (metrics display), Settings (theme switching), Detail (entry view)
 - **Navigation** (`navigation/`): Complete with 82 black-box tests including Manager, stack, and registry
-- **App** (`app/`): Root Bubble Tea model, events, lifecycle, commands, config, theme loading, overlay/notification system
+- **App** (`app/`): Root Bubble Tea model, events, lifecycle, commands, config, theme loading, overlay/notification system. `New()` wires keymap overrides (`keymaps.yaml`), user themes (`themes/`), and app config (`config.yaml`) from `~/.config/crds/`
+- **Keymap** (`keymap/`): Centralized keybinding definitions. `Binding` with `Match()`, `BindingList` with `Help()`, per-screen structs (`Global`, `List`, `Quiz`, `Search`) with `Footer()`/`Revealed()`/`Unrevealed()`, `Registry` with `Bindings()`/`FindBinding()`, `KeymapConfig` + `ApplyDefaultOverrides()` for user-defined overrides. 16 tests.
+- **Config** (`internal/config/`): User configuration directory (`~/.config/crds/`). Auto-creates directory tree with default files. Loads `config.yaml` (theme, animation, quiz limit), `keymaps.yaml` (keybinding overrides), and discovers `themes/*.yaml`. 13 tests.
 
 ## Placeholder Directories
 
 - **actions** (empty): Action types
-- **keymap** (empty): Keyboard bindings
-- **events** (empty): Event types
-- **layout** (empty): Layout helpers
 - **animations** (empty): Animation utilities
 - **debug** (empty): Debug utilities
-- **renderer** (empty): Custom renderer
 - **testdata** (empty): Test fixtures
 
 ---
@@ -355,6 +402,7 @@ Navigation should be testable through emitted events.
 - Statistics shows zeroes for all metrics (no scheduler wired)
 - Detail shows "Select an entry" until data is passed
 - Screens use hardcoded width 60 — no terminal resize awareness yet
+- `~/.config/crds/` is created on `app.New()` but CLI commands are stubs, so it only triggers when the UI actually launches
 
 ---
 
@@ -366,7 +414,7 @@ Likely future additions:
 - search highlighting
 - progress graphs
 - animations
-- configurable themes
+- chord keybindings (e.g. `g` `g` for top of list)
 - mouse support
 - plugins
 - command palette

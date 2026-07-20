@@ -51,7 +51,8 @@ Testing
 vocab/
 
 ├── cmd/
-│   └── root.go
+│   ├── crds/            Main app (Kong CLI + Bubble Tea TUI)
+│   └── legacy-quiz/     Legacy terminal quiz (exercises/*.txt)
 │
 ├── internal/
 │   ├── cli/
@@ -60,30 +61,25 @@ vocab/
 │   │
 │   ├── parser/
 │   │
-│   ├── quiz/
-│   │
-│   ├── scheduler/
-│   │
 │   ├── storage/
 │   │
-│   ├── importer/
+│   ├── quiz/            [not yet implemented]
 │   │
-│   ├── exporter/
+│   ├── scheduler/       [not yet implemented]
+│   │
+│   ├── search/          [not yet implemented]
 │   │
 │   ├── config/
 │   │
-│   ├── ui/
-│   │
-│   └── util/
+│   └── ui/
 │
 ├── exercises/
 │
-├── migrations/
+├── docs/
 │
-├── assets/
-│
+├── Makefile
 ├── go.mod
-└── main.go
+└── go.sum
 ```
 
 ---
@@ -208,9 +204,14 @@ It only returns cards that should be reviewed.
 
 ## storage
 
-Database abstraction.
+Persistence layer for decks and progress.
 
-Responsibilities
+Current implementation:
+- `DeckStore` reads YAML decks from `~/.local/share/crds/decks/`
+- `ProgressStore` tracks progress in-memory within a session
+- No data is persisted to disk yet
+
+Future (SQLite):
 
 - save progress
 - save history

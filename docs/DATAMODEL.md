@@ -20,11 +20,15 @@ Vocabulary Deck (.yaml)
 Parser
         │
         ▼
+    Storage
+   (DeckStore)
+        │
+        ▼
 Application Models
         │
         ├────────► Quiz Engine
         │
-        └────────► SQLite (progress & cache)
+        └────────► ProgressStore (in-memory, future SQLite)
 ```
 
 ---
@@ -38,19 +42,18 @@ Each file represents a single deck.
 Example:
 
 ```yaml
-deck:
-  id: french_a1
-  name: French A1
-  language: fr
-  translation_language: en
+id: french_a1
+name: French A1
+language: fr
+translation_language: en
 
 entries:
   - id: fr_bonjour
     term: bonjour
 
     translations:
-      - hello
-      - good morning
+      - text: hello
+      - text: good morning
 
     examples:
       - text: Bonjour, Marie.
@@ -66,7 +69,7 @@ entries:
     term: manger
 
     translations:
-      - eat
+      - text: eat
 ```
 
 ---
@@ -174,13 +177,15 @@ type Example struct {
 
 ---
 
-# SQLite
+# Storage
 
-SQLite stores only application state.
+## SQLite (planned)
+
+SQLite will store only application state when implemented.
 
 Vocabulary content remains in YAML.
 
-The database stores information such as:
+Planned storage includes:
 
 - review progress
 - spaced repetition scheduling
@@ -188,6 +193,10 @@ The database stores information such as:
 - statistics
 - session history
 - cached search data
+
+## Current implementation
+
+An in-memory `ProgressStore` (`internal/storage/progress_store.go`) tracks progress and provides stats within a session. `DeckStore` (`internal/storage/deck_store.go`) reads YAML decks from `~/.local/share/crds/decks/`. No data is persisted to disk yet.
 
 The YAML files remain the source of truth.
 

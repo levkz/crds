@@ -38,59 +38,53 @@ Every screen should have one responsibility.
 The UI follows Bubble Tea's Elm-style architecture.
 
 ```
-            Bubble Tea
+                Bubble Tea
 
-               │
+                   │
 
-               ▼
+                   ▼
 
-            tea.Msg
+                tea.Msg
 
-               │
+                   │
 
-               ▼
+                   ▼
 
-            Root Model
-
-               │
-
-               ▼
-
-      Navigation Manager
-      (Push/Pop/Replace)
-
-               │
-
-               ▼
-
-      Registry → Screen
-
-               │
-
-      ┌─────────┼──────────┐
-      │         │          │
-      ▼         ▼          ▼
-
-    Home      Quiz      Search
-    Screen     Screen     Screen
-
-      │         │          │
-
-      ▼         ▼          ▼
-
-            Components
-
-     Header
-     Footer
-     Card
-     Progress
-     List
-     Modal
-     Notification
-     Text
+              Root Model
+         ┌───────┼───────────┐
+         │       │           │
+    ┌────▼───┐ ┌─▼──────┐ ┌──▼──────────┐
+    │ Events │ │ Keymap │ │ Navigation  │
+    │ (4     │ │(Global │ │ Manager     │
+    │ types) │ │ bindgs)│ │(Push/Pop)   │
+    └────────┘ └────────┘ └──┬───────────┘
+         │       │           │
+         └───────┼───────────┘
+                 │
+          ┌──────┼──────────┐
+          │      │          │
+          ▼      ▼          ▼
+       Home    Quiz       Search
+      Screen  Screen      Screen
+        │      │            │
+        ▼      ▼            ▼
+     Components (display/ + interactive/)
+      ───────────────────────────────
+      Header   Footer   Card    Modal
+      List     Table    Badge   Panel
+      Progress Text     Label   Window
+      StatusBar  Divider  Section  Group
+      Paragraph  Notification  ConfirmDialog
+      ErrorDialog
+      ───────────────────────────────
+      TextInput  SearchInput  Checkbox
+      RadioGroup  Select  MultiSelect
+      SelectableList  Tree  Spinner
 ```
 
-The root model delegates navigation to the `navigation` package.
+The root model delegates navigation to the `navigation` package and
+keyboard handling to the global `keymap`. Application config is loaded
+from `~/.config/crds/` by the `config` package at startup.
 
 Each screen owns only its own state.
 
@@ -175,31 +169,22 @@ Component:
 
 Components should be reusable.
 
-Current implemented components:
+Components live in two subpackages:
 
-- Header
-- Footer
-- Card
-- Progress
+- **`display/`** — 20 stateless render functions (Header, Footer, Card, Progress,
+  List, Table, Modal, Notification, Text, Label, Badge, Paragraph, Divider,
+  Panel, Section, Group, Window, StatusBar, ConfirmDialog, ErrorDialog)
+- **`interactive/`** — 9 stateful Bubble Tea sub-models (TextInput, SearchInput,
+  Checkbox, RadioGroup, Select, MultiSelect, SelectableList, Tree, Spinner)
 
-Planned but not yet implemented:
+All 29 components are implemented.
 
-- List
-- Modal
-- Notification
-- Text
+Display components receive data and return strings. Interactive components
+own ephemeral UI state (cursor, focus, selection) but not business data.
 
-Future components may include:
-
-- Table
-- Tabs
-- Input
-- Viewport
-- Tree
-
-Components should receive data and return strings.
-
-Avoid hidden state whenever possible.
+Components should avoid hidden state. Interactive components use optional
+key config structs (`NavigationKeys`, `TextInputKeys`, `CheckboxKeys`) for
+configurable vim-style keybindings.
 
 ---
 
@@ -223,31 +208,19 @@ The footer always displays currently available shortcuts.
 
 Styling is centralized.
 
-The `theme` package provides complete semantic styling:
+The `theme` package provides a complete design system:
 
-- Theme has 6 semantic styles: Primary, Success, Warning, Danger, Muted, Header
-- Pallette with 10 colors: Blue, Green, Orange, Red, Gray, White, Background, Selection, Border, Link
-- Typography: Title, Subtitle, Body, Caption, Emphasis, Key
-- Borders: Normal, Rounded, Double, Thick, None
-- Icons: NerdFont support (primary), Emoji fallback, Unicode fallback, ASCII fallback
+- **Palette**: 11 named colors (Blue, Green, Orange, Red, Gray, White, Background, Selection, Border, Link, Surface)
+- **Semantic styles**: 10 styles (Primary, Secondary, Accent, Success, Warning, Danger, Muted, Header, Background, Surface)
+- **Typography**: 6 text roles (Title, Subtitle, Body, Caption, Emphasis, Key)
+- **Borders**: 5 styles (Normal, Rounded, Double, Thick, None)
+- **Icons**: 4 sources × 10 semantic slots (NerdFont → Emoji → Unicode → ASCII), auto-detected at startup
+- **Spacing**: 7-tier scale (Xxs → Xxl)
+- **Border roles**: 6 semantic roles (Container, Card, Modal, Emphasis, Section, None)
+- **YAML loading**: Custom theme files with palette, icons, and typography overrides
+- **Store**: Multi-theme registry with runtime switching via Settings screen
 
-Components use semantic styles instead of hardcoded colors.
-
-Example:
-
-Primary
-
-Success
-
-Warning
-
-Danger
-
-Muted
-
-Background
-
-Components should never use terminal color codes directly.
+Components use semantic styles instead of hardcoded colors. They should never use terminal color codes directly.
 
 ---
 
@@ -256,12 +229,12 @@ Components should never use terminal color codes directly.
 ```
 Registry (ScreenIndex → Screen)
 
-  ├── HomeScreen    → HomeModel (stubbed)
-  ├── QuizScreen    → QuizModel (implemented)
-  ├── SearchScreen  → SearchModel (stubbed)
-  ├── StatisticsScreen → StatisticsModel (stubbed)
-  ├── SettingsScreen   → SettingsModel (stubbed)
-  └── DetailScreen     → DetailModel (stubbed)
+  ├── HomeScreen    → HomeModel      (activity menu)
+  ├── QuizScreen    → QuizModel      (flashcard quiz)
+  ├── SearchScreen  → SearchModel    (text search)
+  ├── StatisticsScreen → StatisticsModel (metrics)
+  ├── SettingsScreen   → SettingsModel (theme switch)
+  └── DetailScreen     → DetailModel  (entry view)
 ```
 
 Screens are stored in a `navigation.Registry` and managed by the
@@ -294,12 +267,25 @@ Keyboard
 
 ↓
 
-Bubble Tea
+Bubble Tea → tea.KeyMsg, tea.WindowSizeMsg
 
 ↓
 
-Screen
-
+Root Model → dispatchEvent()
+│              ├─ events.TickMsg → re-arm TickCmd()
+│              ├─ events.ThemeSwitchMsg → theme.Switch()
+│              ├─ events.ShowNotificationMsg → show notification
+│              ├─ events.HideNotificationMsg → hide notification
+│              ├─ tea.WindowSizeMsg → resize handler
+│              ├─ tea.KeyMsg → dispatchKeyEvent()
+│              │                  ├─ keymap.DefaultGlobal → global action
+│              │                  └─ forwardToScreen() → screen.Update()
+│              │                                           │
+│              │                                     screen handles locally
+│              │                                     via keymap.Default*
+│              │
+│              └─ forwardToScreen() (pass-through)
+│
 ↓
 
 Command
@@ -317,7 +303,14 @@ Updated State
 Render
 ```
 
+Centralized event types live in the `events/` package (4 types:
+`TickMsg`, `ThemeSwitchMsg`, `ShowNotificationMsg`, `HideNotificationMsg`).
 The UI should communicate through events rather than direct mutation.
+
+Keypresses are matched against the centralized `keymap` package:
+global keys in the root model, screen-local keys in each screen's
+`Update()` method. This ensures a single source of truth for all
+keybindings.
 
 ---
 
@@ -339,33 +332,30 @@ Animations should remain optional.
 ## Complete
 
 - **Navigation** (`navigation/`): Full Manager, stack, Registry with 82 black-box tests
-- **Theme** (`theme/`): Complete design system with 82 tests:
-  - 10-color palette
-  - 6 semantic styles (Primary, Success, Warning, Danger, Muted, Header)
+- **Theme** (`theme/`): Complete design system with 54 tests:
+  - 11-color palette (Blue, Green, Orange, Red, Gray, White, Background, Selection, Border, Link, Surface)
+  - 10 semantic styles (Primary, Secondary, Accent, Success, Warning, Danger, Muted, Header, Background, Surface)
   - Typography system (Title, Subtitle, Body, Caption, Emphasis, Key)
   - Border styles (Normal, Rounded, Double, Thick, None)
-  - Icon source priority: NerdFont → Emoji → Unicode → Fallback
+  - 10-slot icon set with 4 sources: NerdFont → Emoji → Unicode → ASCII
   - Environment auto-detection (CRDS_ICON_SOURCE, NerdFont, Emoji, Unicode)
-  - YAML theme loading with 5 test fixtures
-  - Theme store and switching
-- **Components**: Header, Footer, Card, Progress - all functional
-- **Screens**: Quiz - full implementation
-
-## In Progress
-
-- **Styles** (`styles/`): Empty directory awaiting style definitions for all 14 shared Lip Gloss styles
-- **Missing Components**: List, Modal, Notification, Text (functions needed)
-- **Empty Screens**: Home, Search, Statistics, Settings, Detail (stubbed)
+  - Spacing scale (7 tiers), border roles (6 semantic roles)
+  - YAML theme loading with 6 test fixtures + style/typography overrides
+  - Theme store with runtime switching
+- **Styles** (`styles/`): 12 style definitions with 60 tests (Header, Footer, SelectedItem, FocusedInput, Error, Warning, Success, Hint, MutedText, Card, Panel, Modal)
+- **Components** (`components/`): 29 components across `display/` (20 stateless) and `interactive/` (9 stateful) — all implemented
+- **Screens** (`screens/`): All 6 screens — Home (activity menu), Quiz (flashcard), Search (text search), Statistics (metrics), Settings (theme switch), Detail (entry view)
+- **Keymap** (`keymap/`): Centralized keybinding definitions with `Binding.Match()`, `BindingList.Help()`, per-screen keymap structs with `Footer()` methods, `Registry` with `Bindings()`/`FindBinding()`, `KeymapConfig` for user overrides, and 16 tests. All screens and the root model use `keymap.Default*` instead of hardcoded strings.
+- **Config** (`internal/config/`): User configuration from `~/.config/crds/` — directory auto-creation, `config.yaml` loading, `keymaps.yaml` loading with `keymap.ApplyDefaultOverrides()`, theme discovery from `themes/*.yaml`. 13 tests.
+- **Events** (`events/`): 4 centralized event types (`TickMsg`, `ThemeSwitchMsg`, `ShowNotificationMsg`, `HideNotificationMsg`)
+- **Layout** (`layout/`): Layout helpers (Page, Column, Row, Center, Align, Stack, Grid, Spacer)
+- **Renderer** (`renderer/`): Custom renderer utilities (Wrap, Truncate, AnsiWidth, VisibleWidth)
 
 ## Placeholder Directories
 
 - **actions** (empty): Action types
-- **keymap** (empty): Keyboard bindings
-- **events** (empty): Event types
-- **layout** (empty): Layout helpers
 - **animations** (empty): Animation utilities
 - **debug** (empty): Debug utilities
-- **renderer** (empty): Custom renderer
 - **testdata** (empty): Test fixtures
 
 ---
@@ -374,9 +364,9 @@ Animations should remain optional.
 
 The architecture should support:
 
-- Vim keybindings
+- Vim keybindings (partial — `"k"`/`"j"` already defined in `keymap.DefaultList`)
+- Chord bindings (e.g. `g` then `g` for top of list)
 - mouse mode
-- themes (complete and functional)
 - plugin widgets
 - split views
 - audio

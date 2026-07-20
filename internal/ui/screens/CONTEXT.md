@@ -141,18 +141,20 @@ footer via `components.Footer(...)`.
 
 ### Rendering
 
-Every screen follows the same layout:
+Every screen uses layout primitives for consistent structure:
 
-```
-Header()
-\n\n
-Content
-\n\n
-Footer()
+```go
+return layout.Page(
+    components.Header("Title", m.width),
+    layout.Column(/* body sections */),
+    components.Footer(keys, m.width),
+)
 ```
 
-Use `strings.Builder` to construct views. Prefer `components.*` over
-raw `ui.Theme.*` calls for consistency.
+`layout.Page()` handles header/body/footer with `"\n\n"` separators.
+`layout.Column()` composes body sections with `"\n\n"` separators.
+
+Prefer `components.*` over raw `ui.Theme.*` calls for consistency.
 
 ### Screen lifecycle
 
@@ -178,6 +180,7 @@ get no-op lifecycle hooks.
 - `crds/internal/ui/events` — `events.ThemeSwitchMsg`
 - `crds/internal/ui/components` — `Header`, `Footer`, `RenderCard`,
   `ProgressBar`, `RenderList`, `Text`
+- `crds/internal/ui/layout` — `Page`, `Column`
 - `crds/internal/ui/theme` — `theme.Names()`, `theme.CurrentName()`
 
 Screens do NOT depend on:
@@ -215,19 +218,16 @@ screens/
    quick-start options. Consider `components.Text` for descriptions below
    each activity.
 
-4. **Keyboard documentation** — Footer strings are currently inline. Consider
-   a `keymap` package for centralized shortcut definitions.
-
-5. **Width awareness** — Screens currently use `components.Header(60)`,
-   `components.Footer(60)`, etc. These widths should come from the actual
-   terminal width (`m.Width` in the root model). Pass width to screens or
+4. **Width awareness** — Screens currently use hardcoded width 60.
+   These widths should come from the actual terminal width
+   (`m.Width` in the root model). Pass width to screens or
    define a `SetSize(w, h int)` on the `Screen` interface.
 
-6. **Event-driven search** — When search is wired to real data, consider
+5. **Event-driven search** — When search is wired to real data, consider
    debouncing the query input and using a channel or command to load results
    asynchronously.
 
-7. **Statistics refresh** — Statistics could refresh on `OnEnter()` lifecycle
+6. **Statistics refresh** — Statistics could refresh on `OnEnter()` lifecycle
    hook to show fresh data each time the screen is visited.
 
 ---
@@ -241,4 +241,3 @@ screens/
 - [ ] Wire detail view — accept an entry ID and populate `DetailModel` fields
 - [ ] Add `Width`/`Height` awareness — allow screens to adapt to terminal size
 - [ ] Add `Lifecycle` implementation to QuizModel (load deck on enter)
-- [ ] Centralize keybinding strings in a `keymap` package

@@ -17,24 +17,22 @@ These utilities sit below the UI layer (composing views) but above the raw termi
 
 ## Current state
 
-The `renderer` package is currently a placeholder – a directory with only `TODO.md` present. All rendering responsibilities are currently handled elsewhere:
+The `renderer` package provides core rendering utilities:
 
-- **Bubble Tea** – Text rendering, terminal event handling
-- **lipgloss** – Styling, borders, padding, text positioning
-- **Components** – Domain-specific rendering helpers
-- **Screens** – View composition using `strings.Builder`
+- `width.go` — `VisibleWidth(s)`, `LineWidth(s)`, `MaxLineWidth(text)`, `TextDimensions(text)` using `go-runewidth`
+- `ansi.go` — `StripANSI(s)`, `CountANSISequences(s)`
+- `wrap.go` — `Wrap(text, maxWidth)`, `Truncate(text, maxWidth)`, `Fit(text, maxWidth)`
+- `renderer_test.go` — table-driven tests
 
-No dedicated rendering package exists yet.
+Screen view composition uses `layout.Page()` and `layout.Column()`
+instead of manual `strings.Builder` concatenation.
 
 ---
 
 ## Dependencies
 
-Assuming the `renderer` package will be utilized:
-- **github.com/charmbracelet/lipgloss** – ANSI formatting, width/height measurement
 - **github.com/mattn/go-runewidth** – Unicode character width detection
-- **github.com/charmbracelet/lipgl** (if exists) – Terminal-aware rendering
-- **github.com/charmbracelet/bubbletea** – Viewport management (theoretically)
+- **regexp** – ANSI escape sequence processing
 
 ---
 

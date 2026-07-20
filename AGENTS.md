@@ -2,8 +2,8 @@
 
 ## Entry points
 
-- `cmd/crds/main.go` — main app, uses Kong CLI + Bubble Tea
-- `main.go` (root) — legacy terminal quiz, reads `exercises/*.txt`
+- `cmd/crds/main.go` — main app (Kong CLI + Bubble Tea TUI)
+- `cmd/legacy-quiz/main.go` — legacy terminal quiz, reads `exercises/*.txt`
 
 ## Module
 
@@ -13,17 +13,19 @@
 
 | Action | Command |
 |--------|---------|
-| Build | `go build ./cmd/crds/` |
-| Run | `go run ./cmd/crds/ --help` |
-| All tests | `go test ./...` |
+| Build | `make build` |
+| Install | `make install` |
+| Run | `make run` |
+| All tests | `make test` |
 | Single pkg | `go test ./internal/parser/` |
-| Lint | `golangci-lint run` (if installed) |
-| Tidy | `go mod tidy` |
+| Lint | `make lint` (requires `golangci-lint`) |
+| Tidy | `make tidy` |
+| Build legacy quiz | `make legacy` |
 
 ## Known issues
 
 - `duplicate_terms` test expects an error but `validate.go` only checks duplicate IDs, not duplicate terms → test fails
-- No `storage/`, `scheduler/`, `search/`, `quiz/` implementations exist yet — those are aspirational (docs/ outruns code)
+- `scheduler/`, `search/`, `quiz/` implementations don't exist yet — those are aspirational (docs/ outruns code)
 - `migrations/20260716121051_init.sql` is a goose placeholder (no real schema)
 
 ## Architecture (current vs docs)
@@ -34,7 +36,7 @@ Docs describe an aspirational layered architecture. Reality is partial:
 - **parser/** — YAML parsing + validation + normalization (has tests)
 - **cli/** — Kong command stubs (quiz, sync, stats, search) — most `Run()` methods only print
 - **app/** — empty composition root struct (but `internal/ui/app/` has real UI scaffolding)
-- **ui/** — Bubble Tea scaffolding with navigation/ fully implemented, app/ wired, most other subdirectories empty
+- **ui/** — Bubble Tea scaffolding: navigation/ fully implemented, app/ wired, events/ with 4 centralized event types, most other subdirectories still empty
 
 Most work ahead: wiring CLI commands → parser → storage → quiz/scheduler logic.
 

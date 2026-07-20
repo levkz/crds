@@ -20,6 +20,7 @@ func Validate(deck *model.Deck) error {
 	}
 
 	ids := make(map[string]struct{})
+	terms := make(map[string]string)
 
 	for i, entry := range deck.Entries {
 		if entry.ID == "" {
@@ -35,6 +36,12 @@ func Validate(deck *model.Deck) error {
 		if entry.Term == "" {
 			return fmt.Errorf("entry %q: missing term", entry.ID)
 		}
+
+		if existingID, exists := terms[entry.Term]; exists {
+			return fmt.Errorf("duplicate term %q (entries: %q, %q)", entry.Term, existingID, entry.ID)
+		}
+
+		terms[entry.Term] = entry.ID
 
 		if len(entry.Translations) == 0 {
 			return fmt.Errorf("entry %q: no translations", entry.Term)

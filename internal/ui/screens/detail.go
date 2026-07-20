@@ -5,7 +5,9 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"crds/internal/ui"
-	"crds/internal/ui/components"
+	components "crds/internal/ui/components/display"
+	"crds/internal/ui/keymap"
+	"crds/internal/ui/layout"
 	"crds/internal/ui/styles"
 )
 
@@ -14,52 +16,64 @@ type DetailModel struct {
 	Translations []string
 	Examples     []string
 	Notes        string
+	width        int
+	height       int
 }
 
-func NewDetail() DetailModel { return DetailModel{} }
+func NewDetail() *DetailModel {
+	return &DetailModel{width: 60, height: 24}
+}
+
+func (m *DetailModel) SetSize(w, h int) {
+	m.width = w
+	m.height = h
+}
 
 func (m DetailModel) Init() tea.Cmd { return nil }
 
-func (m DetailModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
+func (m *DetailModel) SetEntry(entry ui.CardData) {
+	m.Term = entry.Front
+	m.Translations = entry.Back
+	m.Notes = entry.Notes
+	m.Examples = nil
+}
+
+func (m *DetailModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 	return m, nil
 }
 
 func (m DetailModel) View() string {
-	var b strings.Builder
-	b.WriteString(components.Header("Entry Detail"))
-	b.WriteString("\n\n")
+	var sections []string
 
 	if m.Term != "" {
-		b.WriteString(ui.Theme.Primary.Render(m.Term))
-		b.WriteString("\n\n")
+		sections = append(sections, ui.Theme.Primary.Render(m.Term))
 	}
 
 	if len(m.Translations) > 0 {
-		b.WriteString(ui.Theme.Muted.Render("Translations"))
-		b.WriteString("\n")
-		b.WriteString(styles.Card(60).Render(strings.Join(m.Translations, "\n")))
-		b.WriteString("\n\n")
+		content := ui.Theme.Muted.Render("Translations") + "\n" +
+			styles.Card(m.width).Render(strings.Join(m.Translations, "\n"))
+		sections = append(sections, content)
 	}
 
 	if len(m.Examples) > 0 {
-		b.WriteString(ui.Theme.Muted.Render("Examples"))
-		b.WriteString("\n")
-		b.WriteString(styles.Card(60).Render(strings.Join(m.Examples, "\n")))
-		b.WriteString("\n\n")
+		content := ui.Theme.Muted.Render("Examples") + "\n" +
+			styles.Card(m.width).Render(strings.Join(m.Examples, "\n"))
+		sections = append(sections, content)
 	}
 
 	if m.Notes != "" {
-		b.WriteString(ui.Theme.Muted.Render("Notes"))
-		b.WriteString("\n")
-		b.WriteString(styles.Card(60).Render(m.Notes))
-		b.WriteString("\n\n")
+		content := ui.Theme.Muted.Render("Notes") + "\n" +
+			styles.Card(m.width).Render(m.Notes)
+		sections = append(sections, content)
 	}
 
 	if m.Term == "" {
-		b.WriteString(styles.MutedText().Render("Select an entry to view details"))
+		sections = append(sections, styles.MutedText().Render("Select an entry to view details"))
 	}
 
-	b.WriteString("\n")
-	b.WriteString(components.Footer("esc back"))
-	return b.String()
+	return layout.Page(
+		components.Header("Entry Detail", m.width),
+		layout.Column(sections...),
+		components.Footer(keymap.DefaultGlobal.Back.Help, m.width),
+	)
 }

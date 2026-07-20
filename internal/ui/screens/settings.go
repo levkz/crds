@@ -1,42 +1,52 @@
 package screens
 
 import (
-	"strings"
-
 	tea "github.com/charmbracelet/bubbletea"
 	"crds/internal/ui"
-	"crds/internal/ui/components"
+	components "crds/internal/ui/components/display"
+	"crds/internal/ui/events"
+	"crds/internal/ui/keymap"
+	"crds/internal/ui/layout"
 	"crds/internal/ui/theme"
 )
 
 type SettingsModel struct {
 	cursor int
 	themes []string
+	width  int
+	height int
 }
 
-func NewSettings() SettingsModel {
-	return SettingsModel{
+func NewSettings() *SettingsModel {
+	return &SettingsModel{
 		themes: theme.Names(),
+		width:  60,
+		height: 24,
 	}
+}
+
+func (m *SettingsModel) SetSize(w, h int) {
+	m.width = w
+	m.height = h
 }
 
 func (m SettingsModel) Init() tea.Cmd { return nil }
 
-func (m SettingsModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
+func (m *SettingsModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "up", "k":
+		switch {
+		case keymap.DefaultList.Up.Match(msg):
 			if m.cursor > 0 {
 				m.cursor--
 			}
-		case "down", "j":
+		case keymap.DefaultList.Down.Match(msg):
 			if m.cursor < len(m.themes)-1 {
 				m.cursor++
 			}
-		case "enter":
+			case keymap.DefaultList.Select.Match(msg):
 			return m, func() tea.Msg {
-				return ui.ThemeSwitchMsg{Name: m.themes[m.cursor]}
+				return events.ThemeSwitchMsg{Name: m.themes[m.cursor]}
 			}
 		}
 	}
@@ -45,11 +55,8 @@ func (m SettingsModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 
 func (m SettingsModel) View() string {
 	current := theme.CurrentName()
-	var b strings.Builder
-	b.WriteString(components.Header("Settings"))
-	b.WriteString("\n\n")
-	b.WriteString(components.Text("Select a theme"))
-	b.WriteString("\n")
+	items := make([]string, 0, len(m.themes)+1)
+	items = append(items, components.Text("Select a theme"))
 	for i, name := range m.themes {
 		marker := "  "
 		if i == m.cursor {
@@ -59,10 +66,11 @@ func (m SettingsModel) View() string {
 		if name == current {
 			line += " " + ui.Theme.Success.Render(ui.Theme.Icons.Check)
 		}
-		b.WriteString(line)
-		b.WriteString("\n")
+		items = append(items, line)
 	}
-	b.WriteString("\n")
-	b.WriteString(components.Footer("↑/↓ navigate · enter select · esc back"))
-	return b.String()
+	return layout.Page(
+		components.Header("Settings", m.width),
+		layout.Column(items...),
+		components.Footer(keymap.DefaultList.Footer()+" · "+keymap.DefaultGlobal.Back.Help, m.width),
+	)
 }

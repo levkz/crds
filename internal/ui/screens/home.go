@@ -1,44 +1,53 @@
 package screens
 
 import (
-	"strings"
-
 	tea "github.com/charmbracelet/bubbletea"
 	"crds/internal/ui"
-	"crds/internal/ui/components"
+	components "crds/internal/ui/components/display"
+	"crds/internal/ui/keymap"
+	"crds/internal/ui/layout"
 )
 
 type HomeModel struct {
 	cursor     int
 	activities []string
+	width      int
+	height     int
 }
 
-func NewHome() HomeModel {
-	return HomeModel{
+func NewHome() *HomeModel {
+	return &HomeModel{
 		activities: []string{
 			"Study",
 			"Search",
 			"Statistics",
 			"Settings",
 		},
+		width:  60,
+		height: 24,
 	}
+}
+
+func (m *HomeModel) SetSize(w, h int) {
+	m.width = w
+	m.height = h
 }
 
 func (m HomeModel) Init() tea.Cmd { return nil }
 
-func (m HomeModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
+func (m *HomeModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "up", "k":
+		switch {
+		case keymap.DefaultList.Up.Match(msg):
 			if m.cursor > 0 {
 				m.cursor--
 			}
-		case "down", "j":
+		case keymap.DefaultList.Down.Match(msg):
 			if m.cursor < len(m.activities)-1 {
 				m.cursor++
 			}
-		case "enter":
+		case keymap.DefaultList.Select.Match(msg):
 			screens := []ui.ScreenIndex{
 				ui.QuizScreen,
 				ui.SearchScreen,
@@ -54,11 +63,9 @@ func (m HomeModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 }
 
 func (m HomeModel) View() string {
-	var b strings.Builder
-	b.WriteString(components.Header("Home"))
-	b.WriteString("\n\n")
-	b.WriteString(components.RenderList(m.activities, m.cursor))
-	b.WriteString("\n\n")
-	b.WriteString(components.Footer("↑/↓ navigate · enter select · ? help"))
-	return b.String()
+	return layout.Page(
+		components.Header("Home", m.width),
+		components.RenderList(m.activities, m.cursor, m.width),
+		components.Footer(keymap.DefaultList.Footer()+" · "+keymap.DefaultGlobal.Help.Help, m.width),
+	)
 }

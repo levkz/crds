@@ -46,7 +46,7 @@ Instead they emit typed messages that the root model handles:
 | Message | Emitted by | Handled in |
 |---|---|---|
 | `ui.NavigateToMsg` | Home, any screen needing transition | `app/events.go` → `transitionTo()` |
-| `ui.ThemeSwitchMsg` | Settings | `app/events.go` → `theme.Switch()` |
+| `events.ThemeSwitchMsg` | Settings | `app/events.go` → `theme.Switch()` |
 
 Global keybindings (`esc`, `?`, `ctrl+c`) are handled in `app/events.go`
 before messages reach screens. Screens only handle their own keys.
@@ -174,7 +174,8 @@ get no-op lifecycle hooks.
 
 - `github.com/charmbracelet/bubbletea` — `tea.Model`, `tea.Cmd`, `tea.Msg`
 - `crds/internal/ui` — `ui.Screen`, `ui.ScreenIndex`, `ui.NavigateToMsg`,
-  `ui.ThemeSwitchMsg`, `ui.Theme`
+  `ui.Theme`
+- `crds/internal/ui/events` — `events.ThemeSwitchMsg`
 - `crds/internal/ui/components` — `Header`, `Footer`, `RenderCard`,
   `ProgressBar`, `RenderList`, `Text`
 - `crds/internal/ui/theme` — `theme.Names()`, `theme.CurrentName()`

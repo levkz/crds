@@ -8,52 +8,63 @@ values — each holding the keys that trigger it and a help label.
 
 ---
 
-## Current keyboard handling (without keymap)
+## Current keyboard handling (with keymap)
 
-Keys are currently handled in three layers with no central definition:
+Keys flow through two layers:
 
 ### Layer 1 — Global (app/events.go)
 
 ```go
 func (m Model) dispatchKeyEvent(msg tea.KeyMsg) (Model, tea.Cmd) {
-    switch msg.String() {
-    case m.Config.KeyQuit:   // "ctrl+c"
-    case m.Config.KeyHelp:   // "?"
-    case "esc":
+    switch {
+    case keymap.DefaultGlobal.Quit.Match(msg):
+        return m, tea.Sequence(m.ShutdownCmd(), tea.Quit)
+    case keymap.DefaultGlobal.Help.Match(msg):
+        return m.WithOverlay(HelpOverlay), nil
+    case keymap.DefaultGlobal.Back.Match(msg):
         // dismiss overlay → go back → home
     }
     return m.forwardToScreen(msg)
 }
 ```
 
-Only `KeyQuit` and `KeyHelp` are configurable (via `app.Config`).
-`esc` is hardcoded.
+All three global keys (`ctrl+c`, `?`, `esc`) are defined in `keymap.DefaultGlobal`.
 
 ### Layer 2 — Screen-local key dispatch
 
-Each screen's `Update` switches on `tea.KeyMsg`:
+Each screen's `Update` uses `keymap.Default*` instead of hardcoded strings:
 
-| Screen     | Keys                                          |
-|------------|-----------------------------------------------|
-| Home       | `up`/`k`, `down`/`j`, `enter`                |
-| Quiz       | `enter`, `1`, `2`, `3`, `4`                  |
-| Search     | `up`/`k`, `down`/`j`, `enter`, `backspace`, `tab`, printable chars |
-| Settings   | `up`/`k`, `down`/`j`, `enter`                |
-| Statistics | — (no input)                                  |
-| Detail     | — (no input)                                  |
-
-Pattern `"up", "k"` / `"down", "j"` repeats across three screens.
+| Screen     | Keymap                       |
+|------------|------------------------------|
+| Home       | `keymap.DefaultList`         |
+| Quiz       | `keymap.DefaultQuiz`         |
+| Search     | `keymap.DefaultSearch`       |
+| Settings   | `keymap.DefaultList`         |
+| Statistics | (no input)                   |
+| Detail     | (no input)                   |
 
 ### Layer 3 — Footer help text
 
-Every screen constructs a help string and passes it to `components.Footer()`:
+Every screen derives its footer from keymap methods:
 
-- Home: `"↑/↓ navigate · enter select · ? help"`
-- Quiz: `"Enter Reveal"` / `"1 Again   2 Hard   3 Good   4 Easy"`
-- Search: `"type to search · ↑/↓ navigate · enter open · esc back"`
-- Settings: `"↑/↓ navigate · enter select · esc back"`
+```go
+// Home
+components.Footer(keymap.DefaultList.Footer() + " · " + keymap.DefaultGlobal.Help.Help)
 
-These strings are hardcoded inline in each screen's `View()` method.
+// Quiz (unrevealed)
+components.Footer(keymap.DefaultQuiz.Unrevealed())
+
+// Quiz (revealed)
+components.Footer(keymap.DefaultQuiz.Revealed())
+
+// Search
+components.Footer(keymap.DefaultSearch.Footer() + " · " + keymap.DefaultGlobal.Back.Help)
+
+// Settings
+components.Footer(keymap.DefaultList.Footer() + " · " + keymap.DefaultGlobal.Back.Help)
+```
+
+No hardcoded footer strings remain.
 
 ---
 
@@ -64,11 +75,24 @@ These strings are hardcoded inline in each screen's `View()` method.
 ```go
 type Binding struct {
     Keys []string   // e.g. {"up", "k"}
-    Help string     // e.g. "↑" — used in footer
+    Help string     // e.g. "↑ navigate" — shown in footer
 }
+
+func (b Binding) Match(msg tea.KeyMsg) bool { ... }
 ```
 
 Bindings hold all alternate keys (e.g. `up` + `k`) for the same action.
+`Match()` is the primary way to test a keypress against a binding.
+
+### BindingList
+
+```go
+type BindingList []Binding
+
+func (bl BindingList) Help() string { ... }
+```
+
+Joins each binding's `Help` field with ` · `, skipping empty ones.
 
 ### Predefined keymaps
 
@@ -77,7 +101,38 @@ Bindings hold all alternate keys (e.g. `up` + `k`) for the same action.
 | `DefaultGlobal`   | `Quit` (`ctrl+c`), `Help` (`?`), `Back` (`esc`)         |
 | `DefaultList`     | `Up` (`up`/`k`), `Down` (`down`/`j`), `Select` (`enter`)|
 | `DefaultQuiz`     | `Reveal` (`enter`), `Again`/`Hard`/`Good`/`Easy` (`1`–`4`) |
-| `DefaultSearch`   | embeds `List` + `FocusToggle` (`tab`), `Select` (`enter`), `DeleteChar` (`backspace`) |
+| `DefaultSearch`   | embeds `List` + `FocusToggle` (`tab`), `Open` (`enter`), `DeleteChar` (`backspace`) |
+
+Each struct also has footer helpers:
+- `Global.Footer()`, `List.Footer()`, `Search.Footer()`
+- `Quiz.Unrevealed()`, `Quiz.Revealed()`
+
+### Registry
+
+```go
+type Registry struct {
+    Global Global
+    List   List
+    Quiz   Quiz
+    Search Search
+}
+
+func (r Registry) Bindings() []NamedBinding    // all bindings for display
+func (r Registry) FindBinding(key string) *NamedBinding  // lookup by key
+```
+
+`NamedBinding` wraps `Binding` with `Group` and `Action` metadata:
+
+```go
+type NamedBinding struct {
+    Group   string   // e.g. "Global", "List"
+    Action  string   // e.g. "Quit", "Up"
+    Binding Binding
+}
+```
+
+`DefaultRegistry` is the pre-configured instance.
+The help overlay in `app/view.go` uses `DefaultRegistry.Bindings()` to render the keyboard shortcuts reference.
 
 ### Usage from a screen
 
@@ -87,58 +142,79 @@ import "crds/internal/ui/keymap"
 func (m HomeModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
     switch msg := msg.(type) {
     case tea.KeyMsg:
-        switch msg.String() {
-        case keymap.DefaultList.Up.Keys[0],
-             keymap.DefaultList.Up.Keys[1]:
+        switch {
+        case keymap.DefaultList.Up.Match(msg):
+            m.cursor--
+        case keymap.DefaultList.Down.Match(msg):
+            m.cursor++
+        case keymap.DefaultList.Select.Match(msg):
+            // navigate
         }
     }
 }
 ```
 
-Or with a helper:
+### User-defined overrides
+
+`KeymapConfig` mirrors the keymap struct hierarchy with optional override fields:
 
 ```go
-if msg.In(keymap.DefaultList.Up) { ... }
+type BindingOverride struct {
+    Keys []string `yaml:"keys"`
+    Help *string  `yaml:"help,omitempty"`
+}
+
+type KeymapConfig struct {
+    Global *struct { Quit *BindingOverride ... } `yaml:"global,omitempty"`
+    List   *struct { Up   *BindingOverride ... } `yaml:"list,omitempty"`
+    Quiz   *struct { Reveal *BindingOverride ... } `yaml:"quiz,omitempty"`
+    Search *struct { FocusToggle *BindingOverride ... } `yaml:"search,omitempty"`
+}
 ```
+
+Call `keymap.ApplyDefaultOverrides(cfg)` to apply overrides to all `Default*`
+vars. This is called from `app.New()` after loading `~/.config/crds/keymaps.yaml`.
 
 ---
 
 ## Footer rendering pattern
 
-Each keymap can produce a help string for the current screen:
+Footer strings are generated by keymap methods, not hardcoded:
 
 ```go
-func (km Global) Footer() string {
-    return BindingList{
-        km.Quit, km.Help,
-    }.Help()
-}
+keymap.DefaultList.Footer()     // "↑ navigate · ↓ navigate · enter select"
+keymap.DefaultGlobal.Help.Help  // "? help"
+keymap.DefaultGlobal.Back.Help  // "esc back"
+keymap.DefaultQuiz.Unrevealed() // "enter reveal"
+keymap.DefaultQuiz.Revealed()   // "1 again · 2 hard · 3 good · 4 easy"
 ```
 
-Screens combine keymaps:
-
-```go
-footer := keymap.DefaultList.Footer() + " · " + keymap.DefaultGlobal.Help.Help
-```
+Screens compose them with ` · ` to build complete footers.
 
 ---
 
 ## What keymap enables
 
-1. **Single source of truth** — Change `"k"` to `"K"` in one place
-2. **Configurable keys** — Load user key overrides from config
-3. **Consistent footers** — Derive from keymap instead of hardcoding strings
-4. **Vim bindings** — Add `"j"` for down, `"k"` for up centrally
-5. **User-defined bindings** — One config section to remap any action
+1. **Single source of truth** — Change a key in one place, every screen updates
+2. **Configurable keys** — User overrides from `~/.config/crds/keymaps.yaml`
+3. **Consistent footers** — Derived automatically from keymap definitions
+4. **Vim bindings** — `"k"` for up, `"j"` for down already in `DefaultList`
+5. **Discoverability** — `Registry.Bindings()` iterates all bindings for help overlay
+6. **Type safety** — Compile-time check that referenced keymaps exist
+
+---
+
+## Integration
+
+- **`internal/config/`** — `LoadKeymapConfig()` reads `keymaps.yaml` and returns a `*KeymapConfig`
+- **`internal/ui/app/app.go`** — `New()` calls `config.LoadKeymapConfig()` then `keymap.ApplyDefaultOverrides()`
+- **`internal/ui/app/view.go`** — `renderHelpOverlay()` uses `keymap.DefaultRegistry.Bindings()` to show all shortcuts grouped by category
+- **`internal/ui/screens/*.go`** — All 6 screens use `keymap.Default*` for key dispatch and footer generation
 
 ---
 
 ## Future work
 
-- [ ] Add `Matches(msg tea.KeyMsg) bool` helper on Binding
-- [ ] Add `BindingList` with `Help() string` for automatic footer generation
-- [ ] Wire keymaps into screens — replace inline `case "up", "k":` with
-      `case keymap.DefaultList.Up.Matches(msg):`
-- [ ] Replace `app.Config.KeyQuit`/`KeyHelp` with keymap.Global reference
-- [ ] Add `KeymapConfig` struct for user overrides in YAML
-- [ ] Support chord bindings (e.g. `g` then `g` for top of list)
+- Support chord bindings (e.g. `g` then `g` for top of list)
+- Add mouse binding support
+- Allow per-screen keymap overrides in user config

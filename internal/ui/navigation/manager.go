@@ -114,6 +114,10 @@ func (m *Manager) SetRegistry(r *Registry) {
 	m.registry = r
 }
 
+func (m *Manager) Registry() *Registry {
+	return m.registry
+}
+
 func (m *Manager) CurrentScreen() (ui.Screen, bool) {
 	if m.registry == nil {
 		return nil, false

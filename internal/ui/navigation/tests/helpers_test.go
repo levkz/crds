@@ -16,6 +16,7 @@ type mockScreen struct {
 	id string
 }
 
-func (m mockScreen) Init() tea.Cmd                  { return nil }
+func (m mockScreen) Init() tea.Cmd                        { return nil }
 func (m mockScreen) Update(tea.Msg) (ui.Screen, tea.Cmd) { return m, nil }
-func (m mockScreen) View() string                    { return m.id }
+func (m mockScreen) View() string                          { return m.id }
+func (m mockScreen) SetSize(int, int)                      {}

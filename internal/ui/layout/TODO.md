@@ -1,13 +1,13 @@
 Layout primitives.
 
-- [ ] Row
-- [ ] Column
-- [ ] Stack
-- [ ] Grid
-- [ ] Spacer
-- [ ] Padding
-- [ ] Margin
-- [ ] Alignment
-- [ ] Borders
-- [ ] Centering
-- [ ] Responsive sizing
+- [x] Row
+- [x] Column
+- [x] Stack
+- [x] Grid
+- [x] Spacer (VSpace, HSpace)
+- [ ] Padding  (handled by styles/)
+- [ ] Margin   (handled by styles/)
+- [x] Alignment (AlignLeft, AlignRight, Center)
+- [ ] Borders  (handled by styles/ via theme.BorderFor)
+- [x] Centering (Center)
+- [x] Responsive sizing (SetSize on Screen + Page wrapper)

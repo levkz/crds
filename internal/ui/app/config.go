@@ -1,11 +1,10 @@
 package app
 
+import cfg "crds/internal/config"
+
 // Config holds UI-level preferences and settings.
 // Populated from defaults and optionally from a config file at startup.
 type Config struct {
-	KeyHelp string
-	KeyQuit string
-
 	AnimationEnabled bool
 	DefaultQuizLimit int
 	ThemePath        string
@@ -13,11 +12,23 @@ type Config struct {
 
 func DefaultConfig() Config {
 	return Config{
-		KeyHelp:           "?",
-		KeyQuit:           "ctrl+c",
-		AnimationEnabled:  false,
-		DefaultQuizLimit:  20,
+		AnimationEnabled: false,
+		DefaultQuizLimit: 20,
 	}
+}
+
+// ApplyYAML overrides config fields from a parsed ~/.config/crds/config.yaml.
+func (c Config) ApplyYAML(y *cfg.ConfigYAML) Config {
+	if y == nil {
+		return c
+	}
+	if y.AnimationEnabled != nil {
+		c.AnimationEnabled = *y.AnimationEnabled
+	}
+	if y.DefaultQuizLimit != nil {
+		c.DefaultQuizLimit = *y.DefaultQuizLimit
+	}
+	return c
 }
 
 // WithTheme returns a copy of the config with the given theme path set.

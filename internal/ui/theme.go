@@ -7,7 +7,3 @@ var Theme = theme.Default
 func SetTheme(t theme.Theme) {
 	Theme = t
 }
-
-type ThemeSwitchMsg struct {
-	Name string
-}

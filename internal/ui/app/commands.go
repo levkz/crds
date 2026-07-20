@@ -2,6 +2,7 @@ package app
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+	"crds/internal/ui"
 )
 
 // MsgKind classifies command result messages for typed dispatch.
@@ -11,6 +12,7 @@ const (
 	MsgKindDeckList MsgKind = iota
 	MsgKindDeck
 	MsgKindAnswer
+	MsgKindStats
 )
 
 func (k MsgKind) String() string {
@@ -21,6 +23,8 @@ func (k MsgKind) String() string {
 		return "deck"
 	case MsgKindAnswer:
 		return "answer"
+	case MsgKindStats:
+		return "stats"
 	default:
 		return "unknown"
 	}
@@ -31,6 +35,7 @@ func (k MsgKind) String() string {
 type Dispatcher struct {
 	Decks    DeckProvider
 	Progress ProgressRecorder
+	Stats    StatsProvider
 }
 
 // Cmd wraps a side-effect function as a tea.Cmd for Bubble Tea dispatch.
@@ -80,6 +85,14 @@ func RecordAnswerCmd(d *Dispatcher, cardID string, grade int) tea.Cmd {
 	})
 }
 
+// FetchStatsCmd returns a command that fetches learning statistics.
+func FetchStatsCmd(d *Dispatcher) tea.Cmd {
+	return Dispatch(d, func(d *Dispatcher) tea.Msg {
+		stats := d.Stats.Stats()
+		return StatsLoadedMsg{Stats: stats}
+	})
+}
+
 // Domain command result messages
 
 type LoadDataMsg struct {
@@ -110,4 +123,6 @@ type SaveErrorMsg struct {
 	Err  error
 }
 
-
+type StatsLoadedMsg struct {
+	Stats ui.Stats
+}

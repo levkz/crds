@@ -2,6 +2,7 @@ package app
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+	"crds/internal/ui"
 	nav "crds/internal/ui/navigation"
 )
 
@@ -30,16 +31,21 @@ type Model struct {
 	Global GlobalState
 	Config Config
 
-	Navigator *nav.Manager
-
+	Navigator  *nav.Manager
 	Dispatcher *Dispatcher
 
 	Width  int
 	Height int
+
+	CurrentDeck *ui.DeckData
+	AllDecks    []string
 }
 
 func (m Model) Init() tea.Cmd {
-	return TickCmd()
+	return tea.Batch(
+		TickCmd(),
+		ListDecksCmd(m.Dispatcher),
+	)
 }
 
 func (m Model) WithOverlay(t OverlayType) Model {
@@ -74,12 +80,6 @@ type ShowOverlayMsg struct {
 }
 
 type HideOverlayMsg struct{}
-
-type ShowNotificationMsg struct {
-	Text string
-}
-
-type HideNotificationMsg struct{}
 
 type SetLoadingMsg struct {
 	Loading bool

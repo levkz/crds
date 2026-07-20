@@ -2,9 +2,10 @@ package app
 
 import (
 	"log"
-
 	tea "github.com/charmbracelet/bubbletea"
+	"crds/internal/config"
 	"crds/internal/ui"
+	"crds/internal/ui/keymap"
 	"crds/internal/ui/screens"
 	"crds/internal/ui/theme"
 	nav "crds/internal/ui/navigation"
@@ -13,6 +14,38 @@ import (
 // New creates and initializes the root UI application model with injected dependencies
 // and an optional config override. Pass DefaultConfig() to use defaults.
 func New(deps Dependencies, cfg Config) Model {
+	if err := config.EnsureDefaultFiles(); err != nil {
+		log.Printf("warning: config init: %v", err)
+	}
+
+	// Load and apply keymap overrides from ~/.config/crds/keymaps.yaml
+	keyPath, err := config.KeymapsPath()
+	if err == nil {
+		kmCfg, err := config.LoadKeymapConfig(keyPath)
+		if err != nil {
+			log.Printf("warning: loading keymaps: %v", err)
+		} else if kmCfg != nil {
+			keymap.ApplyDefaultOverrides(*kmCfg)
+		}
+	}
+
+	// Load user themes from ~/.config/crds/themes/
+	if err := config.LoadUserThemes(); err != nil {
+		log.Printf("warning: loading user themes: %v", err)
+	}
+
+	// Load and apply app config from ~/.config/crds/config.yaml
+	cfgPath, err := config.ConfigPath()
+	var y *config.ConfigYAML
+	if err == nil {
+		y, err = config.LoadConfigYAML(cfgPath)
+		if err != nil {
+			log.Printf("warning: loading config: %v", err)
+		} else {
+			cfg = cfg.ApplyYAML(y)
+		}
+	}
+
 	n := nav.New(ui.HomeScreen)
 	reg := nav.NewRegistry()
 	reg.Register(ui.HomeScreen, screens.NewHome())
@@ -23,6 +56,7 @@ func New(deps Dependencies, cfg Config) Model {
 	reg.Register(ui.DetailScreen, screens.NewDetail())
 	n.SetRegistry(reg)
 
+	// Apply theme from config, preferring explicit ThemePath over config.yaml's theme name
 	if cfg.ThemePath != "" {
 		t, err := theme.LoadTheme(cfg.ThemePath)
 		if err != nil {
@@ -33,12 +67,16 @@ func New(deps Dependencies, cfg Config) Model {
 				ui.SetTheme(t)
 			}
 		}
+	} else if y != nil && y.Theme != "" {
+		if _, err := theme.Switch(y.Theme); err != nil {
+			log.Printf("warning: theme %q not found, using default", y.Theme)
+		}
 	}
 
 	return Model{
 		Config:     cfg,
 		Navigator:  n,
-		Dispatcher: &Dispatcher{Decks: deps.Decks, Progress: deps.Progress},
+		Dispatcher: &Dispatcher{Decks: deps.Decks, Progress: deps.Progress, Stats: deps.Stats},
 	}
 }
 

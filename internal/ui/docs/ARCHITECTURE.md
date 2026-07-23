@@ -229,12 +229,14 @@ Components use semantic styles instead of hardcoded colors. They should never us
 ```
 Registry (ScreenIndex → Screen)
 
-  ├── HomeScreen    → HomeModel      (activity menu)
-  ├── QuizScreen    → QuizModel      (flashcard quiz)
-  ├── SearchScreen  → SearchModel    (text search)
-  ├── StatisticsScreen → StatisticsModel (metrics)
-  ├── SettingsScreen   → SettingsModel (theme switch)
-  └── DetailScreen     → DetailModel  (entry view)
+  ├── HomeScreen         → HomeModel         (activity menu)
+  ├── QuizScreen         → QuizModel         (flashcard quiz)
+  ├── TypingQuizScreen   → TypingQuizModel   (typing-based quiz)
+  ├── DecksScreen        → DecksModel        (multi-deck selection)
+  ├── SearchScreen       → SearchModel       (text search)
+  ├── StatisticsScreen   → StatisticsModel   (metrics)
+  ├── SettingsScreen     → SettingsModel     (theme switch)
+  └── DetailScreen       → DetailModel       (entry view)
 ```
 
 Screens are stored in a `navigation.Registry` and managed by the
@@ -303,9 +305,13 @@ Updated State
 Render
 ```
 
-Centralized event types live in the `events/` package (4 types:
-`TickMsg`, `ThemeSwitchMsg`, `ShowNotificationMsg`, `HideNotificationMsg`).
-The UI should communicate through events rather than direct mutation.
+Screen events are defined in `internal/ui/screen.go`:
+`NavigateToMsg`, `SaveAnswerMsg`, `TypeAnswerMsg`, `TypingGradeMsg`,
+`DeckSelectionChangedMsg`, `NavigateToDetailMsg`, `DataLoadedMsg`,
+`DataErrorMsg`, `SavedMsg`. Additional centralized event types live
+in the `events/` package (4 types: `TickMsg`, `ThemeSwitchMsg`,
+`ShowNotificationMsg`, `HideNotificationMsg`). The UI should
+communicate through events rather than direct mutation.
 
 Keypresses are matched against the centralized `keymap` package:
 global keys in the root model, screen-local keys in each screen's
@@ -344,7 +350,7 @@ Animations should remain optional.
   - Theme store with runtime switching
 - **Styles** (`styles/`): 12 style definitions with 60 tests (Header, Footer, SelectedItem, FocusedInput, Error, Warning, Success, Hint, MutedText, Card, Panel, Modal)
 - **Components** (`components/`): 29 components across `display/` (20 stateless) and `interactive/` (9 stateful) — all implemented
-- **Screens** (`screens/`): All 6 screens — Home (activity menu), Quiz (flashcard), Search (text search), Statistics (metrics), Settings (theme switch), Detail (entry view)
+- **Screens** (`screens/`): All 7 screens — Home (activity menu), Quiz (flashcard), TypingQuiz (typing-based), Search (text search), Statistics (metrics), Settings (theme switch), Detail (entry view)
 - **Keymap** (`keymap/`): Centralized keybinding definitions with `Binding.Match()`, `BindingList.Help()`, per-screen keymap structs with `Footer()` methods, `Registry` with `Bindings()`/`FindBinding()`, `KeymapConfig` for user overrides, and 16 tests. All screens and the root model use `keymap.Default*` instead of hardcoded strings.
 - **Config** (`internal/config/`): User configuration from `~/.config/crds/` — directory auto-creation, `config.yaml` loading, `keymaps.yaml` loading with `keymap.ApplyDefaultOverrides()`, theme discovery from `themes/*.yaml`. 13 tests.
 - **Events** (`events/`): 4 centralized event types (`TickMsg`, `ThemeSwitchMsg`, `ShowNotificationMsg`, `HideNotificationMsg`)

@@ -64,6 +64,8 @@ SearchScreen
 StatisticsScreen
 SettingsScreen
 DetailScreen
+DecksScreen
+TypingQuizScreen
 ```
 
 ---
@@ -123,6 +125,23 @@ DetailScreen
 - **Renders**: Header + Primary term + section(s) + footer
 - **Known issue**: No data is passed to the model — shows "Select an entry"
   until wired with real data.
+
+### DecksModel (`decks.go`)
+
+- **State**: `cursor`, `decks` list, `selected` set
+- **Keys**: `up`/`k`, `down`/`j`, `space` (toggle), `a` (toggle all), `enter` (confirm)
+- **Behavior**: Multi-deck selection with checkmarks. Space toggles current item,
+  'a' toggles all. Enter emits `DeckSelectionChangedMsg`.
+- **Renders**: Header + checkmarked list + footer
+
+### TypingQuizModel (`typing_quiz.go`)
+
+- **State**: `CardIndex`, `Input` (text input), `Feedback`, `Progress`, `Cards`
+- **Keys**: `enter` (submit answer), `tab` (reveal without grading)
+- **Behavior**: Displays a term, user types the translation. Uses
+  `fuzzy.LevenshteinMatcher` to grade the typed answer. Tab reveals the
+  correct answer (records `Again`, grade 1).
+- **Renders**: Header + term + text input + feedback line + progress bar + footer
 
 ---
 
@@ -200,7 +219,9 @@ screens/
 ├── search.go        SearchModel — text input + results
 ├── statistics.go    StatisticsModel — study metrics
 ├── settings.go      SettingsModel — theme switching
-└── detail.go        DetailModel — entry detail
+├── detail.go        DetailModel — entry detail
+├── decks.go         DecksModel — deck selection
+└── typing_quiz.go   TypingQuizModel — typing quiz
 ```
 
 ---
@@ -218,10 +239,9 @@ screens/
    quick-start options. Consider `components.Text` for descriptions below
    each activity.
 
-4. **Width awareness** — Screens currently use hardcoded width 60.
-   These widths should come from the actual terminal width
-   (`m.Width` in the root model). Pass width to screens or
-   define a `SetSize(w, h int)` on the `Screen` interface.
+4. **Width awareness** — `SetSize(w, h int)` is now called on every screen
+   during `transitionTo()` via the `Lifecycle` interface. Screens should
+   support dynamic sizing rather than relying on hardcoded defaults.
 
 5. **Event-driven search** — When search is wired to real data, consider
    debouncing the query input and using a channel or command to load results

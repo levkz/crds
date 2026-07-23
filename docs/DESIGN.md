@@ -37,7 +37,10 @@ Configuration
 
 Persistence
 
-- SQLite
+- SQLite (via `modernc.org/sqlite`)
+- goose (migrations)
+- sqlc (type-safe query generation)
+- `database/sql` (standard library interface)
 
 Testing
 
@@ -207,19 +210,29 @@ It only returns cards that should be reviewed.
 Persistence layer for decks and progress.
 
 Current implementation:
-- `DeckStore` reads YAML decks from `~/.local/share/crds/decks/`
-- `ProgressStore` tracks progress in-memory within a session
-- No data is persisted to disk yet
+- `DeckStore` reads YAML decks from `~/.local/share/crds/decks/` (legacy)
+- `Store` (SQLite) persists reviews, sessions, typing details, progress, and deck cache
+- `StateStore` persists selected decks to YAML file
 
-Future (SQLite):
+On startup, `SyncDecks()` syncs YAML decks into the SQLite cache using mtime checks.
+The SQLite `Store` then serves as the `DeckProvider`, `ProgressRecorder`, and `StatsProvider`.
 
-- save progress
-- save history
-- load cards
-- update review dates
-- search vocabulary
+SQLite stack:
+- `modernc.org/sqlite` for pure Go SQLite driver
+- `goose` for schema migrations
+- `sqlc` for type-safe query generation
+- `database/sql` standard library interface
 
-SQLite schema should be hidden behind interfaces.
+Database location: `~/.local/share/crds/crds.db`
+
+Schema includes:
+- `sessions` — quiz session tracking
+- `reviews` — individual answer records
+- `typing_details` — typing quiz specifics (user input, similarity)
+- `progress` — per-entry spaced repetition state
+- `decks` — deck metadata cache
+- `entries` — entry cache with translations, examples, tags
+- `sync_state` — file mtime tracking for incremental sync
 
 ---
 
@@ -389,21 +402,67 @@ vocab config
 
 # Storage
 
-SQLite
+## SQL Stack
 
-Tables
+| Component | Choice | Purpose |
+|-----------|--------|---------|
+| Database | SQLite | Local, embedded database |
+| Driver | `modernc.org/sqlite` | Pure Go SQLite driver (no CGo) |
+| Migrations | goose | Schema versioning and migrations |
+| Query builder | sqlc | Type-safe Go code from SQL queries |
+| Interface | `database/sql` | Standard library database interface |
 
+## Schema
+
+```sql
+-- Quiz sessions
+CREATE TABLE sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    finished_at DATETIME,
+    reviewed INTEGER NOT NULL DEFAULT 0,
+    correct INTEGER NOT NULL DEFAULT 0,
+    incorrect INTEGER NOT NULL DEFAULT 0,
+    duration_ms INTEGER NOT NULL DEFAULT 0
+);
+
+-- Individual review records
+CREATE TABLE reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+    deck_id TEXT NOT NULL,
+    entry_id TEXT NOT NULL,
+    grade INTEGER NOT NULL,
+    reviewed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Typing quiz details
+CREATE TABLE typing_details (
+    review_id INTEGER PRIMARY KEY REFERENCES reviews(id) ON DELETE CASCADE,
+    user_input TEXT NOT NULL,
+    correct_answer TEXT NOT NULL,
+    similarity REAL NOT NULL
+);
+
+-- Per-entry progress
+CREATE TABLE progress (
+    deck_id TEXT NOT NULL,
+    entry_id TEXT NOT NULL,
+    ease REAL NOT NULL DEFAULT 2.5,
+    interval INTEGER NOT NULL DEFAULT 0,
+    due DATETIME,
+    correct INTEGER NOT NULL DEFAULT 0,
+    incorrect INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (deck_id, entry_id)
+);
 ```
-entries
 
-reviews
+## Grade Values
 
-sessions
-
-decks
-
-tags
-```
+| Quiz Type | Scale | Meaning |
+|-----------|-------|---------|
+| Flashcard | 0-3 | Again(0), Hard(1), Good(2), Easy(3) |
+| Typing | 1-3 | Again(1), Hard(2), Good(3) |
 
 Future support
 

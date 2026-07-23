@@ -24,21 +24,31 @@
 
 ## Known issues
 
-- `duplicate_terms` test expects an error but `validate.go` only checks duplicate IDs, not duplicate terms → test fails
 - `scheduler/`, `search/`, `quiz/` implementations don't exist yet — those are aspirational (docs/ outruns code)
-- `migrations/20260716121051_init.sql` is a goose placeholder (no real schema)
+- Grade scale mismatch: Flashcard uses 0-3, Typing uses 1-3 (needs normalization)
 
 ## Architecture (current vs docs)
 
 Docs describe an aspirational layered architecture. Reality is partial:
 
-- **model/** — domain types (Deck, Entry, Progress, Review, Session)
+- **model/** — domain types (Deck, Entry, Progress, Review, Session). `TypingDetail` only exists in sqlc-generated code.
 - **parser/** — YAML parsing + validation + normalization (has tests)
 - **cli/** — Kong command stubs (quiz, sync, stats, search) — most `Run()` methods only print
 - **app/** — empty composition root struct (but `internal/ui/app/` has real UI scaffolding)
 - **ui/** — Bubble Tea scaffolding: navigation/ fully implemented, app/ wired, events/ with 4 centralized event types, most other subdirectories still empty
+- **storage/** — SQLite fully implemented via `Store` (goose + sqlc). On startup, `SyncDecks()` caches YAML decks in SQLite. `Store` implements `DeckProvider`, `ProgressRecorder`, and `StatsProvider`. `DeckStore` (legacy filesystem) remains but is not wired.
+
+SQL stack: SQLite (`modernc.org/sqlite`) + goose (migrations) + sqlc (type-safe queries)
 
 Most work ahead: wiring CLI commands → parser → storage → quiz/scheduler logic.
+
+## Commit workflow
+
+After each feature is implemented and tests pass (`make test` + `make build`), commit
+using `commit.sh` (run `./commit.sh --execute`). It groups changed files by feature
+into 9 logical commits. If something needs fixing, reset the last commit with
+`git reset --soft HEAD~1`, fix, test, and re-run `./commit.sh --execute` (the script
+stages and commits incrementally — already-committed groups are skipped).
 
 ## Parser specifics
 

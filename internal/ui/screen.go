@@ -7,6 +7,8 @@ type ScreenIndex int
 const (
 	HomeScreen     ScreenIndex = iota
 	QuizScreen
+	DecksScreen
+	TypingQuizScreen
 	SearchScreen
 	StatisticsScreen
 	SettingsScreen
@@ -47,8 +49,33 @@ type NavigateToDetailMsg struct {
 	Entry  CardData
 }
 
-// SaveAnswerMsg is emitted by the Quiz screen when a card is graded.
+// SaveAnswerMsg is emitted by a Quiz screen when a card is graded.
+// For flashcard quiz: only CardID, Grade, DeckID are set.
+// For typing quiz: UserInput, CorrectAnswer, Similarity are also set.
 type SaveAnswerMsg struct {
-	CardID string
-	Grade  int
+	DeckID        string
+	CardID        string
+	Grade         int
+	UserInput     string
+	CorrectAnswer string
+	Similarity    float64
+}
+
+// TypeAnswerMsg is emitted by the TypingQuiz screen when the user submits a typed answer.
+type TypeAnswerMsg struct {
+	EntryID string
+	Answer  string
+}
+
+// TypingGradeMsg carries the result of grading a typed answer.
+type TypingGradeMsg struct {
+	EntryID string
+	Grade   int     // 1=Again, 2=Hard, 3=Good
+	Score   float64 // similarity score 0.0-1.0
+	Correct bool
+}
+
+// DeckSelectionChangedMsg is emitted by the Decks screen when the user confirms a new deck selection.
+type DeckSelectionChangedMsg struct {
+	Selected []string
 }

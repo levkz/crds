@@ -70,6 +70,25 @@ func (km Quiz) Revealed() string {
 	return BindingList{km.Again, km.Hard, km.Good, km.Easy}.Help()
 }
 
+type TypingQuiz struct {
+	Submit Binding
+	Reveal Binding
+}
+
+func (km TypingQuiz) Footer() string {
+	return BindingList{km.Submit, km.Reveal}.Help()
+}
+
+type Decks struct {
+	List
+	Toggle    Binding
+	ToggleAll Binding
+}
+
+func (km Decks) Footer() string {
+	return BindingList{km.Up, km.Down, km.Toggle, km.ToggleAll, km.Select}.Help()
+}
+
 type Search struct {
 	FocusToggle Binding
 	Open        Binding
@@ -90,10 +109,12 @@ type NamedBinding struct {
 
 // Registry holds all application keymaps as a single unit.
 type Registry struct {
-	Global Global
-	List   List
-	Quiz   Quiz
-	Search Search
+	Global     Global
+	List       List
+	Quiz       Quiz
+	TypingQuiz TypingQuiz
+	Decks      Decks
+	Search     Search
 }
 
 // Bindings returns every registered binding with its group/action label.
@@ -110,6 +131,10 @@ func (r Registry) Bindings() []NamedBinding {
 		{"Quiz", "Hard", r.Quiz.Hard},
 		{"Quiz", "Good", r.Quiz.Good},
 		{"Quiz", "Easy", r.Quiz.Easy},
+		{"TypingQuiz", "Submit", r.TypingQuiz.Submit},
+		{"TypingQuiz", "Reveal", r.TypingQuiz.Reveal},
+		{"Decks", "Toggle", r.Decks.Toggle},
+		{"Decks", "ToggleAll", r.Decks.ToggleAll},
 		{"Search", "FocusToggle", r.Search.FocusToggle},
 		{"Search", "Open", r.Search.Open},
 		{"Search", "DeleteChar", r.Search.DeleteChar},
@@ -148,6 +173,17 @@ var DefaultQuiz = Quiz{
 	Easy:   Binding{Keys: []string{"4"}, Help: "4 easy"},
 }
 
+var DefaultTypingQuiz = TypingQuiz{
+	Submit: Binding{Keys: []string{"enter"}, Help: "enter submit"},
+	Reveal: Binding{Keys: []string{"tab"},  Help: "tab reveal"},
+}
+
+var DefaultDecks = Decks{
+	List:      DefaultList,
+	Toggle:    Binding{Keys: []string{" "}, Help: "space toggle"},
+	ToggleAll: Binding{Keys: []string{"a"}, Help: "a toggle all"},
+}
+
 var DefaultSearch = Search{
 	FocusToggle: Binding{Keys: []string{"tab"}, Help: "tab focus"},
 	Open:        Binding{Keys: []string{"enter"}, Help: "enter open"},
@@ -157,10 +193,12 @@ var DefaultSearch = Search{
 
 // DefaultRegistry is the default keybinding configuration for the application.
 var DefaultRegistry = Registry{
-	Global: DefaultGlobal,
-	List:   DefaultList,
-	Quiz:   DefaultQuiz,
-	Search: DefaultSearch,
+	Global:     DefaultGlobal,
+	List:       DefaultList,
+	Quiz:       DefaultQuiz,
+	TypingQuiz: DefaultTypingQuiz,
+	Decks:      DefaultDecks,
+	Search:     DefaultSearch,
 }
 
 // BindingOverride specifies user-defined keys and/or help text for a Binding.
@@ -190,6 +228,14 @@ type KeymapConfig struct {
 		Good   *BindingOverride `yaml:"good,omitempty"`
 		Easy   *BindingOverride `yaml:"easy,omitempty"`
 	} `yaml:"quiz,omitempty"`
+	TypingQuiz *struct {
+		Submit *BindingOverride `yaml:"submit,omitempty"`
+		Reveal *BindingOverride `yaml:"reveal,omitempty"`
+	} `yaml:"typing_quiz,omitempty"`
+	Decks *struct {
+		Toggle    *BindingOverride `yaml:"toggle,omitempty"`
+		ToggleAll *BindingOverride `yaml:"toggle_all,omitempty"`
+	} `yaml:"decks,omitempty"`
 	Search *struct {
 		FocusToggle *BindingOverride `yaml:"focus_toggle,omitempty"`
 		Open        *BindingOverride `yaml:"open,omitempty"`
@@ -250,6 +296,22 @@ func ApplyDefaultOverrides(cfg KeymapConfig) {
 			DefaultQuiz.Easy = applyOverride(DefaultQuiz.Easy, *cfg.Quiz.Easy)
 		}
 	}
+	if cfg.TypingQuiz != nil {
+		if cfg.TypingQuiz.Submit != nil {
+			DefaultTypingQuiz.Submit = applyOverride(DefaultTypingQuiz.Submit, *cfg.TypingQuiz.Submit)
+		}
+		if cfg.TypingQuiz.Reveal != nil {
+			DefaultTypingQuiz.Reveal = applyOverride(DefaultTypingQuiz.Reveal, *cfg.TypingQuiz.Reveal)
+		}
+	}
+	if cfg.Decks != nil {
+		if cfg.Decks.Toggle != nil {
+			DefaultDecks.Toggle = applyOverride(DefaultDecks.Toggle, *cfg.Decks.Toggle)
+		}
+		if cfg.Decks.ToggleAll != nil {
+			DefaultDecks.ToggleAll = applyOverride(DefaultDecks.ToggleAll, *cfg.Decks.ToggleAll)
+		}
+	}
 	if cfg.Search != nil {
 		if cfg.Search.FocusToggle != nil {
 			DefaultSearch.FocusToggle = applyOverride(DefaultSearch.FocusToggle, *cfg.Search.FocusToggle)
@@ -263,9 +325,11 @@ func ApplyDefaultOverrides(cfg KeymapConfig) {
 	}
 	// Keep DefaultRegistry in sync with the per-group defaults.
 	DefaultRegistry = Registry{
-		Global: DefaultGlobal,
-		List:   DefaultList,
-		Quiz:   DefaultQuiz,
-		Search: DefaultSearch,
+		Global:     DefaultGlobal,
+		List:       DefaultList,
+		Quiz:       DefaultQuiz,
+		TypingQuiz: DefaultTypingQuiz,
+		Decks:      DefaultDecks,
+		Search:     DefaultSearch,
 	}
 }

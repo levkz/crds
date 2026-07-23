@@ -21,10 +21,7 @@ type QuizModel struct {
 }
 
 func NewQuiz() *QuizModel {
-	return &QuizModel{
-		width:  60,
-		height: 24,
-	}
+	return &QuizModel{}
 }
 
 func (m *QuizModel) SetSize(w, h int) {
@@ -80,7 +77,11 @@ func (m *QuizModel) grade(g Grade) (*QuizModel, tea.Cmd) {
 	}
 
 	return m, func() tea.Msg {
-		return ui.SaveAnswerMsg{CardID: cardID, Grade: int(g)}
+		return ui.SaveAnswerMsg{
+			DeckID: m.deckName,
+			CardID: cardID,
+			Grade:  int(g),
+		}
 	}
 }
 

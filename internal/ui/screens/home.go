@@ -18,13 +18,13 @@ type HomeModel struct {
 func NewHome() *HomeModel {
 	return &HomeModel{
 		activities: []string{
-			"Study",
+			"Decks",
+			"Flash Cards",
+			"Typing Quiz",
 			"Search",
 			"Statistics",
 			"Settings",
 		},
-		width:  60,
-		height: 24,
 	}
 }
 
@@ -49,7 +49,9 @@ func (m *HomeModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 			}
 		case keymap.DefaultList.Select.Match(msg):
 			screens := []ui.ScreenIndex{
+				ui.DecksScreen,
 				ui.QuizScreen,
+				ui.TypingQuizScreen,
 				ui.SearchScreen,
 				ui.StatisticsScreen,
 				ui.SettingsScreen,

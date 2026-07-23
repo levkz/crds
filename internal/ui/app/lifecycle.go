@@ -35,6 +35,10 @@ func (m Model) transitionTo(screen ui.ScreenIndex) (Model, tea.Cmd) {
 
 	m.Navigator.Replace(screen)
 
+	if s, ok := m.Navigator.CurrentScreen(); ok {
+		s.SetSize(m.Width, m.Height)
+	}
+
 	if cmd := m.enterCurrent(); cmd != nil {
 		cmds = append(cmds, cmd)
 	}
@@ -48,6 +52,9 @@ func (m Model) popToPrevious() (Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	}
 	_, _ = m.Navigator.Pop()
+	if s, ok := m.Navigator.CurrentScreen(); ok {
+		s.SetSize(m.Width, m.Height)
+	}
 	if cmd := m.enterCurrent(); cmd != nil {
 		cmds = append(cmds, cmd)
 	}

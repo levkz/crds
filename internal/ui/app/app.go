@@ -2,6 +2,7 @@ package app
 
 import (
 	"log"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"crds/internal/config"
 	"crds/internal/ui"
@@ -50,6 +51,8 @@ func New(deps Dependencies, cfg Config) Model {
 	reg := nav.NewRegistry()
 	reg.Register(ui.HomeScreen, screens.NewHome())
 	reg.Register(ui.QuizScreen, screens.NewQuiz())
+	reg.Register(ui.DecksScreen, screens.NewDecks())
+	reg.Register(ui.TypingQuizScreen, screens.NewTypingQuiz())
 	reg.Register(ui.SearchScreen, screens.NewSearch())
 	reg.Register(ui.StatisticsScreen, screens.NewStatistics())
 	reg.Register(ui.SettingsScreen, screens.NewSettings())
@@ -73,10 +76,27 @@ func New(deps Dependencies, cfg Config) Model {
 		}
 	}
 
+	// Wire session and typing support if Store provides them
+	var sessions SessionManager
+	if sm, ok := deps.Progress.(SessionManager); ok {
+		sessions = sm
+	}
+	var typing TypingRecorder
+	if tr, ok := deps.Progress.(TypingRecorder); ok {
+		typing = tr
+	}
+
 	return Model{
 		Config:     cfg,
 		Navigator:  n,
-		Dispatcher: &Dispatcher{Decks: deps.Decks, Progress: deps.Progress, Stats: deps.Stats},
+		Dispatcher: &Dispatcher{
+			Decks:    deps.Decks,
+			Progress: deps.Progress,
+			Stats:    deps.Stats,
+			State:    deps.State,
+			Sessions: sessions,
+			Typing:   typing,
+		},
 	}
 }
 

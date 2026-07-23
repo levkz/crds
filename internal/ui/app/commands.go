@@ -1,7 +1,11 @@
 package app
 
 import (
+	"fmt"
+	"strings"
+
 	tea "github.com/charmbracelet/bubbletea"
+	"crds/internal/storage"
 	"crds/internal/ui"
 )
 
@@ -13,6 +17,7 @@ const (
 	MsgKindDeck
 	MsgKindAnswer
 	MsgKindStats
+	MsgKindState
 )
 
 func (k MsgKind) String() string {
@@ -25,6 +30,8 @@ func (k MsgKind) String() string {
 		return "answer"
 	case MsgKindStats:
 		return "stats"
+	case MsgKindState:
+		return "state"
 	default:
 		return "unknown"
 	}
@@ -36,6 +43,9 @@ type Dispatcher struct {
 	Decks    DeckProvider
 	Progress ProgressRecorder
 	Stats    StatsProvider
+	State    *storage.StateStore
+	Sessions SessionManager
+	Typing   TypingRecorder
 }
 
 // Cmd wraps a side-effect function as a tea.Cmd for Bubble Tea dispatch.
@@ -75,13 +85,79 @@ func LoadDeckCmd(d *Dispatcher, name string) tea.Cmd {
 	})
 }
 
-// RecordAnswerCmd returns a command that persists a quiz answer.
-func RecordAnswerCmd(d *Dispatcher, cardID string, grade int) tea.Cmd {
+// LoadSelectedDecksCmd loads multiple decks and merges them into a single DeckData.
+func LoadSelectedDecksCmd(d *Dispatcher, names []string) tea.Cmd {
 	return Dispatch(d, func(d *Dispatcher) tea.Msg {
-		if err := d.Progress.RecordAnswer(cardID, grade); err != nil {
-			return DataErrorMsg{Kind: MsgKindAnswer, Err: err}
+		var decks []ui.DeckData
+		for _, name := range names {
+			deck, err := d.Decks.LoadDeck(name)
+			if err != nil {
+				return DataErrorMsg{Kind: MsgKindDeck, Err: fmt.Errorf("load %q: %w", name, err)}
+			}
+			decks = append(decks, deck)
+		}
+		merged := mergeDecks(decks)
+		return DataLoadedMsg{Kind: MsgKindDeck, Data: merged}
+	})
+}
+
+// mergeDecks combines multiple DeckData into one by concatenating cards.
+func mergeDecks(decks []ui.DeckData) ui.DeckData {
+	if len(decks) == 0 {
+		return ui.DeckData{}
+	}
+	if len(decks) == 1 {
+		return decks[0]
+	}
+	var nameParts []string
+	var allCards []ui.CardData
+	for _, d := range decks {
+		nameParts = append(nameParts, d.Name)
+		allCards = append(allCards, d.Cards...)
+	}
+	return ui.DeckData{
+		Name:  strings.Join(nameParts, " + "),
+		Cards: allCards,
+	}
+}
+
+// SaveStateCmd persists the selected decks state.
+func SaveStateCmd(d *Dispatcher, selected []string) tea.Msg {
+	if d.State == nil {
+		return nil
+	}
+	err := d.State.Save(&storage.State{SelectedDecks: selected})
+	if err != nil {
+		return DataErrorMsg{Kind: MsgKindState, Err: fmt.Errorf("saving state: %w", err)}
+	}
+	return SavedMsg{Kind: MsgKindState}
+}
+
+// RecordAnswerCmd returns a command that persists a quiz answer.
+// If the msg has typing details, they are recorded via TypingRecorder.
+func RecordAnswerCmd(d *Dispatcher, msg ui.SaveAnswerMsg) tea.Cmd {
+	return Dispatch(d, func(d *Dispatcher) tea.Msg {
+		if d.Typing != nil && (msg.UserInput != "" || msg.CorrectAnswer != "") {
+			_, err := d.Typing.RecordAnswerFull(0, msg.DeckID, msg.CardID, msg.Grade, msg.UserInput, msg.CorrectAnswer, msg.Similarity)
+			if err != nil {
+				return DataErrorMsg{Kind: MsgKindAnswer, Err: err}
+			}
+		} else {
+			if err := d.Progress.RecordAnswer(msg.CardID, msg.Grade); err != nil {
+				return DataErrorMsg{Kind: MsgKindAnswer, Err: err}
+			}
 		}
 		return SavedMsg{Kind: MsgKindAnswer}
+	})
+}
+
+// ResetSessionCmd returns a command that resets the current session.
+func ResetSessionCmd(d *Dispatcher) tea.Cmd {
+	return Dispatch(d, func(d *Dispatcher) tea.Msg {
+		if d.Sessions != nil {
+			_ = d.Sessions.ResetSession()
+		}
+		return nil
 	})
 }
 

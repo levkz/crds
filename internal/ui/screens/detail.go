@@ -21,7 +21,7 @@ type DetailModel struct {
 }
 
 func NewDetail() *DetailModel {
-	return &DetailModel{width: 60, height: 24}
+	return &DetailModel{}
 }
 
 func (m *DetailModel) SetSize(w, h int) {

@@ -24,6 +24,10 @@ type entrySetter interface {
 	SetEntry(ui.CardData)
 }
 
+type setDecksLister interface {
+	SetDecks(decks []string, selected []string)
+}
+
 // dispatchEvent routes a message to its registered handler or the active screen.
 func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -66,6 +70,23 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 		}
 		return m.transitionTo(msg.Screen)
 
+	case ui.DeckSelectionChangedMsg:
+		m.SelectedDecks = msg.Selected
+		var cmds []tea.Cmd
+		cmds = append(cmds, func() tea.Msg {
+			return SaveStateCmd(m.Dispatcher, msg.Selected)
+		})
+		cmds = append(cmds, ResetSessionCmd(m.Dispatcher))
+		if len(msg.Selected) > 0 {
+			cmds = append(cmds, LoadSelectedDecksCmd(m.Dispatcher, msg.Selected))
+		} else {
+			m.CurrentDeck = nil
+			cmds = append(cmds, func() tea.Msg {
+				return DataLoadedMsg{Kind: MsgKindDeck, Data: ui.DeckData{}}
+			})
+		}
+		return m, tea.Batch(cmds...)
+
 	case DataLoadedMsg:
 		return m.handleDataLoaded(msg)
 
@@ -73,7 +94,7 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 		return m.WithNotification("Error loading "+msg.Kind.String()+": "+msg.Err.Error()), nil
 
 	case ui.SaveAnswerMsg:
-		return m, RecordAnswerCmd(m.Dispatcher, msg.CardID, msg.Grade)
+		return m, RecordAnswerCmd(m.Dispatcher, msg)
 
 	case StatsLoadedMsg:
 		if screen, ok := m.Navigator.Registry().Get(m.Navigator.Current); ok {
@@ -122,11 +143,51 @@ func (m Model) handleDataLoaded(msg DataLoadedMsg) (Model, tea.Cmd) {
 		}
 		m.AllDecks = names
 
-		// Auto-load the first available deck
-		if len(names) > 0 {
-			return m, LoadDeckCmd(m.Dispatcher, names[0])
+		// Load saved state
+		state, err := m.Dispatcher.State.Load()
+		if err != nil {
+			return m.WithNotification("Error loading state: " + err.Error()), nil
 		}
-		return m.WithNotification("No decks found"), nil
+
+		// Filter selected decks to only available ones
+		available := make(map[string]bool, len(names))
+		for _, n := range names {
+			available[n] = true
+		}
+		var validSelected []string
+		for _, s := range state.SelectedDecks {
+			if available[s] {
+				validSelected = append(validSelected, s)
+			}
+		}
+		m.SelectedDecks = validSelected
+
+		// Pass deck list + selection to Decks screen
+		if decksScreen, ok := m.Navigator.Registry().Get(ui.DecksScreen); ok {
+			if setter, ok := decksScreen.(setDecksLister); ok {
+				setter.SetDecks(names, validSelected)
+			}
+		}
+
+		// Load selected decks or show empty
+		if len(validSelected) > 0 {
+			return m, LoadSelectedDecksCmd(m.Dispatcher, validSelected)
+		}
+
+		// Handle empty selection: pass empty deck to screens so they show "No cards loaded"
+		emptyDeck := ui.DeckData{}
+		m.CurrentDeck = &emptyDeck
+		if quiz, ok := m.Navigator.Registry().Get(ui.QuizScreen); ok {
+			if setter, ok := quiz.(setDecker); ok {
+				setter.SetDeck(emptyDeck)
+			}
+		}
+		if typingQuiz, ok := m.Navigator.Registry().Get(ui.TypingQuizScreen); ok {
+			if setter, ok := typingQuiz.(setDecker); ok {
+				setter.SetDeck(emptyDeck)
+			}
+		}
+		return m, nil
 
 	case MsgKindDeck:
 		deck, ok := msg.Data.(ui.DeckData)
@@ -135,9 +196,14 @@ func (m Model) handleDataLoaded(msg DataLoadedMsg) (Model, tea.Cmd) {
 		}
 		m.CurrentDeck = &deck
 
-		// Pass deck data to Quiz screen (always, so it's ready when user navigates there)
+		// Pass deck data to Quiz screens (always, so they're ready when user navigates there)
 		if quiz, ok := m.Navigator.Registry().Get(ui.QuizScreen); ok {
 			if setter, ok := quiz.(setDecker); ok {
+				setter.SetDeck(deck)
+			}
+		}
+		if typingQuiz, ok := m.Navigator.Registry().Get(ui.TypingQuizScreen); ok {
+			if setter, ok := typingQuiz.(setDecker); ok {
 				setter.SetDeck(deck)
 			}
 		}

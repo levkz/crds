@@ -1,6 +1,9 @@
 package app
 
-import "crds/internal/ui"
+import (
+	"crds/internal/storage"
+	"crds/internal/ui"
+)
 
 // DeckProvider is the interface the UI uses to list and load decks.
 // The concrete implementation lives outside the UI package.
@@ -14,6 +17,17 @@ type ProgressRecorder interface {
 	RecordAnswer(cardID string, grade int) error
 }
 
+// SessionManager creates and manages quiz sessions.
+type SessionManager interface {
+	EnsureSession() (int64, error)
+	ResetSession() error
+}
+
+// TypingRecorder persists typing-specific answer details.
+type TypingRecorder interface {
+	RecordAnswerFull(sessionID int64, deckID, entryID string, grade int, userInput, correctAnswer string, similarity float64) (int64, error)
+}
+
 // StatsProvider provides learning statistics.
 type StatsProvider interface {
 	Stats() ui.Stats
@@ -24,4 +38,5 @@ type Dependencies struct {
 	Decks    DeckProvider
 	Progress ProgressRecorder
 	Stats    StatsProvider
+	State    *storage.StateStore
 }

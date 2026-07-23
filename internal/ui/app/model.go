@@ -37,8 +37,9 @@ type Model struct {
 	Width  int
 	Height int
 
-	CurrentDeck *ui.DeckData
-	AllDecks    []string
+	CurrentDeck    *ui.DeckData
+	AllDecks       []string
+	SelectedDecks []string
 }
 
 func (m Model) Init() tea.Cmd {

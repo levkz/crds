@@ -18,7 +18,7 @@ type StatisticsModel struct {
 }
 
 func NewStatistics() *StatisticsModel {
-	return &StatisticsModel{width: 60, height: 24}
+	return &StatisticsModel{}
 }
 
 func (m *StatisticsModel) SetSize(w, h int) {

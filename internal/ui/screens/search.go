@@ -32,8 +32,6 @@ type SearchModel struct {
 func NewSearch() *SearchModel {
 	return &SearchModel{
 		focused: true,
-		width:   60,
-		height:  24,
 	}
 }
 

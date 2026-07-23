@@ -20,8 +20,6 @@ type SettingsModel struct {
 func NewSettings() *SettingsModel {
 	return &SettingsModel{
 		themes: theme.Names(),
-		width:  60,
-		height: 24,
 	}
 }
 

@@ -50,6 +50,10 @@ into 9 logical commits. If something needs fixing, reset the last commit with
 `git reset --soft HEAD~1`, fix, test, and re-run `./commit.sh --execute` (the script
 stages and commits incrementally — already-committed groups are skipped).
 
+The shared boilerplate lives in `scripts/commit_group.sh` — source it in new commit
+scripts to get the `commit()` helper and dry-run handling. Feed `COMMIT_EXECUTE=1`
+as the environment variable (or set it via a `--execute` flag in your wrapper).
+
 ## Parser specifics
 
 - Uses `go.yaml.in/yaml/v3` (NOT the standard `gopkg.in/yaml.v3`)

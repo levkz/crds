@@ -8,7 +8,6 @@ import (
 	kongcompletion "github.com/jotaen/kong-completion"
 	"github.com/posener/complete"
 
-	"crds/internal/app"
 	"crds/internal/cli"
 	"crds/internal/storage"
 )
@@ -55,6 +54,6 @@ func main() {
 		parser.FatalIfErrorf(err)
 	}
 
-	err = ctx.Run(&app.App{})
+	err = ctx.Run()
 	ctx.FatalIfErrorf(err)
 }

@@ -238,7 +238,7 @@ ui/
 │   ├── quiz.go         QuizModel — flashcard quiz
 │   ├── typing_quiz.go  TypingQuizModel — typing-based quiz with fuzzy matching
 │   ├── decks.go        DecksModel — multi-deck selection with toggle/toggle-all
-│   ├── search.go       SearchModel — text input + results display
+│   ├── search.go       SearchModel — two-phase: input mode (type + filter) + results mode (navigate + select)
 │   ├── statistics.go   StatisticsModel — study metrics
 │   ├── settings.go     SettingsModel — theme switching
 │   └── detail.go       DetailModel — entry detail view

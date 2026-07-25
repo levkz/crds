@@ -92,12 +92,16 @@ TypingQuizScreen
 
 ### SearchModel (`search.go`)
 
-- **State**: `query`, `cursor`, `results`, `cards`, `focused`
-- **Keys**: `up`/`k`, `down`/`j`, `enter`, `backspace`, `tab`, printable chars
-- **Behavior**: Text input with live query filtering against loaded deck cards.
-  Enter opens the selected result's detail screen. Implements `Lifecycle` —
-  `OnLeave` clears query, results, and cursor when navigating away.
-- **Renders**: Header + FocusedInput styled input + RenderList + footer
+- **State**: `query`, `cursor`, `results`, `cards`, `mode` (input/results)
+- **Keys**: `j`/`k`/arrows, `enter`, `backspace`, printable chars, `esc`
+- **Behavior**: Two-phase search. In **input mode**, all printable keys
+  (including j/k) type into the query, results filter live. Enter switches
+  to **results mode** if results exist. In results mode, j/k/arrows navigate,
+  Enter opens the selected result's detail, Esc returns to input mode.
+  Implements `Lifecycle` — `OnEnter` resets to input mode, `OnLeave` clears
+  query/results/mode when navigating away.
+- **Renders**: Header + FocusedInput styled input (with/without cursor) +
+  RenderList (with/without selection highlight) + footer (dynamic per mode)
 
 ### StatisticsModel (`statistics.go`)
 

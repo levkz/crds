@@ -47,15 +47,10 @@ func (m Model) transitionTo(screen ui.ScreenIndex) (Model, tea.Cmd) {
 }
 
 // pushTo navigates to a screen using Push (stacked navigation, enables back).
+// The current screen is preserved in the history stack — no OnLeave is called.
 func (m Model) pushTo(screen ui.ScreenIndex) (Model, tea.Cmd) {
 	if m.Navigator.Current == screen {
 		return m, nil
-	}
-
-	var cmds []tea.Cmd
-
-	if cmd := m.leaveCurrent(); cmd != nil {
-		cmds = append(cmds, cmd)
 	}
 
 	m.Navigator.Push(screen)
@@ -65,25 +60,23 @@ func (m Model) pushTo(screen ui.ScreenIndex) (Model, tea.Cmd) {
 	}
 
 	if cmd := m.enterCurrent(); cmd != nil {
-		cmds = append(cmds, cmd)
+		return m, cmd
 	}
 
-	return m, tea.Sequence(cmds...)
+	return m, nil
 }
 
+// popToPrevious navigates back using Pop. The current screen is pushed to the
+// forward stack — no OnLeave is called. OnEnter fires on the restored screen.
 func (m Model) popToPrevious() (Model, tea.Cmd) {
-	var cmds []tea.Cmd
-	if cmd := m.leaveCurrent(); cmd != nil {
-		cmds = append(cmds, cmd)
-	}
 	_, _ = m.Navigator.Pop()
 	if s, ok := m.Navigator.CurrentScreen(); ok {
 		s.SetSize(m.Width, m.Height)
 	}
 	if cmd := m.enterCurrent(); cmd != nil {
-		cmds = append(cmds, cmd)
+		return m, cmd
 	}
-	return m, tea.Sequence(cmds...)
+	return m, nil
 }
 
 func (m Model) leaveCurrent() tea.Cmd {

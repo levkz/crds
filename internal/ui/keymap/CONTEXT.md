@@ -101,7 +101,7 @@ Joins each binding's `Help` field with ` · `, skipping empty ones.
 | `DefaultGlobal`   | `Quit` (`ctrl+c`), `Help` (`?`), `Back` (`esc`)         |
 | `DefaultList`     | `Up` (`up`/`k`), `Down` (`down`/`j`), `Select` (`enter`)|
 | `DefaultQuiz`     | `Reveal` (`enter`), `Again`/`Hard`/`Good`/`Easy` (`1`–`4`) |
-| `DefaultSearch`   | embeds `List` + `FocusToggle` (`tab`), `Open` (`enter`), `DeleteChar` (`backspace`) |
+| `DefaultSearch`   | embeds `List` + `Open` (`enter`), `DeleteChar` (`backspace`) |
 
 Each struct also has footer helpers:
 - `Global.Footer()`, `List.Footer()`, `Search.Footer()`
@@ -168,7 +168,7 @@ type KeymapConfig struct {
     Global *struct { Quit *BindingOverride ... } `yaml:"global,omitempty"`
     List   *struct { Up   *BindingOverride ... } `yaml:"list,omitempty"`
     Quiz   *struct { Reveal *BindingOverride ... } `yaml:"quiz,omitempty"`
-    Search *struct { FocusToggle *BindingOverride ... } `yaml:"search,omitempty"`
+    Search *struct { Open *BindingOverride ... } `yaml:"search,omitempty"`
 }
 ```
 

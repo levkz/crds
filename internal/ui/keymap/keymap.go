@@ -90,14 +90,13 @@ func (km Decks) Footer() string {
 }
 
 type Search struct {
-	FocusToggle Binding
-	Open        Binding
-	DeleteChar  Binding
+	Open       Binding
+	DeleteChar Binding
 	List
 }
 
 func (km Search) Footer() string {
-	return BindingList{km.FocusToggle, km.List.Up, km.List.Down, km.Open}.Help()
+	return BindingList{km.List.Up, km.List.Down, km.Open}.Help()
 }
 
 // NamedBinding pairs a Binding with its group and action name for display.
@@ -135,7 +134,6 @@ func (r Registry) Bindings() []NamedBinding {
 		{"TypingQuiz", "Reveal", r.TypingQuiz.Reveal},
 		{"Decks", "Toggle", r.Decks.Toggle},
 		{"Decks", "ToggleAll", r.Decks.ToggleAll},
-		{"Search", "FocusToggle", r.Search.FocusToggle},
 		{"Search", "Open", r.Search.Open},
 		{"Search", "DeleteChar", r.Search.DeleteChar},
 	}
@@ -185,10 +183,9 @@ var DefaultDecks = Decks{
 }
 
 var DefaultSearch = Search{
-	FocusToggle: Binding{Keys: []string{"tab"}, Help: "tab focus"},
-	Open:        Binding{Keys: []string{"enter"}, Help: "enter open"},
-	DeleteChar:  Binding{Keys: []string{"backspace"}, Help: ""},
-	List:        DefaultList,
+	Open:       Binding{Keys: []string{"enter"}, Help: "enter open"},
+	DeleteChar: Binding{Keys: []string{"backspace"}, Help: ""},
+	List:       DefaultList,
 }
 
 // DefaultRegistry is the default keybinding configuration for the application.
@@ -237,9 +234,8 @@ type KeymapConfig struct {
 		ToggleAll *BindingOverride `yaml:"toggle_all,omitempty"`
 	} `yaml:"decks,omitempty"`
 	Search *struct {
-		FocusToggle *BindingOverride `yaml:"focus_toggle,omitempty"`
-		Open        *BindingOverride `yaml:"open,omitempty"`
-		DeleteChar  *BindingOverride `yaml:"delete_char,omitempty"`
+		Open       *BindingOverride `yaml:"open,omitempty"`
+		DeleteChar *BindingOverride `yaml:"delete_char,omitempty"`
 	} `yaml:"search,omitempty"`
 }
 
@@ -313,9 +309,6 @@ func ApplyDefaultOverrides(cfg KeymapConfig) {
 		}
 	}
 	if cfg.Search != nil {
-		if cfg.Search.FocusToggle != nil {
-			DefaultSearch.FocusToggle = applyOverride(DefaultSearch.FocusToggle, *cfg.Search.FocusToggle)
-		}
 		if cfg.Search.Open != nil {
 			DefaultSearch.Open = applyOverride(DefaultSearch.Open, *cfg.Search.Open)
 		}

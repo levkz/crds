@@ -105,9 +105,9 @@ screen identity from their concrete types.
 The root model delegates to `Manager`:
 
 ```go
-m.Navigator.Replace(screen)  // flat navigation (no history)
-m.Navigator.Push(screen)     // stacked navigation (enables back)
-m.Navigator.Pop()            // back navigation
+m.Navigator.Replace(screen)  // flat navigation (no history, fires OnLeave/OnEnter)
+m.Navigator.Push(screen)     // stacked navigation (preserves screen in history, OnEnter only)
+m.Navigator.Pop()            // back navigation (restores from history, OnEnter only)
 ```
 
 Screens do **not** construct or reference other screens.
@@ -148,8 +148,10 @@ type Lifecycle interface {
 }
 ```
 
-Currently implemented by `SearchModel` (clears query/results on leave)
-and `DecksModel` (saves selection on leave).
+Currently implemented by `SearchModel` (OnEnter resets to input mode,
+OnLeave clears query/results/mode) and `DecksModel` (OnLeave saves
+selection). Lifecycle hooks fire on flat transitions (Replace) but not
+on stacked navigation (Push/Pop) where screens are preserved in history.
 
 A screen should never modify global application state.
 
@@ -364,7 +366,7 @@ Animations should remain optional.
   - Theme store with runtime switching
 - **Styles** (`styles/`): 12 style definitions with 60 tests (Header, Footer, SelectedItem, FocusedInput, Error, Warning, Success, Hint, MutedText, Card, Panel, Modal)
 - **Components** (`components/`): 29 components across `display/` (20 stateless) and `interactive/` (9 stateful) — all implemented
-- **Screens** (`screens/`): All 7 screens — Home (activity menu), Quiz (flashcard), TypingQuiz (typing-based), Search (text search), Statistics (metrics), Settings (theme switch), Detail (entry view)
+- **Screens** (`screens/`): All 7 screens — Home (activity menu), Quiz (flashcard), TypingQuiz (typing-based), Search (two-phase: input + results), Statistics (metrics), Settings (theme switch), Detail (entry view)
 - **Keymap** (`keymap/`): Centralized keybinding definitions with `Binding.Match()`, `BindingList.Help()`, per-screen keymap structs with `Footer()` methods, `Registry` with `Bindings()`/`FindBinding()`, `KeymapConfig` for user overrides, and 16 tests. All screens and the root model use `keymap.Default*` instead of hardcoded strings.
 - **Config** (`internal/config/`): User configuration from `~/.config/crds/` — directory auto-creation, `config.yaml` loading, `keymaps.yaml` loading with `keymap.ApplyDefaultOverrides()`, theme discovery from `themes/*.yaml`. 13 tests.
 - **Events** (`events/`): 4 centralized event types (`TickMsg`, `ThemeSwitchMsg`, `ShowNotificationMsg`, `HideNotificationMsg`)

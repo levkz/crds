@@ -132,8 +132,8 @@ func TestDefaultQuizFooter(t *testing.T) {
 }
 
 func TestDefaultSearchKeys(t *testing.T) {
-	if !DefaultSearch.FocusToggle.Match(tea.KeyMsg(tea.Key{Type: tea.KeyTab})) {
-		t.Error("Search.FocusToggle should match tab")
+	if !DefaultSearch.Open.Match(tea.KeyMsg(tea.Key{Type: tea.KeyEnter})) {
+		t.Error("Search.Open should match enter")
 	}
 	if !DefaultSearch.DeleteChar.Match(tea.KeyMsg(tea.Key{Type: tea.KeyBackspace})) {
 		t.Error("Search.DeleteChar should match backspace")
@@ -241,7 +241,6 @@ func TestDefaultRegistryFindBinding(t *testing.T) {
 		{"2", false, "Quiz", "Hard"},
 		{"3", false, "Quiz", "Good"},
 		{"4", false, "Quiz", "Easy"},
-		{"tab", false, "Search", "FocusToggle"},
 		{"backspace", false, "Search", "DeleteChar"},
 		{"nonexistent", true, "", ""},
 	}

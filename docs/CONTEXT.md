@@ -146,7 +146,7 @@ Most implementation work happens inside `internal/`.
 |---|---|
 | `internal/quiz/` | Does not exist. Quiz logic is in UI screens only. |
 | `internal/scheduler/` | Does not exist. No spaced repetition. |
-| `internal/search/` | Does not exist. Search is placeholder in UI. |
+| `internal/search/` | Does not exist. Search is implemented in UI screens only. |
 | `internal/ui/actions/` | Empty. Deferred until command palette or mouse support. |
 | `internal/ui/events/` | 4 basic event types. Mostly deferred. |
 | `internal/ui/animations/` | Empty placeholder. |

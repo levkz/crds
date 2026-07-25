@@ -66,9 +66,8 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 			if setter, ok := detail.(entrySetter); ok {
 				setter.SetEntry(msg.Entry)
 			}
-			m.Navigator.SetCurrentScreen(detail)
 		}
-		return m.transitionTo(msg.Screen)
+		return m.pushTo(msg.Screen)
 
 	case ui.DeckSelectionChangedMsg:
 		m.SelectedDecks = msg.Selected

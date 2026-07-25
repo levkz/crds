@@ -181,13 +181,13 @@ Screens emit navigation events instead of changing the active screen directly. T
 | Screen | Status | Notes |
 |---|---|---|---|
 | Home | Functional | 6-item activity menu. |
-| Decks | Functional | Multi-select list. Space toggle, a toggle-all, enter confirms. Persists via StateStore. |
+| Decks | Functional | Multi-select list. Space toggle, a toggle-all, enter confirms. Saves selection on leave via Lifecycle. Persists via StateStore. |
 | Quiz | Functional | Real keyboard handling. Receives deck data, grades cards, dispatches progress. |
 | TypingQuiz | Functional | Real keyboard handling. Text input for typed answers. Fuzzy-matched auto-grading. |
-| Search | Partial | Real text input. Filters loaded deck data. Navigates to detail. |
+| Search | Functional | Real text input. Filters loaded deck data. Navigates to detail with stacked back-navigation. Clears state on leave via Lifecycle. |
 | Statistics | Partial | Receives real stats from ProgressStore. Shows metrics. |
 | Settings | Functional | Real theme switching. Most complete screen. |
-| Detail | Partial | Receives entry data from search. Shows term, translations, examples. |
+| Detail | Functional | Receives entry data from Search via NavigateToDetailMsg. Uses stacked navigation (pushTo) for back to Search. |
 
 ---
 

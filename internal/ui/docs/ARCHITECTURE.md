@@ -105,9 +105,9 @@ screen identity from their concrete types.
 The root model delegates to `Manager`:
 
 ```go
-m.Navigator.Replace(screen)
-m.Navigator.Push(screen)
-m.Navigator.Pop()
+m.Navigator.Replace(screen)  // flat navigation (no history)
+m.Navigator.Push(screen)     // stacked navigation (enables back)
+m.Navigator.Pop()            // back navigation
 ```
 
 Screens do **not** construct or reference other screens.
@@ -115,11 +115,11 @@ Screens do **not** construct or reference other screens.
 Instead they emit navigation events:
 
 ```
-Quiz
-  ↓ Esc
-Navigate(Home)
+Search
+  ↓ Enter on result
+NavigateToDetailMsg
   ↓
-Root Model → m.Navigator.Pop()
+Root Model → m.Navigator.Push(DetailScreen)
 ```
 
 This prevents coupling between screens.
@@ -137,6 +137,19 @@ type Screen interface {
     View() string
 }
 ```
+
+Screens may also implement the optional `Lifecycle` interface for
+enter/leave hooks:
+
+```go
+type Lifecycle interface {
+    OnEnter() tea.Cmd
+    OnLeave() tea.Cmd
+}
+```
+
+Currently implemented by `SearchModel` (clears query/results on leave)
+and `DecksModel` (saves selection on leave).
 
 A screen should never modify global application state.
 

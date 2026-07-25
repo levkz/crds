@@ -220,7 +220,7 @@ ui/
 │   ├── events.go       dispatchEvent + dispatchKeyEvent + forwardToScreen
 │   ├── view.go         Root View() + help overlay using keymap.Registry
 │   ├── update.go       Root Update()
-│   ├── lifecycle.go    Lifecycle hooks, transitionTo, popToPrevious
+│   ├── lifecycle.go    Lifecycle hooks, transitionTo, pushTo, popToPrevious
 │   ├── commands.go     NavigateToMsg, Dispatcher, config update
 │   ├── config.go       Config + DefaultConfig + ApplyYAML
 │   ├── dependencies.go DeckProvider, ProgressRecorder interfaces
@@ -421,9 +421,7 @@ Navigation should be testable through emitted events.
 
 - QuizModel.Cards is pre-populated — no data loading wired yet
 - Quiz progress always 0, grading returns no-op
-- Search currently shows placeholder results (not wired to real data)
 - Statistics shows zeroes for all metrics (no scheduler wired)
-- Detail shows "Select an entry" until data is passed
 - `~/.config/crds/` is created on `app.New()` but CLI commands are stubs, so it only triggers when the UI actually launches
 
 ---

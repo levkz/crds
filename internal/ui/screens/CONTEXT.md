@@ -92,12 +92,12 @@ TypingQuizScreen
 
 ### SearchModel (`search.go`)
 
-- **State**: `query`, `cursor`, `results`, `focused`
+- **State**: `query`, `cursor`, `results`, `cards`, `focused`
 - **Keys**: `up`/`k`, `down`/`j`, `enter`, `backspace`, `tab`, printable chars
-- **Behavior**: Text input with live query filtering. Results via `components.RenderList`.
-  Enter opens the selected result's detail screen.
+- **Behavior**: Text input with live query filtering against loaded deck cards.
+  Enter opens the selected result's detail screen. Implements `Lifecycle` —
+  `OnLeave` clears query, results, and cursor when navigating away.
 - **Renders**: Header + FocusedInput styled input + RenderList + footer
-- **Known issue**: Results are placeholder text — no real search wired yet.
 
 ### StatisticsModel (`statistics.go`)
 
@@ -119,19 +119,21 @@ TypingQuizScreen
 ### DetailModel (`detail.go`)
 
 - **State**: `Term`, `Translations`, `Examples`, `Notes`
-- **Keys**: None (esc handled globally)
+- **Keys**: None (esc handled globally — pops back to Search)
 - **Behavior**: Displays vocabulary entry details using `styles.Card` containers
-  for translations, examples, and notes sections.
+  for translations, examples, and notes sections. Receives entry data from
+  Search via `NavigateToDetailMsg`. Uses stacked navigation (`pushTo`) so
+  Esc returns to Search.
 - **Renders**: Header + Primary term + section(s) + footer
-- **Known issue**: No data is passed to the model — shows "Select an entry"
-  until wired with real data.
 
 ### DecksModel (`decks.go`)
 
 - **State**: `cursor`, `decks` list, `selected` set
 - **Keys**: `up`/`k`, `down`/`j`, `space` (toggle), `a` (toggle all), `enter` (confirm)
 - **Behavior**: Multi-deck selection with checkmarks. Space toggles current item,
-  'a' toggles all. Enter emits `DeckSelectionChangedMsg`.
+  'a' toggles all. Enter emits `DeckSelectionChangedMsg` and navigates to Home.
+  Implements `Lifecycle` — `OnLeave` saves the current selection whenever the
+  user leaves the screen (via Enter or Esc).
 - **Renders**: Header + checkmarked list + footer
 
 ### TypingQuizModel (`typing_quiz.go`)
@@ -232,8 +234,9 @@ screens/
    time or load it via commands returned from `Init()`. Currently `Cards` is
    prepopulated and always empty.
 
-2. **Lifecycle hooks** — Use `app.Lifecycle` for screens that need to
-   (re)load data on enter or save on leave. Search and Quiz are candidates.
+2. **Lifecycle hooks** — Search and Decks now implement `app.Lifecycle`.
+   Quiz and TypingQuiz are candidates for `OnEnter` (load deck data) and
+   Statistics for `OnEnter` (refresh metrics).
 
 3. **Home improvements** — After wiring deck loading, show recent decks or
    quick-start options. Consider `components.Text` for descriptions below
@@ -256,8 +259,6 @@ screens/
 
 - [ ] Wire quiz data loading — `QuizModel.Cards` should come from a deck via
       `app.LoadDeckCmd` or similar
-- [ ] Wire search to real data — `filterResults()` should query actual entries
 - [ ] Wire statistics to real metrics — pull from a scheduler/progress store
-- [ ] Wire detail view — accept an entry ID and populate `DetailModel` fields
 - [ ] Add `Width`/`Height` awareness — allow screens to adapt to terminal size
 - [ ] Add `Lifecycle` implementation to QuizModel (load deck on enter)

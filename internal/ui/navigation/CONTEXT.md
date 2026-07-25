@@ -36,18 +36,24 @@ All 14 original TODO items are implemented and tested (82 tests).
 - `Model` has a `Navigator *nav.Manager` field instead of a raw
   `Current ScreenIndex`
 - `transitionTo()` calls `m.Navigator.Replace(screen)` with lifecycle hooks
+  (flat navigation, no history)
+- `pushTo()` calls `m.Navigator.Push(screen)` with lifecycle hooks
+  (stacked navigation, enables back via history stack)
 - `NavigateToMsg.Screen` is `ui.ScreenIndex`
 - `forwardToScreen()` and `View()` read `m.Navigator.Current`
 - App is initialized with `nav.New(HomeScreen)` in `app.New()`
 
+### Navigation patterns
+
+- **Flat** (`transitionTo` / `Replace`): Home → Decks, Home → Search,
+  Decks → Home. No history entry; Esc returns to Home directly.
+- **Stacked** (`pushTo` / `Push`): Search → Detail. Pushes Search onto
+  the history stack; Esc from Detail pops back to Search.
+
 ### Not yet integrated from the navigation package
 
-- `Registry` — screen stubs in `app/screens.go` don't implement `ui.Screen`
-  yet (their `Update` returns `(Model, tea.Cmd)`, not just `tea.Cmd`).
-  Once they implement `ui.Screen`, the switch in `forwardToScreen` and
-  `View()` can be replaced with `m.Navigator.CurrentScreen()`.
-- `Push`/`Pop` — app currently uses `Replace()` (flat transitions without
-  history). Switching to `Push`/`Pop` enables back/forward navigation.
+- `Push`/`Pop` — now used for Search → Detail navigation. Other transitions
+  still use `Replace()` (flat transitions without history).
 - Modal — `PushModal`/`DismissModal` available but unused.
 - Overlay — `ShowOverlay`/`HideOverlay` available but app has its own
   `OverlayType` in `GlobalState`.

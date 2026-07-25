@@ -42,6 +42,15 @@ func (m *SearchModel) SetSize(w, h int) {
 
 func (m SearchModel) Init() tea.Cmd { return nil }
 
+func (m *SearchModel) OnEnter() tea.Cmd { return nil }
+
+func (m *SearchModel) OnLeave() tea.Cmd {
+	m.query = ""
+	m.results = nil
+	m.cursor = 0
+	return nil
+}
+
 func (m *SearchModel) SetSearchData(cards []ui.CardData) {
 	m.cards = cards
 	m.query = ""
@@ -102,6 +111,7 @@ func (m *SearchModel) filterResults() {
 		return
 	}
 
+	m.results = nil
 	q := strings.ToLower(m.query)
 	for _, card := range m.cards {
 		if strings.Contains(strings.ToLower(card.Front), q) {

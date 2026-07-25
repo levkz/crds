@@ -40,15 +40,29 @@ func (m *DecksModel) SetDecks(decks []string, selected []string) {
 
 func (m *DecksModel) Init() tea.Cmd { return nil }
 
+func (m *DecksModel) OnEnter() tea.Cmd { return nil }
+
+func (m *DecksModel) OnLeave() tea.Cmd {
+	selected := m.selectedNames()
+	return func() tea.Msg {
+		return ui.DeckSelectionChangedMsg{Selected: selected}
+	}
+}
+
+func (m *DecksModel) selectedNames() []string {
+	var selected []string
+	for _, name := range m.decks {
+		if m.selected[name] {
+			selected = append(selected, name)
+		}
+	}
+	return selected
+}
+
 func (m *DecksModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
-		case keymap.DefaultGlobal.Back.Match(msg):
-			return m, func() tea.Msg {
-				return ui.NavigateToMsg{Screen: ui.HomeScreen}
-			}
-
 		case keymap.DefaultDecks.Up.Match(msg):
 			if m.cursor > 0 {
 				m.cursor--
@@ -78,12 +92,7 @@ func (m *DecksModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 			}
 
 		case keymap.DefaultDecks.Select.Match(msg):
-			var selected []string
-			for _, name := range m.decks {
-				if m.selected[name] {
-					selected = append(selected, name)
-				}
-			}
+			selected := m.selectedNames()
 			return m, tea.Sequence(
 				func() tea.Msg {
 					return ui.DeckSelectionChangedMsg{Selected: selected}

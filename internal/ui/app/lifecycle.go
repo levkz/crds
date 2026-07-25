@@ -21,7 +21,7 @@ type Lifecycle interface {
 	OnLeave() tea.Cmd
 }
 
-// transitionTo navigates to a screen with lifecycle hooks.
+// transitionTo navigates to a screen using Replace (flat navigation, no history).
 func (m Model) transitionTo(screen ui.ScreenIndex) (Model, tea.Cmd) {
 	if m.Navigator.Current == screen {
 		return m, nil
@@ -34,6 +34,31 @@ func (m Model) transitionTo(screen ui.ScreenIndex) (Model, tea.Cmd) {
 	}
 
 	m.Navigator.Replace(screen)
+
+	if s, ok := m.Navigator.CurrentScreen(); ok {
+		s.SetSize(m.Width, m.Height)
+	}
+
+	if cmd := m.enterCurrent(); cmd != nil {
+		cmds = append(cmds, cmd)
+	}
+
+	return m, tea.Sequence(cmds...)
+}
+
+// pushTo navigates to a screen using Push (stacked navigation, enables back).
+func (m Model) pushTo(screen ui.ScreenIndex) (Model, tea.Cmd) {
+	if m.Navigator.Current == screen {
+		return m, nil
+	}
+
+	var cmds []tea.Cmd
+
+	if cmd := m.leaveCurrent(); cmd != nil {
+		cmds = append(cmds, cmd)
+	}
+
+	m.Navigator.Push(screen)
 
 	if s, ok := m.Navigator.CurrentScreen(); ok {
 		s.SetSize(m.Width, m.Height)

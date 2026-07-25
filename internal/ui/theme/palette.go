@@ -14,6 +14,10 @@ type Palette struct {
 	Border     lipgloss.Color
 	Link       lipgloss.Color
 	Surface    lipgloss.Color
+	Magenta    lipgloss.Color
+	Purple     lipgloss.Color
+	Cyan       lipgloss.Color
+	Yellow     lipgloss.Color
 }
 
 var DefaultPalette = Palette{
@@ -28,4 +32,8 @@ var DefaultPalette = Palette{
 	Border:     lipgloss.Color("59"),
 	Link:       lipgloss.Color("33"),
 	Surface:    lipgloss.Color("235"),
+	Magenta:    lipgloss.Color("177"),
+	Purple:     lipgloss.Color("140"),
+	Cyan:       lipgloss.Color("117"),
+	Yellow:     lipgloss.Color("220"),
 }

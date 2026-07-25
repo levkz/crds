@@ -26,6 +26,10 @@ func TestDefaultPalette(t *testing.T) {
 		{"Border", DefaultPalette.Border, "59"},
 		{"Link", DefaultPalette.Link, "33"},
 		{"Surface", DefaultPalette.Surface, "235"},
+		{"Magenta", DefaultPalette.Magenta, "177"},
+		{"Purple", DefaultPalette.Purple, "140"},
+		{"Cyan", DefaultPalette.Cyan, "117"},
+		{"Yellow", DefaultPalette.Yellow, "220"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -510,6 +514,18 @@ func TestLoadThemeFull(t *testing.T) {
 	if string(th.Palette.Surface) != "236" {
 		t.Errorf("Surface = %q, want 236", th.Palette.Surface)
 	}
+	if string(th.Palette.Magenta) != "177" {
+		t.Errorf("Magenta = %q, want 177", th.Palette.Magenta)
+	}
+	if string(th.Palette.Purple) != "140" {
+		t.Errorf("Purple = %q, want 140", th.Palette.Purple)
+	}
+	if string(th.Palette.Cyan) != "117" {
+		t.Errorf("Cyan = %q, want 117", th.Palette.Cyan)
+	}
+	if string(th.Palette.Yellow) != "220" {
+		t.Errorf("Yellow = %q, want 220", th.Palette.Yellow)
+	}
 	fs := th.Primary.GetForeground()
 	if fs != th.Palette.Green {
 		t.Errorf("Primary foreground = %v, want Green=%v", fs, th.Palette.Green)
@@ -677,8 +693,8 @@ func TestLoadThemeCreatesStyles(t *testing.T) {
 
 func TestNewStore(t *testing.T) {
 	s := NewStore()
-	if s.Len() != 3 {
-		t.Errorf("expected 3 themes (default, dark, light), got %d", s.Len())
+	if s.Len() != 4 {
+		t.Errorf("expected 4 themes (default, dark, light, tokyonight), got %d", s.Len())
 	}
 	if name := s.CurrentName(); name != "default" {
 		t.Errorf("expected 'default', got %q", name)
@@ -700,8 +716,8 @@ func TestStoreRegister(t *testing.T) {
 	if !s.Has("custom") {
 		t.Error("expected 'custom' to be registered")
 	}
-	if s.Len() != 4 {
-		t.Errorf("expected 4 themes, got %d", s.Len())
+	if s.Len() != 5 {
+		t.Errorf("expected 5 themes, got %d", s.Len())
 	}
 }
 
@@ -748,7 +764,7 @@ func TestStoreNames(t *testing.T) {
 	s.Register("b", NewTheme(DefaultPalette))
 	names := s.Names()
 	sort.Strings(names)
-	expected := []string{"a", "b", "dark", "default", "light"}
+	expected := []string{"a", "b", "dark", "default", "light", "tokyonight"}
 	if len(names) != len(expected) {
 		t.Fatalf("expected %d names, got %d: %v", len(expected), len(names), names)
 	}
@@ -817,6 +833,53 @@ func TestLightTheme(t *testing.T) {
 	}
 	if th.Icons.Check == "" {
 		t.Error("Light theme icons should be populated")
+	}
+}
+
+func TestTokyonightPalette(t *testing.T) {
+	tests := []struct {
+		name  string
+		color lipgloss.Color
+		want  string
+	}{
+		{"Blue", TokyonightPalette.Blue, "#7aa2f7"},
+		{"Green", TokyonightPalette.Green, "#9ece6a"},
+		{"Orange", TokyonightPalette.Orange, "#ff9e64"},
+		{"Red", TokyonightPalette.Red, "#f7768e"},
+		{"Gray", TokyonightPalette.Gray, "#565f89"},
+		{"White", TokyonightPalette.White, "#c0caf5"},
+		{"Background", TokyonightPalette.Background, "#1a1b26"},
+		{"Selection", TokyonightPalette.Selection, "#283457"},
+		{"Border", TokyonightPalette.Border, "#15161e"},
+		{"Link", TokyonightPalette.Link, "#2ac3de"},
+		{"Surface", TokyonightPalette.Surface, "#16161e"},
+		{"Magenta", TokyonightPalette.Magenta, "#bb9af7"},
+		{"Purple", TokyonightPalette.Purple, "#9d7cd8"},
+		{"Cyan", TokyonightPalette.Cyan, "#7dcfff"},
+		{"Yellow", TokyonightPalette.Yellow, "#e0af68"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := string(tt.color); got != tt.want {
+				t.Errorf("got %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTokyonightTheme(t *testing.T) {
+	th := TokyonightTheme()
+	if string(th.Palette.Blue) != "#7aa2f7" {
+		t.Errorf("Tokyonight Blue = %q, want #7aa2f7", th.Palette.Blue)
+	}
+	if string(th.Palette.Background) != "#1a1b26" {
+		t.Errorf("Tokyonight Background = %q, want #1a1b26", th.Palette.Background)
+	}
+	if string(th.Palette.Surface) != "#16161e" {
+		t.Errorf("Tokyonight Surface = %q, want #16161e", th.Palette.Surface)
+	}
+	if th.Icons.Check == "" {
+		t.Error("Tokyonight theme icons should be populated")
 	}
 }
 
@@ -894,12 +957,15 @@ func TestStoreDarkLightRegistered(t *testing.T) {
 	if !s.Has("light") {
 		t.Error("expected 'light' in new store")
 	}
-	th, err := s.Switch("dark")
+	if !s.Has("tokyonight") {
+		t.Error("expected 'tokyonight' in new store")
+	}
+	th, err := s.Switch("tokyonight")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(th.Palette.Blue) != "75" {
-		t.Errorf("switched to dark: Blue = %q, want 75", th.Palette.Blue)
+	if string(th.Palette.Blue) != "#7aa2f7" {
+		t.Errorf("switched to tokyonight: Blue = %q, want #7aa2f7", th.Palette.Blue)
 	}
 }
 

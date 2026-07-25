@@ -17,6 +17,7 @@ func NewStore() *Store {
 	s.themes["default"] = Default
 	s.themes["dark"] = DarkTheme()
 	s.themes["light"] = LightTheme()
+	s.themes["tokyonight"] = TokyonightTheme()
 	s.current = "default"
 	return s
 }

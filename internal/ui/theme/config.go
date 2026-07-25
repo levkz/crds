@@ -27,6 +27,10 @@ type ConfigPalette struct {
 	Border     string `yaml:"border"`
 	Link       string `yaml:"link"`
 	Surface    string `yaml:"surface"`
+	Magenta    string `yaml:"magenta"`
+	Purple     string `yaml:"purple"`
+	Cyan       string `yaml:"cyan"`
+	Yellow     string `yaml:"yellow"`
 	Primary    string `yaml:"primary"`
 	Secondary  string `yaml:"secondary"`
 	Accent     string `yaml:"accent"`
@@ -82,6 +86,18 @@ func (c Config) Build() (Theme, error) {
 		}
 		if c.Palette.Surface != "" {
 			p.Surface = mustColor(c.Palette.Surface)
+		}
+		if c.Palette.Magenta != "" {
+			p.Magenta = mustColor(c.Palette.Magenta)
+		}
+		if c.Palette.Purple != "" {
+			p.Purple = mustColor(c.Palette.Purple)
+		}
+		if c.Palette.Cyan != "" {
+			p.Cyan = mustColor(c.Palette.Cyan)
+		}
+		if c.Palette.Yellow != "" {
+			p.Yellow = mustColor(c.Palette.Yellow)
 		}
 	}
 
@@ -202,6 +218,14 @@ func paletteColor(p Palette, name string) (lipgloss.Color, error) {
 		return p.Link, nil
 	case "surface":
 		return p.Surface, nil
+	case "magenta":
+		return p.Magenta, nil
+	case "purple":
+		return p.Purple, nil
+	case "cyan":
+		return p.Cyan, nil
+	case "yellow":
+		return p.Yellow, nil
 	default:
 		return resolveDirectColor(name)
 	}

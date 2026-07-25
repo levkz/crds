@@ -23,8 +23,7 @@ func RenderList(items []string, selected int, width int) string {
 		if i == selected {
 			b.WriteString(styles.SelectedItem().Render(ui.Theme.Icons.Navigate + " " + truncated))
 		} else {
-			b.WriteString("  ")
-			b.WriteString(truncated)
+			b.WriteString(styles.MutedText().Render("  " + truncated))
 		}
 	}
 	return b.String()

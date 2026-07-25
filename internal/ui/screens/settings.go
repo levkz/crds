@@ -7,6 +7,7 @@ import (
 	"crds/internal/ui/events"
 	"crds/internal/ui/keymap"
 	"crds/internal/ui/layout"
+	"crds/internal/ui/styles"
 	"crds/internal/ui/theme"
 )
 
@@ -61,8 +62,13 @@ func (m SettingsModel) View() string {
 			marker = ui.Theme.Primary.Render(ui.Theme.Icons.Navigate)
 		}
 		line := "  " + marker + " " + name
+		if i == m.cursor {
+			line = styles.MutedText().Render("  ") + marker + styles.MutedText().Render(" " + name)
+		} else {
+			line = styles.MutedText().Render("  " + marker + " " + name)
+		}
 		if name == current {
-			line += " " + ui.Theme.Success.Render(ui.Theme.Icons.Check)
+			line += styles.MutedText().Render(" ") + ui.Theme.Success.Render(ui.Theme.Icons.Check)
 		}
 		items = append(items, line)
 	}

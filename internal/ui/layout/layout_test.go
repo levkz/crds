@@ -12,6 +12,7 @@ func TestPage(t *testing.T) {
 		header string
 		body   string
 		footer string
+		height int
 		want   string
 	}{
 		{
@@ -19,6 +20,7 @@ func TestPage(t *testing.T) {
 			header: "header",
 			body:   "body",
 			footer: "footer",
+			height: 0,
 			want:   "header\n\nbody\n\nfooter",
 		},
 		{
@@ -26,6 +28,7 @@ func TestPage(t *testing.T) {
 			header: "",
 			body:   "body",
 			footer: "footer",
+			height: 0,
 			want:   "\n\nbody\n\nfooter",
 		},
 		{
@@ -33,6 +36,7 @@ func TestPage(t *testing.T) {
 			header: "header",
 			body:   "",
 			footer: "footer",
+			height: 0,
 			want:   "header\n\n\n\nfooter",
 		},
 		{
@@ -40,12 +44,61 @@ func TestPage(t *testing.T) {
 			header: "header",
 			body:   "body",
 			footer: "",
+			height: 0,
 			want:   "header\n\nbody\n\n",
+		},
+		{
+			name:   "anchors footer to bottom",
+			header: "h",
+			body:   "b",
+			footer: "f",
+			height: 10,
+			want:   "h\n\nb\n\n\n\n\n\n\nf",
+		},
+		{
+			name:   "no padding when body fits exactly",
+			header: "h",
+			body:   "b",
+			footer: "f",
+			height: 5,
+			want:   "h\n\nb\n\nf",
+		},
+		{
+			name:   "no padding when body exceeds height",
+			header: "h",
+			body:   "b\nc\nd\ne",
+			footer: "f",
+			height: 5,
+			want:   "h\n\nb\nc\nd\ne\n\nf",
+		},
+		{
+			name:   "anchors with multi-line footer",
+			header: "h",
+			body:   "b",
+			footer: "f\ng",
+			height: 10,
+			want:   "h\n\nb\n\n\n\n\n\nf\ng",
+		},
+		{
+			name:   "zero height falls back to no anchoring",
+			header: "h",
+			body:   "b",
+			footer: "f",
+			height: 0,
+			want:   "h\n\nb\n\nf",
+		},
+		{
+			name:   "negative height falls back to no anchoring",
+			header: "h",
+			body:   "b",
+			footer: "f",
+			height: -1,
+			want:   "h\n\nb\n\nf",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Page(tt.header, tt.body, tt.footer)
+			got := Page(tt.header, tt.body, tt.footer, tt.height)
 			if got != tt.want {
 				t.Errorf("Page() = %q, want %q", got, tt.want)
 			}

@@ -75,5 +75,6 @@ func (m DetailModel) View() string {
 		components.Header("Entry Detail", m.width),
 		layout.Column(sections...),
 		components.Footer(keymap.DefaultGlobal.Back.Help, m.width),
+		m.height,
 	)
 }

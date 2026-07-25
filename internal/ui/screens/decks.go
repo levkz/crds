@@ -116,5 +116,6 @@ func (m *DecksModel) View() string {
 		components.Header("Decks", m.width),
 		content,
 		components.Footer(keymap.DefaultDecks.Footer()+" · "+keymap.DefaultGlobal.Back.Help, m.width),
+		m.height,
 	)
 }

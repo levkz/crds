@@ -159,5 +159,6 @@ func (m SearchModel) View() string {
 		components.Header("Search", m.width),
 		layout.Column(input, results),
 		components.Footer(keymap.DefaultSearch.Footer()+" · "+keymap.DefaultGlobal.Back.Help, m.width),
+		m.height,
 	)
 }

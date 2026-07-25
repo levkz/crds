@@ -46,6 +46,13 @@ func TestHeader(t *testing.T) {
 			t.Error("Header should be bold")
 		}
 	})
+	t.Run("background", func(t *testing.T) {
+		s := Header(60)
+		bg := s.GetBackground()
+		if bg != ui.Theme.Palette.Surface {
+			t.Errorf("Header background = %v, want %v", bg, ui.Theme.Palette.Surface)
+		}
+	})
 }
 
 func TestFooter(t *testing.T) {
@@ -71,6 +78,13 @@ func TestFooter(t *testing.T) {
 		fg := s.GetForeground()
 		if fg != ui.Theme.Palette.Gray {
 			t.Errorf("Footer foreground = %v, want %v", fg, ui.Theme.Palette.Gray)
+		}
+	})
+	t.Run("background", func(t *testing.T) {
+		s := Footer(60)
+		bg := s.GetBackground()
+		if bg != ui.Theme.Palette.Surface {
+			t.Errorf("Footer background = %v, want %v", bg, ui.Theme.Palette.Surface)
 		}
 	})
 }

@@ -120,6 +120,7 @@ func (m QuizModel) View() string {
 			components.Header("Quiz", m.width),
 			styles.MutedText().Render("No cards loaded"),
 			components.Footer(keymap.DefaultGlobal.Back.Help, m.width),
+			m.height,
 		)
 	}
 
@@ -128,6 +129,7 @@ func (m QuizModel) View() string {
 			components.Header(m.deckName, m.width),
 			styles.MutedText().Render("Quiz complete!"),
 			components.Footer(keymap.DefaultGlobal.Back.Help, m.width),
+			m.height,
 		)
 	}
 
@@ -147,6 +149,7 @@ func (m QuizModel) View() string {
 			components.ProgressBar(m.Progress),
 		),
 		footer,
+		m.height,
 	)
 }
 

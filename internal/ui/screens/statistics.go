@@ -71,5 +71,6 @@ func (m StatisticsModel) View() string {
 		components.Header("Statistics", m.width),
 		layout.Column(items...),
 		components.Footer(keymap.DefaultGlobal.Back.Help, m.width),
+		m.height,
 	)
 }

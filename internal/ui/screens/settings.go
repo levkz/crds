@@ -70,5 +70,6 @@ func (m SettingsModel) View() string {
 		components.Header("Settings", m.width),
 		layout.Column(items...),
 		components.Footer(keymap.DefaultList.Footer()+" · "+keymap.DefaultGlobal.Back.Help, m.width),
+		m.height,
 	)
 }

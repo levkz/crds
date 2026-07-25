@@ -69,5 +69,6 @@ func (m HomeModel) View() string {
 		components.Header("Home", m.width),
 		components.RenderList(m.activities, m.cursor, m.width),
 		components.Footer(keymap.DefaultList.Footer()+" · "+keymap.DefaultGlobal.Help.Help, m.width),
+		m.height,
 	)
 }

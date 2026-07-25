@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"crds/internal/ui"
+	components "crds/internal/ui/components/display"
 	"crds/internal/ui/keymap"
 	"crds/internal/ui/renderer"
 )
@@ -21,8 +22,24 @@ func (m Model) View() string {
 	}
 
 	if m.Global.Notification != nil {
-		b.WriteString("\n")
-		b.WriteString(ui.Theme.Muted.Render(m.Global.Notification.Text))
+		output := b.String()
+		lines := strings.Split(output, "\n")
+		for i := len(lines) - 1; i >= 0; i-- {
+			if renderer.StripANSI(strings.TrimSpace(lines[i])) != "" {
+				if m.Width > 0 {
+					visible := renderer.StripANSI(lines[i])
+					trimmed := strings.TrimRight(visible, " ")
+					lines[i] = components.StatusBar(
+						trimmed,
+						m.Global.Notification.Text,
+						m.Width,
+						ui.Theme.Palette.Surface,
+					)
+				}
+				break
+			}
+		}
+		return strings.Join(lines, "\n")
 	}
 
 	return b.String()

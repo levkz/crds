@@ -155,6 +155,7 @@ func (m TypingQuizModel) View() string {
 			components.Header("Typing Quiz", m.width),
 			styles.MutedText().Render("No cards loaded"),
 			components.Footer(keymap.DefaultGlobal.Back.Help, m.width),
+			m.height,
 		)
 	}
 
@@ -163,6 +164,7 @@ func (m TypingQuizModel) View() string {
 			components.Header(m.deckName, m.width),
 			styles.MutedText().Render("Quiz complete!"),
 			components.Footer(keymap.DefaultGlobal.Back.Help, m.width),
+			m.height,
 		)
 	}
 
@@ -221,5 +223,6 @@ func (m TypingQuizModel) View() string {
 		components.Header(headerTitle, m.width),
 		layout.Column(items...),
 		footer,
+		m.height,
 	)
 }

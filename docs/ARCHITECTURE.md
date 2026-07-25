@@ -317,6 +317,28 @@ SQLite is **not** the source of truth for vocabulary.
 ~/.local/share/crds/crds.db
 ```
 
+### SQLite DSN Format
+
+The connection string uses `_pragma` query parameters — **not** bare key/value pairs. The `modernc.org/sqlite` driver ignores unrecognized parameters silently, so `_journal_mode=WAL&_foreign_keys=on` appears to work but does nothing.
+
+Correct format (`internal/storage/store.go`):
+
+```text
+crds.db?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)
+```
+
+Each `_pragma` value is prepended with `PRAGMA ` and executed as raw SQL on every new connection drawn from the pool. The parenthesized form avoids URL-encoding `=` as `%3D`. An equivalent equals-form exists (`_pragma=foreign_keys=on`) but is harder to read in DSN strings.
+
+| Parameter | Effect |
+|-----------|--------|
+| `_pragma=foreign_keys(1)` | Enables `ON DELETE CASCADE` and other FK constraints |
+| `_pragma=journal_mode(WAL)` | Write-ahead logging for concurrent reads |
+| `_pragma=busy_timeout(5000)` | Wait up to 5 s before returning SQLITE_BUSY |
+
+**Why this matters:** Without `PRAGMA foreign_keys = ON`, `ON DELETE CASCADE` in the schema is silently ignored. Deleting a row in `entries` does **not** cascade to `translations`, `examples`, or `entry_tags`, leaving orphaned rows that accumulate on every re-sync.
+
+> **Do not** use `db.Exec("PRAGMA foreign_keys = ON")` after opening the connection. With `database/sql` connection pooling, the pragma only applies to the single connection it runs on — not to connections later drawn from the pool.
+
 ### Storage Layer Structure
 
 ```text

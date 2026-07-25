@@ -54,26 +54,22 @@ func fillBackground(s string, width int) string {
 	lines := strings.Split(s, "\n")
 	bgStyle := lipgloss.NewStyle().Background(ui.Theme.Palette.Background)
 	for i, line := range lines {
-		vw := renderer.VisibleWidth(line)
-		if vw >= width {
-			continue
-		}
 		// Each inner styled segment ends with \033[0m (full ANSI reset),
 		// which clears the background that bgStyle sets. Split at each
 		// reset and re-wrap each segment so the background is re-applied
 		// immediately after every reset.
 		parts := strings.Split(line, "\033[0m")
-		if len(parts) <= 1 {
-			lines[i] = bgStyle.Render(line) + bgStyle.Render(strings.Repeat(" ", width-vw))
-		} else {
-			var sb strings.Builder
-			for _, p := range parts {
-				if p != "" {
-					sb.WriteString(bgStyle.Render(p))
-				}
+		var sb strings.Builder
+		for _, p := range parts {
+			if p != "" {
+				sb.WriteString(bgStyle.Render(p))
 			}
-			lines[i] = sb.String() + bgStyle.Render(strings.Repeat(" ", width-vw))
 		}
+		line = sb.String()
+		if vw := renderer.VisibleWidth(line); vw < width {
+			line += bgStyle.Render(strings.Repeat(" ", width-vw))
+		}
+		lines[i] = line
 	}
 	return strings.Join(lines, "\n")
 }

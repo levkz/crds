@@ -11,7 +11,7 @@ or characters.
 
 ## Current State
 
-All TODO items are implemented and tested (54 tests).
+All TODO items are implemented and tested (68+ tests).
 
 ### What's in place
 
@@ -20,9 +20,10 @@ All TODO items are implemented and tested (54 tests).
   `Muted`, `Header`, `Background`, `Surface`), a palette, typography,
   borders, icons, spacing, and border roles.
 
-- **Palette** `palette.go` — `Palette` with 11 named colors
+- **Palette** `palette.go` — `Palette` with 15 named colors
   (`Blue`, `Green`, `Orange`, `Red`, `Gray`, `White`,
-  `Background`, `Selection`, `Border`, `Link`, `Surface`).
+  `Background`, `Selection`, `Border`, `Link`, `Surface`,
+  `Magenta`, `Purple`, `Cyan`, `Yellow`).
   `DefaultPalette` uses ANSI 256‑color values (`"39"`, `"42"`, etc.).
 
 - **Typography** `typography.go` — 6 text role styles built from the
@@ -80,13 +81,14 @@ All TODO items are implemented and tested (54 tests).
   color principles, semantic style roles, icon semantics, spacing scale,
   border role usage, theme switching, and YAML configuration format.
 
-- **Built-in presets** `presets.go` — `DarkPalette`/`DarkTheme()` and
-  `LightPalette`/`LightTheme()` presets for dark and light backgrounds.
+- **Built-in presets** `presets.go` — `DarkPalette`/`DarkTheme()`,
+  `LightPalette`/`LightTheme()`, and `TokyonightPalette`/`TokyonightTheme()`
+  presets for dark, light, and TokyoNight backgrounds.
 
 - **Store & Switching** `store.go` — `Store` is a named‑theme registry:
   `Register(name, Theme)`, `Switch(name)` (returns the Theme),
   `Current()`, `CurrentName()`, `Names()`, `Get()`, `Unregister()`,
-  `Has()`, `Len()`. Pre-registers `"default"`, `"dark"`, `"light"`.
+  `Has()`, `Len()`. Pre-registers `"default"`, `"dark"`, `"light"`, `"tokyonight"`.
   Package‑level functions delegate to `DefaultStore`.
 
   Callers switch by:
@@ -167,7 +169,7 @@ theme/
 │                     YAML structs, LoadTheme, ParseTheme,
 │                     Config.Build, paletteColor, resolveDirectColor,
 │                     applyTextRole
-├── presets.go        DarkPalette, LightPalette, DarkTheme, LightTheme
+├── presets.go        DarkPalette, LightPalette, TokyonightPalette, DarkTheme, LightTheme, TokyonightTheme
 ├── store.go          Store (Register, Switch, Current, Names,
 │                     etc.), DefaultStore, package-level convs
 ├── theme_test.go     54 tests

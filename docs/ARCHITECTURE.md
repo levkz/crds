@@ -98,7 +98,7 @@ The project is divided into several independent subsystems.
 | Quiz | Learning session orchestration | Not implemented |
 | Scheduler | Determining review order | Not implemented |
 | Search | Vocabulary lookup | Not implemented |
-| UI | Terminal presentation | Wired to real data |
+| UI | Terminal presentation | Full UI with background fill, theme switching, 8 screens |
 | Model | Shared domain objects | Complete |
 
 Each subsystem has its own documentation describing its internal design.
@@ -137,7 +137,7 @@ The UI is the most developed subsystem. It follows Bubble Tea's Elm-style archit
 | `app/` | Root model, event dispatch, lifecycle, commands | — |
 | `navigation/` | Stack-based manager with push/pop/replace/forward/modal | 82 tests |
 | `keymap/` | Centralized keybinding definitions, user overrides | 16 tests |
-| `theme/` | Design system: palette, typography, icons, borders, spacing | 54 tests |
+| `theme/` | Design system: 15-color palette, typography, icons, borders, spacing, 4 built-in themes | 68+ tests |
 | `styles/` | 12 semantic style definitions | 60 tests |
 | `components/` | 29 components (display + interactive) | — |
 | `layout/` | Layout primitives: Page, Column, Row, Grid, Stack, Spacer, Center, Align | Tests |

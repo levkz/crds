@@ -210,7 +210,7 @@ Styling is centralized.
 
 The `theme` package provides a complete design system:
 
-- **Palette**: 11 named colors (Blue, Green, Orange, Red, Gray, White, Background, Selection, Border, Link, Surface)
+- **Palette**: 15 named colors (Blue, Green, Orange, Red, Gray, White, Background, Selection, Border, Link, Surface, Magenta, Purple, Cyan, Yellow)
 - **Semantic styles**: 10 styles (Primary, Secondary, Accent, Success, Warning, Danger, Muted, Header, Background, Surface)
 - **Typography**: 6 text roles (Title, Subtitle, Body, Caption, Emphasis, Key)
 - **Borders**: 5 styles (Normal, Rounded, Double, Thick, None)
@@ -218,7 +218,8 @@ The `theme` package provides a complete design system:
 - **Spacing**: 7-tier scale (Xxs → Xxl)
 - **Border roles**: 6 semantic roles (Container, Card, Modal, Emphasis, Section, None)
 - **YAML loading**: Custom theme files with palette, icons, and typography overrides
-- **Store**: Multi-theme registry with runtime switching via Settings screen
+- **Store**: Multi-theme registry with runtime switching via Settings screen (built-in: default, dark, light, tokyonight)
+- **Background fill**: `fillBackground()` in `app/view.go` re-wraps each ANSI-reset-delimited segment with `Background(p.Background)` so the theme background covers the entire terminal
 
 Components use semantic styles instead of hardcoded colors. They should never use terminal color codes directly.
 

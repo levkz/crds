@@ -85,8 +85,11 @@ Page(
     Header(...),
     Content(...),
     Footer(...),
+    height,
 )
 ```
+
+`fillBackground()` in `app/view.go` wraps each ANSI-reset-delimited segment with the theme's `Background` color, ensuring full-width background coverage across the entire terminal. This runs after screen composition and notification injection.
 
 instead of manually concatenating strings throughout the codebase.
 
@@ -300,7 +303,7 @@ ui/
 │   ├── detect.go       Icon source auto-detection
 │   ├── nerdfont.go     NerdFont detection
 │   ├── config.go       YAML loading + style overrides
-│   ├── presets.go      Dark/light presets
+│   ├── presets.go      Dark/light/tokyonight presets
 │   ├── store.go        Theme registry + switching
 │   ├── DESIGN.md       Design language documentation
 │   ├── theme_test.go   54 tests
@@ -314,7 +317,7 @@ ui/
 │   └── TODO.md         Progress tracker
 
 ├── layout/             Layout helpers
-│   ├── page.go         Page(header, content, footer)
+│   ├── page.go         Page(header, content, footer, height)
 │   ├── column.go       Column(items...)
 │   ├── row.go          Row(items...)
 │   ├── center.go       Center(content, width, height)
@@ -396,10 +399,10 @@ Navigation should be testable through emitted events.
 
 ## Complete
 
-- **Theme** (`theme/`): Full implementation with 54 tests, including 11-color palette, 10 semantic styles, typography, borders, 10-slot icons (4 icon sources), spacing scale, border roles, YAML loading with style overrides, and theme switching
+- **Theme** (`theme/`): Full implementation with 54+ tests, including 15-color palette, 10 semantic styles, typography, borders, 10-slot icons (4 icon sources), spacing scale, border roles, YAML loading with style overrides, and theme switching (built-in: default, dark, light, tokyonight)
 - **Styles** (`styles/`): All 12 style definitions implemented with 60 tests — Header, Footer, SelectedItem, FocusedInput, Error, Warning, Success, Hint, MutedText, Card, Panel, Modal
 - **Components** (`components/`): All 29 components implemented — 20 in `display/` (Header, Footer, Card, Progress, List, Table, Modal, Notification, Text, Label, Badge, Paragraph, Divider, Panel, Section, Group, Window, StatusBar, ConfirmDialog, ErrorDialog) and 9 in `interactive/` (TextInput, SearchInput, Checkbox, RadioGroup, Select, MultiSelect, SelectableList, Tree, Spinner)
-- **Screens** (`screens/`): All 7 screens implemented — Home (activity menu), Quiz (flashcard), TypingQuiz (typing-based with fuzzy matching), Search (text input + results), Statistics (metrics display), Settings (theme switching), Detail (entry view)
+- **Screens** (`screens/`): All 8 screens implemented — Home (activity menu), Quiz (flashcard), TypingQuiz (typing-based with fuzzy matching), Decks (multi-deck selection), Search (text input + results), Statistics (metrics display), Settings (theme switching), Detail (entry view)
 - **Navigation** (`navigation/`): Complete with 82 black-box tests including Manager, stack, and registry
 - **App** (`app/`): Root Bubble Tea model, events, lifecycle, commands, config, theme loading, overlay/notification system. `New()` wires keymap overrides (`keymaps.yaml`), user themes (`themes/`), and app config (`config.yaml`) from `~/.config/crds/`
 - **Keymap** (`keymap/`): Centralized keybinding definitions. `Binding` with `Match()`, `BindingList` with `Help()`, per-screen structs (`Global`, `List`, `Quiz`, `Search`) with `Footer()`/`Revealed()`/`Unrevealed()`, `Registry` with `Bindings()`/`FindBinding()`, `KeymapConfig` + `ApplyDefaultOverrides()` for user-defined overrides. 16 tests.
@@ -421,7 +424,6 @@ Navigation should be testable through emitted events.
 - Search currently shows placeholder results (not wired to real data)
 - Statistics shows zeroes for all metrics (no scheduler wired)
 - Detail shows "Select an entry" until data is passed
-- Screens use hardcoded width 60 — no terminal resize awareness yet
 - `~/.config/crds/` is created on `app.New()` but CLI commands are stubs, so it only triggers when the UI actually launches
 
 ---

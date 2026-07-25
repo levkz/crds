@@ -26,6 +26,7 @@
 
 - `scheduler/`, `search/`, `quiz/` implementations don't exist yet — those are aspirational (docs/ outruns code)
 - Grade scale mismatch: Flashcard uses 0-3, Typing uses 1-3 (needs normalization)
+- Background fill ANSI nesting: `fillBackground()` must split at every `\033[0m` (full reset) and re-wrap each segment — otherwise inner resets destroy outer backgrounds. This is handled in `app/view.go` but any new ANSI-producing code must account for it.
 
 ## Architecture (current vs docs)
 
@@ -35,7 +36,7 @@ Docs describe an aspirational layered architecture. Reality is partial:
 - **parser/** — YAML parsing + validation + normalization (has tests)
 - **cli/** — Kong command stubs (quiz, sync, stats, search) — most `Run()` methods only print
 - **app/** — empty composition root struct (but `internal/ui/app/` has real UI scaffolding)
-- **ui/** — Bubble Tea scaffolding: navigation/ fully implemented, app/ wired, events/ with 4 centralized event types, most other subdirectories still empty
+- **ui/** — Full Bubble Tea UI: navigation/ fully implemented, app/ wired, 8 screens, theme system with 15-color palette and 4 built-in themes (dark, light, tokyonight, default), background fill across entire terminal, inline notifications
 - **storage/** — SQLite fully implemented via `Store` (goose + sqlc). On startup, `SyncDecks()` caches YAML decks in SQLite. `Store` implements `DeckProvider`, `ProgressRecorder`, and `StatsProvider`. `DeckStore` (legacy filesystem) remains but is not wired.
 
 SQL stack: SQLite (`modernc.org/sqlite`) + goose (migrations) + sqlc (type-safe queries)
@@ -61,6 +62,14 @@ as the environment variable (or set it via a `--execute` flag in your wrapper).
 - `Validate()` checks: deck id/name/language required, entry id required, no duplicate IDs, term required, ≥1 translation
 - Test fixtures in `internal/parser/testdata/` (12 YAML files)
 - `testdata/auto_ids.yaml` tests entries without explicit IDs (not yet wired to validation)
+
+## Theme specifics
+
+- `Palette` struct has 15 named colors: Blue, Green, Orange, Red, Gray, White, Background, Selection, Border, Link, Surface, Magenta, Purple, Cyan, Yellow
+- 4 built-in themes: default (ANSI 256), dark, light, tokyonight (hex values from folke/tokyonight.nvim)
+- `theme.Store` pre-registers "default", "dark", "light", "tokyonight"
+- Config supports custom themes via YAML with named palette references or direct ANSI/hex values
+- `fillBackground()` wraps every line with the theme background — handles ANSI reset codes by splitting and re-wrapping segments
 
 ## Style
 

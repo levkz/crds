@@ -195,6 +195,20 @@ type Lifecycle interface {
 This is checked by `app/lifecycle.go` — screens that don't implement it
 get no-op lifecycle hooks.
 
+### BackHandler
+
+Screens can implement `ui.BackHandler` to intercept Back (Esc) before
+the global handler applies default behavior:
+
+```go
+type BackHandler interface {
+    HandleBack() bool
+}
+```
+
+Return `true` if the screen consumed the event. Currently implemented by
+`SearchModel` (returns to input mode when in results mode).
+
 ---
 
 ## Dependencies

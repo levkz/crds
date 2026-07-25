@@ -79,3 +79,10 @@ type TypingGradeMsg struct {
 type DeckSelectionChangedMsg struct {
 	Selected []string
 }
+
+// BackHandler is implemented by screens that want to handle Back (Esc)
+// before the global handler applies default behavior. Return true if
+// the screen consumed the event; false to let the global handler proceed.
+type BackHandler interface {
+	HandleBack() bool
+}

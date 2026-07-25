@@ -240,6 +240,12 @@ func (m Model) dispatchKeyEvent(msg tea.KeyMsg) (Model, tea.Cmd) {
 		if m.Global.Overlay != NoOverlay {
 			return m.WithoutOverlay(), nil
 		}
+		if screen, ok := m.Navigator.CurrentScreen(); ok {
+			if handler, ok := screen.(ui.BackHandler); ok && handler.HandleBack() {
+				m.Navigator.SetCurrentScreen(screen)
+				return m, nil
+			}
+		}
 		if m.Navigator.CanGoBack() {
 			return m.popToPrevious()
 		}

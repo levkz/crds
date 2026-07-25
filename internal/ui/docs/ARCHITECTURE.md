@@ -153,6 +153,18 @@ OnLeave clears query/results/mode) and `DecksModel` (OnLeave saves
 selection). Lifecycle hooks fire on flat transitions (Replace) but not
 on stacked navigation (Push/Pop) where screens are preserved in history.
 
+Screens can implement `BackHandler` to intercept Esc before the global
+handler applies default behavior:
+
+```go
+type BackHandler interface {
+    HandleBack() bool
+}
+```
+
+Return `true` if the screen consumed the event. Currently implemented by
+`SearchModel` (returns to input mode when in results mode).
+
 A screen should never modify global application state.
 
 ---
@@ -297,6 +309,7 @@ Root Model → dispatchEvent()
 │              ├─ tea.WindowSizeMsg → resize handler
 │              ├─ tea.KeyMsg → dispatchKeyEvent()
 │              │                  ├─ keymap.DefaultGlobal → global action
+│              │                  │   (Back checks BackHandler first)
 │              │                  └─ forwardToScreen() → screen.Update()
 │              │                                           │
 │              │                                     screen handles locally
@@ -304,7 +317,6 @@ Root Model → dispatchEvent()
 │              │
 │              └─ forwardToScreen() (pass-through)
 │
-↓
 
 Command
 

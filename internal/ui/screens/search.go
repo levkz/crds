@@ -136,10 +136,16 @@ func (m *SearchModel) updateResults(msg tea.KeyMsg) (ui.Screen, tea.Cmd) {
 				}
 			}
 		}
-	case keymap.DefaultGlobal.Back.Match(msg):
-		m.mode = searchInput
 	}
 	return m, nil
+}
+
+func (m *SearchModel) HandleBack() bool {
+	if m.mode == searchResults {
+		m.mode = searchInput
+		return true
+	}
+	return false
 }
 
 func (m *SearchModel) filterResults() {
@@ -187,7 +193,7 @@ func (m SearchModel) View() string {
 	if m.mode == searchInput {
 		input = styles.FocusedInput().Render(m.query + "█")
 	} else {
-		input = styles.MutedText().Render(m.query)
+		input = styles.FocusedInput().Render(m.query)
 	}
 
 	var results string
@@ -197,7 +203,11 @@ func (m SearchModel) View() string {
 		for i, r := range m.results {
 			items[i] = r.front + " → " + strings.Join(r.back, ", ")
 		}
-		results = components.RenderList(items, m.cursor, m.width)
+		sel := -1
+		if m.mode == searchResults {
+			sel = m.cursor
+		}
+		results = components.RenderList(items, sel, m.width)
 	case m.query != "":
 		results = styles.MutedText().Render("No results found")
 	default:

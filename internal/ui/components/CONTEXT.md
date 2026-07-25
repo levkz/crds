@@ -125,6 +125,7 @@ Components are organized into six categories plus structural helpers:
 | `Group` | `func Group(title, content string, width int) string` | stateless | `styles.Hint()` |
 | `Window` | `func Window(title, content, footer string, width int) string` | stateless | `Header()`, `Footer()` |
 | `RenderList` | `func RenderList(items []string, selected int, width int) string` | stateless | `styles.SelectedItem()`, `renderer.Truncate()`, `ui.Theme.Icons` |
+| `RenderListClipped` | `func RenderListClipped(items []string, selected int, offset int, maxItems int, width int) string` | stateless | `RenderList` + scroll indicators |
 | `SelectableListModel` | `func NewSelectableList(multi bool) SelectableListModel` | hybrid | `styles.SelectedItem()`, `renderer.Truncate()`, `ui.Theme.Icons` |
 | `TreeModel` | `func NewTree() TreeModel` | hybrid | `styles.SelectedItem()`, `renderer.Truncate()`, `ui.Theme.Icons` |
 | `Table` | `func Table(headers []string, rows [][]string, width int) string` | stateless | `styles.MutedText()`, `renderer.Truncate()` |
@@ -343,7 +344,7 @@ components/
 │   ├── section.go        Section(title, content, width)
 │   ├── group.go          Group(title, content, width)
 │   ├── window.go         Window(title, content, footer, width)
-│   ├── list.go           RenderList(items, selected, width)
+│   ├── list.go           RenderList(items, selected, width) + RenderListClipped(items, selected, offset, maxItems, width)
 │   ├── table.go          Table(headers, rows, width)
 │   ├── progress.go       ProgressBar(progress)
 │   ├── notification.go   RenderNotification(text)

@@ -257,7 +257,7 @@ ui/
 │   │   ├── section.go        Section(title, content, width)
 │   │   ├── group.go          Group(title, content, width)
 │   │   ├── window.go         Window(title, content, footer, width)
-│   │   ├── list.go           RenderList(items, selected, width)
+│   │   ├── list.go           RenderList + RenderListClipped (scrollable)
 │   │   ├── table.go          Table(headers, rows, width)
 │   │   ├── progress.go       ProgressBar(progress)
 │   │   ├── notification.go   RenderNotification(text)

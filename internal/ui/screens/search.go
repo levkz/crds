@@ -27,13 +27,14 @@ type searchEntry struct {
 }
 
 type SearchModel struct {
-	query   string
-	cursor  int
-	results []searchEntry
-	cards   []ui.CardData
-	mode    searchMode
-	width   int
-	height  int
+	query        string
+	cursor       int
+	scrollOffset int
+	results      []searchEntry
+	cards        []ui.CardData
+	mode         searchMode
+	width        int
+	height       int
 }
 
 func NewSearch() *SearchModel {
@@ -56,6 +57,7 @@ func (m *SearchModel) OnLeave() tea.Cmd {
 	m.query = ""
 	m.results = nil
 	m.cursor = 0
+	m.scrollOffset = 0
 	m.mode = searchInput
 	return nil
 }
@@ -65,6 +67,7 @@ func (m *SearchModel) SetSearchData(cards []ui.CardData) {
 	m.query = ""
 	m.results = nil
 	m.cursor = 0
+	m.scrollOffset = 0
 	m.mode = searchInput
 }
 
@@ -116,10 +119,12 @@ func (m *SearchModel) updateResults(msg tea.KeyMsg) (ui.Screen, tea.Cmd) {
 	case keymap.DefaultList.Up.Match(msg):
 		if m.cursor > 0 {
 			m.cursor--
+			m.adjustScroll()
 		}
 	case keymap.DefaultList.Down.Match(msg):
 		if m.cursor < len(m.results)-1 {
 			m.cursor++
+			m.adjustScroll()
 		}
 	case keymap.DefaultSearch.Open.Match(msg):
 		if len(m.results) > 0 {
@@ -148,6 +153,26 @@ func (m *SearchModel) HandleBack() bool {
 	return false
 }
 
+func (m *SearchModel) maxVisible() int {
+	if m.height <= 9 {
+		return 1
+	}
+	return m.height - 9
+}
+
+func (m *SearchModel) adjustScroll() {
+	max := m.maxVisible()
+	if max <= 0 {
+		return
+	}
+	if m.cursor < m.scrollOffset {
+		m.scrollOffset = m.cursor
+	}
+	if m.cursor >= m.scrollOffset+max {
+		m.scrollOffset = m.cursor - max + 1
+	}
+}
+
 func (m *SearchModel) filterResults() {
 	if m.query == "" || len(m.cards) == 0 {
 		m.results = nil
@@ -155,6 +180,7 @@ func (m *SearchModel) filterResults() {
 	}
 
 	m.results = nil
+	m.scrollOffset = 0
 	q := strings.ToLower(m.query)
 	for _, card := range m.cards {
 		if strings.Contains(strings.ToLower(card.Front), q) {
@@ -204,10 +230,12 @@ func (m SearchModel) View() string {
 			items[i] = r.front + " → " + strings.Join(r.back, ", ")
 		}
 		sel := -1
+		offset := 0
 		if m.mode == searchResults {
 			sel = m.cursor
+			offset = m.scrollOffset
 		}
-		results = components.RenderList(items, sel, m.width)
+		results = components.RenderListClipped(items, sel, offset, m.maxVisible(), m.width)
 	case m.query != "":
 		results = styles.MutedText().Render("No results found")
 	default:

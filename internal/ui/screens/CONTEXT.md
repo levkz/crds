@@ -92,16 +92,19 @@ TypingQuizScreen
 
 ### SearchModel (`search.go`)
 
-- **State**: `query`, `cursor`, `results`, `cards`, `mode` (input/results)
+- **State**: `query`, `cursor`, `scrollOffset`, `results`, `cards`, `mode` (input/results)
 - **Keys**: `j`/`k`/arrows, `enter`, `backspace`, printable chars, `esc`
 - **Behavior**: Two-phase search. In **input mode**, all printable keys
   (including j/k) type into the query, results filter live. Enter switches
   to **results mode** if results exist. In results mode, j/k/arrows navigate,
   Enter opens the selected result's detail, Esc returns to input mode.
   Implements `Lifecycle` — `OnEnter` resets to input mode, `OnLeave` clears
-  query/results/mode when navigating away.
+  query/results/cursor/mode when navigating away.
+- **Scrolling**: Uses `RenderListClipped` with `scrollOffset` to clip
+  results to available terminal height. `adjustScroll()` keeps cursor
+  visible when navigating. `↑`/`↓` indicators show when content is clipped.
 - **Renders**: Header + FocusedInput styled input (with/without cursor) +
-  RenderList (with/without selection highlight) + footer (dynamic per mode)
+  RenderListClipped (clipped to fit terminal height) + footer (dynamic per mode)
 
 ### StatisticsModel (`statistics.go`)
 

@@ -37,6 +37,13 @@ func (s *Store) SyncDecks(deckDir string) error {
 		}
 	}
 
+	// Deduplicate translations and examples that may have accumulated due to
+	// foreign keys not being enforced in earlier versions.
+	ctx := context.Background()
+	_, _ = s.conn.ExecContext(ctx, "DELETE FROM translations WHERE id NOT IN (SELECT MIN(id) FROM translations GROUP BY entry_id, text)")
+	_, _ = s.conn.ExecContext(ctx, "DELETE FROM examples WHERE id NOT IN (SELECT MIN(id) FROM examples GROUP BY entry_id, text, translation)")
+	// entry_tags has a composite PK so duplicates cannot exist.
+
 	return nil
 }
 
@@ -68,6 +75,18 @@ func (s *Store) syncDeck(path string) error {
 		TranslationLanguage: deck.TranslationLanguage,
 	}); err != nil {
 		return fmt.Errorf("upsert deck: %w", err)
+	}
+
+	// Explicitly delete child rows first as a safety net in case
+	// PRAGMA foreign_keys was not honored by the driver.
+	if _, err := s.conn.ExecContext(ctx, "DELETE FROM translations WHERE entry_id IN (SELECT id FROM entries WHERE deck_id = ?)", deck.ID); err != nil {
+		return fmt.Errorf("delete translations by deck: %w", err)
+	}
+	if _, err := s.conn.ExecContext(ctx, "DELETE FROM examples WHERE entry_id IN (SELECT id FROM entries WHERE deck_id = ?)", deck.ID); err != nil {
+		return fmt.Errorf("delete examples by deck: %w", err)
+	}
+	if _, err := s.conn.ExecContext(ctx, "DELETE FROM entry_tags WHERE entry_id IN (SELECT id FROM entries WHERE deck_id = ?)", deck.ID); err != nil {
+		return fmt.Errorf("delete entry tags by deck: %w", err)
 	}
 
 	if err := s.queries.DeleteEntriesByDeck(ctx, deck.ID); err != nil {
@@ -135,7 +154,7 @@ func (s *Store) deckNeedsSync(path string, mtime time.Time) (bool, error) {
 		// No sync state recorded yet — needs sync
 		return true, nil
 	}
-	return mtime.After(stored) || mtime.Equal(stored), nil
+	return mtime.After(stored), nil
 }
 
 // ListDecks returns the deck IDs of all cached decks.

@@ -8,6 +8,7 @@ import (
 	kongcompletion "github.com/jotaen/kong-completion"
 	"github.com/posener/complete"
 
+	"crds/internal/app"
 	"crds/internal/cli"
 	"crds/internal/storage"
 )
@@ -42,6 +43,7 @@ func main() {
 		&c,
 		kong.Name("crds"),
 		kong.Description("Terminal flashcard application."),
+		kong.Bind(&app.App{}),
 	)
 	if err != nil {
 		panic(err)

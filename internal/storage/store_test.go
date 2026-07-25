@@ -16,7 +16,7 @@ import (
 func newTestStore(t *testing.T) *Store {
 	t.Helper()
 
-	conn, err := sql.Open("sqlite", ":memory:?_journal_mode=WAL&_busy_timeout=5000&_foreign_keys=on")
+	conn, err := sql.Open("sqlite", ":memory:?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)")
 	if err != nil {
 		t.Fatalf("open in-memory db: %v", err)
 	}

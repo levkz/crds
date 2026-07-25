@@ -33,7 +33,7 @@ type Store struct {
 // NewStore opens or creates the SQLite database at dbPath, runs pending
 // migrations, and returns a ready Store.
 func NewStore(dbPath string) (*Store, error) {
-	conn, err := sql.Open("sqlite", dbPath+"?_journal_mode=WAL&_busy_timeout=5000&_foreign_keys=on")
+	conn, err := sql.Open("sqlite", dbPath+"?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)")
 	if err != nil {
 		return nil, fmt.Errorf("open db: %w", err)
 	}

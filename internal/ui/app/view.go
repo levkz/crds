@@ -8,6 +8,7 @@ import (
 	components "crds/internal/ui/components/display"
 	"crds/internal/ui/keymap"
 	"crds/internal/ui/renderer"
+	"github.com/charmbracelet/lipgloss"
 )
 
 func (m Model) View() string {
@@ -21,8 +22,9 @@ func (m Model) View() string {
 		}
 	}
 
+	output := b.String()
+
 	if m.Global.Notification != nil {
-		output := b.String()
 		lines := strings.Split(output, "\n")
 		for i := len(lines) - 1; i >= 0; i-- {
 			if renderer.StripANSI(strings.TrimSpace(lines[i])) != "" {
@@ -39,10 +41,25 @@ func (m Model) View() string {
 				break
 			}
 		}
-		return strings.Join(lines, "\n")
+		output = strings.Join(lines, "\n")
 	}
 
-	return b.String()
+	return fillBackground(output, m.Width)
+}
+
+func fillBackground(s string, width int) string {
+	if width < 1 || s == "" {
+		return s
+	}
+	lines := strings.Split(s, "\n")
+	bgStyle := lipgloss.NewStyle().Background(ui.Theme.Palette.Background)
+	for i, line := range lines {
+		vw := renderer.VisibleWidth(line)
+		if vw < width {
+			lines[i] = line + bgStyle.Render(strings.Repeat(" ", width-vw))
+		}
+	}
+	return strings.Join(lines, "\n")
 }
 
 func renderOverlay(t OverlayType) string {

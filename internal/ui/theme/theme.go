@@ -33,7 +33,7 @@ func NewTheme(p Palette) Theme {
 		Danger:    lipgloss.NewStyle().Foreground(p.Red),
 		Muted:     lipgloss.NewStyle().Foreground(p.Gray),
 		Header:    lipgloss.NewStyle().Bold(true).Background(p.Surface),
-		Background: lipgloss.NewStyle().Foreground(p.White),
+		Background: lipgloss.NewStyle().Background(p.Background).Foreground(p.White),
 		Surface:   lipgloss.NewStyle().Background(p.Surface).Foreground(p.Blue),
 
 		Typography: NewTypography(p),

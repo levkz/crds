@@ -11,6 +11,7 @@ import (
 // State holds ephemeral application state persisted between sessions.
 type State struct {
 	SelectedDecks []string `yaml:"selected_decks"`
+	Theme         string   `yaml:"theme,omitempty"`
 }
 
 // StateStore manages loading and saving State to a YAML file.

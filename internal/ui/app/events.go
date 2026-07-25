@@ -120,7 +120,10 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 			return m.WithNotification("Theme not found: " + msg.Name), nil
 		}
 		ui.SetTheme(th)
-		return m.WithNotification("Switched to " + msg.Name + " theme"), nil
+		cmd := func() tea.Msg {
+			return SaveStateCmd(m.Dispatcher, m.SelectedDecks)
+		}
+		return m.WithNotification("Switched to " + msg.Name + " theme"), cmd
 
 	case events.TickMsg:
 		return m, TickCmd()
@@ -161,6 +164,13 @@ func (m Model) handleDataLoaded(msg DataLoadedMsg) (Model, tea.Cmd) {
 			}
 		}
 		m.SelectedDecks = validSelected
+
+		// Restore theme from saved state
+		if state.Theme != "" {
+			if th, err := theme.Switch(state.Theme); err == nil {
+				ui.SetTheme(th)
+			}
+		}
 
 		// Pass deck list + selection to Decks screen
 		if decksScreen, ok := m.Navigator.Registry().Get(ui.DecksScreen); ok {

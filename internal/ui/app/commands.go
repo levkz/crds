@@ -7,6 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"crds/internal/storage"
 	"crds/internal/ui"
+	"crds/internal/ui/theme"
 )
 
 // MsgKind classifies command result messages for typed dispatch.
@@ -121,12 +122,15 @@ func mergeDecks(decks []ui.DeckData) ui.DeckData {
 	}
 }
 
-// SaveStateCmd persists the selected decks state.
+// SaveStateCmd persists the selected decks and active theme.
 func SaveStateCmd(d *Dispatcher, selected []string) tea.Msg {
 	if d.State == nil {
 		return nil
 	}
-	err := d.State.Save(&storage.State{SelectedDecks: selected})
+	err := d.State.Save(&storage.State{
+		SelectedDecks: selected,
+		Theme:         theme.CurrentName(),
+	})
 	if err != nil {
 		return DataErrorMsg{Kind: MsgKindState, Err: fmt.Errorf("saving state: %w", err)}
 	}

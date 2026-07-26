@@ -25,6 +25,8 @@
 ## Known issues
 
 - `scheduler/`, `search/`, `quiz/` implementations don't exist yet — those are aspirational (docs/ outruns code)
+- CLI commands are all stubs — see `internal/cli/CONTEXT.md` for the wiring guide
+- `app.App` is empty — must be extended with Store/State/SharedDir/DataDir before CLI commands can work
 - Grade scale mismatch: Flashcard uses 0-3, Typing uses 1-3 (needs normalization)
 - Background fill ANSI nesting: `fillBackground()` must split at every `\033[0m` (full reset) and re-wrap each segment — otherwise inner resets destroy outer backgrounds. This is handled in `app/view.go` but any new ANSI-producing code must account for it.
 
@@ -34,14 +36,15 @@ Docs describe an aspirational layered architecture. Reality is partial:
 
 - **model/** — domain types (Deck, Entry, Progress, Review, Session). `TypingDetail` only exists in sqlc-generated code.
 - **parser/** — YAML parsing + validation + normalization (has tests)
-- **cli/** — Kong command stubs (quiz, sync, stats, search) — most `Run()` methods only print
+- **cli/** — Kong command stubs — see `internal/cli/CONTEXT.md` for the full wiring guide
 - **app/** — empty composition root struct (but `internal/ui/app/` has real UI scaffolding)
+- **editor/** — `$EDITOR`/nano/vim invocation + YAML buffer handling for entry editing
 - **ui/** — Full Bubble Tea UI: navigation/ fully implemented, app/ wired, 8 screens, theme system with 15-color palette and 4 built-in themes (dark, light, tokyonight, default), background fill across entire terminal, inline notifications
-- **storage/** — SQLite fully implemented via `Store` (goose + sqlc). On startup, `SyncDecks()` caches YAML decks in SQLite. `Store` implements `DeckProvider`, `ProgressRecorder`, and `StatsProvider`. `DeckStore` (legacy filesystem) remains but is not wired.
+- **storage/** — SQLite fully implemented via `Store` (goose + sqlc). On startup, `SyncDecks()` caches YAML decks in SQLite. `Store` implements `DeckProvider`, `ProgressRecorder`, and `StatsProvider`. Deck+entry CRUD, reserve/backup, revert all implemented. `DeckStore` (legacy filesystem) remains but is not wired.
 
 SQL stack: SQLite (`modernc.org/sqlite`) + goose (migrations) + sqlc (type-safe queries)
 
-Most work ahead: wiring CLI commands → parser → storage → quiz/scheduler logic.
+Most work ahead: wiring CLI commands (`internal/cli/CONTEXT.md`) → quiz/scheduler logic.
 
 ## Commit workflow
 

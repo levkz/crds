@@ -83,9 +83,10 @@ Run everything from repo root.
 ## Subsystem Documentation
 
 | Subsystem | Documentation | Status |
-|---|---|---|
+|---|---|---|---|
 | Parser | — | No dedicated docs yet |
-| Storage | — | SQLite fully implemented via `Store` (goose + sqlc). `DeckStore` reads YAML decks. `StateStore` persists selected decks. |
+| Storage | — | SQLite fully implemented via `Store` (goose + sqlc). Deck CRUD, entry CRUD, reserve/backup, revert all implemented. `DeckStore` reads YAML decks (legacy, not wired). `StateStore` persists selected decks. |
+| Editor | — | `internal/editor/` implements `$EDITOR` invocation + YAML buffer handling |
 | Quiz | — | Package does not exist yet |
 | Scheduler | — | Package does not exist yet |
 | Search | — | Package does not exist yet |
@@ -132,14 +133,16 @@ Most implementation work happens inside `internal/`.
 | `internal/ui/app/` | Root Bubble Tea model, event dispatch, lifecycle, commands | — |
 | `internal/ui/screens/` | 8 screens: Home, Quiz, Typing Quiz, Search, Statistics, Settings, Detail, Decks | — |
 | `internal/fuzzy/` | Levenshtein-based fuzzy string matching for grading typed answers | 8 tests |
+| `internal/editor/` | `$EDITOR`/nano/vim invoker with YAML buffer for entry editing | — |
 
 ## Partially Implemented
 
 | Package | Status |
 |---|---|
-| `internal/storage/` | SQLite fully implemented via `Store` (goose + sqlc). `DeckStore` reads YAML decks. `StateStore` persists selected decks. Legacy `ProgressStore` remains but is not wired. |
-| `internal/cli/` | Kong command stubs. Most `Run()` methods only print. |
-| `internal/app/` | Empty composition root struct. Aspirational. |
+| `internal/storage/` | SQLite fully implemented via `Store` (goose + sqlc). Deck+entry CRUD, reserve/backup, revert all implemented. `DeckStore` reads YAML decks (legacy, not wired). `StateStore` persists selected decks. `ProgressStore` legacy remains but is not wired. |
+| `internal/cli/` | Kong command stubs. All `Run()` methods need wiring. See `internal/cli/CONTEXT.md`. |
+| `internal/app/` | Empty composition root struct. Must be extended with Store/State/SharedDir/DataDir before CLI commands can work. |
+| `internal/editor/` | Implemented (`$EDITOR` + YAML buffer) but has no tests yet. |
 
 ## Not Implemented
 
@@ -158,7 +161,8 @@ Most implementation work happens inside `internal/`.
 # Known Issues
 
 - Deck selection screen exists but empty selection means no quiz (must pick at least one deck)
-- CLI commands (quiz, sync, stats, search) are stubs — only the TUI launches
+- CLI commands (quiz, sync, stats, search, import, export, delete, reserve, revert, edit) are stubs — only the TUI launches
+- `app.App` is empty — must be extended with Store/State/SharedDir/DataDir before CLI commands can work
 - Grade scale mismatch: Flashcard uses 0-3, Typing uses 1-3 (needs normalization)
 
 ---

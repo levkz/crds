@@ -8,9 +8,10 @@ import (
 )
 
 type Card struct {
-	Front string
-	Back  []string
-	Notes string
+	Front    string
+	Back     []string
+	Variants []string
+	Notes    string
 }
 
 func RenderCard(c Card, revealed bool, width int) string {

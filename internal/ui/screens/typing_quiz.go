@@ -49,6 +49,12 @@ func (m *TypingQuizModel) SetDeck(deck ui.DeckData) {
 		cards[i] = components.Card{
 			Front: c.Front,
 			Back:  c.Back,
+			Variants: func() []string {
+				if len(c.Variants) > 0 {
+					return c.Variants
+				}
+				return c.Back
+			}(),
 			Notes: c.Notes,
 		}
 	}
@@ -69,9 +75,9 @@ func (m *TypingQuizModel) gradeInput() bool {
 	if answer == "" {
 		return false
 	}
-	translations := m.cards[m.cardIndex].Back
-	m.grade = m.matcher.Grade(answer, translations)
-	score, _ := m.matcher.Check(answer, translations)
+	variants := m.cards[m.cardIndex].Variants
+	m.grade = m.matcher.Grade(answer, variants)
+	score, _ := m.matcher.Check(answer, variants)
 	m.score = score
 	return true
 }

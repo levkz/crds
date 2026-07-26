@@ -27,10 +27,11 @@ type NavigateToMsg struct {
 }
 
 type CardData struct {
-	ID    string
-	Front string
-	Back  []string
-	Notes string
+	ID       string
+	Front    string
+	Back     []string
+	Variants []string
+	Notes    string
 }
 
 type DeckData struct {

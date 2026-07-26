@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"crds/internal/model"
 	"crds/internal/parser"
 	"crds/internal/storage/db"
 	"crds/internal/ui"
@@ -196,13 +197,19 @@ func (s *Store) LoadDeck(id string) (ui.DeckData, error) {
 }
 
 func (s *Store) buildCard(ctx context.Context, entry db.Entry) ui.CardData {
-	translations, _ := s.queries.GetTranslationsByEntry(ctx, entry.ID)
+	texts, _ := s.queries.GetTranslationsByEntry(ctx, entry.ID)
+
+	var variants []string
+	for _, t := range texts {
+		variants = append(variants, model.ExpandText(t)...)
+	}
 
 	return ui.CardData{
-		ID:    entry.ID,
-		Front: entry.Term,
-		Back:  translations,
-		Notes: entry.Notes,
+		ID:       entry.ID,
+		Front:    entry.Term,
+		Back:     texts,
+		Variants: variants,
+		Notes:    entry.Notes,
 	}
 }
 

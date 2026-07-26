@@ -13,13 +13,14 @@ type CLI struct {
     Stats      StatsCmd
     Deck       DeckCmd      `cmd:"" help:"Deck operations."`
     State      StateCmd     `cmd:"" help:"State management."`
+    Profile    ProfileCmd   `cmd:"" help:"Profile operations."`
     Completion kongcompletion.Completion
 }
 ```
 
-Flat commands (Quiz, Stats, Completion) remain at root. Deck and state operations are grouped under `DeckCmd` and `StateCmd`.
+Flat commands (Quiz, Stats, Completion) remain at root. Deck, state, and profile operations are grouped under `DeckCmd`, `StateCmd`, and `ProfileCmd`.
 
-### Command groups (`deck.go`, `state.go`, `term.go`)
+### Command groups (`deck.go`, `state.go`, `term.go`, `profile.go`)
 
 ```go
 type DeckCmd struct {
@@ -42,6 +43,12 @@ type StateCmd struct {
     Revert  RevertCmd  `cmd:"" help:"Revert from a reserve copy."`
     Sync    SyncCmd    `cmd:"" help:"Synchronize decks."`
 }
+
+type ProfileCmd struct {
+    Export ProfileExportCmd `cmd:"" help:"Export full profile for device migration."`
+    Import ProfileImportCmd `cmd:"" help:"Import a profile from another device."`
+}
+
 ```
 
 Each subcommand accepts its own positional args (e.g. `ExportCmd.Deck`, `TermEditCmd.Deck` / `TermEditCmd.TermID`).
@@ -71,6 +78,8 @@ crds deck term add <deck>       → DeckCmd.Term.Add.Run(a)  → add entry
 crds deck term edit <deck> <id> → DeckCmd.Term.Edit.Run(a) → edit entry
 crds deck term rm <deck> <id>   → DeckCmd.Term.Rm.Run(a)   → remove entry
 crds deck edit <deck>           → DeckCmd.Edit.Run(a)       → full deck edit
+crds profile export             → ProfileCmd.Export.Run(a)  → profile export
+crds profile import <file>      → ProfileCmd.Import.Run(a)  → profile import
 ```
 
 When a subcommand is matched, Kong's `RunNode` walks from the selected node up to the root calling every `Run()` it finds. Subcommand `Run()` executes first, then `CLI.Run()` receives `ctx.Selected() != nil` and returns immediately without launching the TUI.
@@ -88,6 +97,8 @@ Constructed from `os.UserHomeDir()` in `main.go`:
 | `DBPath` | `~/.local/share/crds/crds.db` |
 | `ReserveDir` | `~/.local/share/crds/reserve-copies/` |
 | `StatePath` | `~/.local/share/crds/state.yaml` |
+| `ConfigDir` | `~/.config/crds/` |
+| `ThemesDir` | `~/.config/crds/themes/` |
 
 ---
 
@@ -123,6 +134,13 @@ All methods on `*storage.Store`. All paths use `deckDir` (the directory containi
 | `CreateReserveTo` | `sharedDir, outputDir, name` | Same but with custom output dir and/or name; returns full path |
 | `RevertReserve` | `sharedDir, reservePath` | Restore from backup, auto pre-backup, close/reopen DB |
 | `ListReserves` | `sharedDir` (standalone) | Returns reserve archive paths, newest-first |
+
+### Profile operations
+
+| Method | Parameters | Behaviour |
+|--------|------------|-----------|
+| `CreateProfile` | `sharedDir, configDir, outputDir, name` | Pack DB + state + decks + config/keymaps/themes into `crds-profile.tar.gz` (auto-increment on collision) |
+| `ImportProfile` | `sharedDir, configDir, profilePath` | Pre-backup, close DB, extract (sharedDir files → sharedDir, config/ subtree → configDir), reopen DB, migrate, sync |
 
 ### Session and stats
 

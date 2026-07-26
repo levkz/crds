@@ -92,7 +92,7 @@ The project is divided into several independent subsystems.
 
 | Subsystem | Responsibility | Status |
 |---|---|---|
-| CLI | Command-line interface and command dispatch | Fully implemented (3 command groups + top-level Quiz/Stats, Kong dispatch, TUI launch) |
+| CLI | Command-line interface and command dispatch | Fully implemented (4 command groups + top-level Quiz/Stats, Kong dispatch, TUI launch) |
 | Parser | Loading and validating vocabulary files | Complete |
 | Storage | Persisting user-specific state | Fully implemented via `Store` (SQLite, goose, sqlc) |
 | Quiz | Learning session orchestration | Not implemented |
@@ -472,7 +472,7 @@ docs/
 # Known Issues
 
 - `duplicate_terms` test expects error but validation only checks duplicate IDs
-- CLI commands fully implemented: quiz, stats, deck (import/export/delete/search/edit/term-add/edit/rm), state (reserve/revert/sync)
+- CLI commands fully implemented: quiz, stats, deck (import/export/delete/search/edit/term-add/edit/rm), state (reserve/revert/sync), profile (export/import)
 - Deck selection screen exists but empty selection means no quiz (must pick at least one deck)
 - Grade scale mismatch: Flashcard uses 0-3, Typing uses 1-3 (needs normalization)
 

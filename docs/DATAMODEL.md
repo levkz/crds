@@ -216,6 +216,7 @@ CREATE TABLE reviews (
     deck_id TEXT NOT NULL,
     entry_id TEXT NOT NULL,
     grade INTEGER NOT NULL,
+    reverse INTEGER NOT NULL DEFAULT 0,
     reviewed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 ```
@@ -254,12 +255,13 @@ Per-entry learning progress for spaced repetition.
 CREATE TABLE progress (
     deck_id TEXT NOT NULL,
     entry_id TEXT NOT NULL,
+    reverse INTEGER NOT NULL DEFAULT 0,
     ease REAL NOT NULL DEFAULT 2.5,
     interval INTEGER NOT NULL DEFAULT 0,
     due DATETIME,
     correct INTEGER NOT NULL DEFAULT 0,
     incorrect INTEGER NOT NULL DEFAULT 0,
-    PRIMARY KEY (deck_id, entry_id)
+    PRIMARY KEY (deck_id, entry_id, reverse)
 );
 ```
 
@@ -287,6 +289,7 @@ Domain model (plain struct, no DB fields):
 type Progress struct {
     DeckID   string
     EntryID  string
+    Reverse  bool
     Ease     float64
     Interval int
     Due      time.Time
@@ -301,9 +304,10 @@ sqlc-generated model (with DB tags):
 type Progress struct {
     DeckID    string
     EntryID   string
+    Reverse   int64
     Ease      float64
     Interval  int64
-    Due       sql.NullTime
+    Due       *time.Time
     Correct   int64
     Incorrect int64
 }
@@ -330,6 +334,7 @@ type Review struct {
     EntryID    string
     ReviewedAt time.Time
     Grade      int
+    Reverse    bool
 }
 ```
 
@@ -342,6 +347,7 @@ type Review struct {
     DeckID     string
     EntryID    string
     Grade      int64
+    Reverse    int64
     ReviewedAt time.Time
 }
 ```
@@ -463,7 +469,8 @@ SQL queries are organized by domain in `internal/storage/queries/`:
 internal/storage/
 ├── migrations/
 │   ├── 20260716121051_init.sql
-│   └── 20260721000000_add_deck_cache.sql
+│   ├── 20260721000000_add_deck_cache.sql
+│   └── 20260726120000_add_reverse.sql
 ├── queries/
 │   ├── sessions.sql
 │   ├── reviews.sql

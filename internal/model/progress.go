@@ -5,6 +5,7 @@ import "time"
 type Progress struct {
 	DeckID  string
 	EntryID string
+	Reverse bool
 
 	Ease     float64
 	Interval int

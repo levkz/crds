@@ -22,11 +22,7 @@ func Validate(deck *model.Deck) error {
 	ids := make(map[string]struct{})
 	terms := make(map[string]string)
 
-	for i, entry := range deck.Entries {
-		if entry.ID == "" {
-			return fmt.Errorf("entry %d: missing id!\nrun `crds sync` to generate missing ids.", i+1)
-		}
-
+	for _, entry := range deck.Entries {
 		if _, exists := ids[entry.ID]; exists {
 			return fmt.Errorf("duplicate entry id: %q", entry.ID)
 		}

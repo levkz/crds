@@ -33,6 +33,7 @@ func Parse(data []byte) (*model.Deck, error) {
 	}
 
 	Normalize(&deck)
+	assignIDs(&deck)
 
 	if err := Validate(&deck); err != nil {
 		return nil, err

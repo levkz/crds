@@ -522,6 +522,179 @@ func (s *Store) DeleteDeck(deckID, deckDir string) error {
 	return nil
 }
 
+// --- Entry operations ---
+
+// AddEntry appends a new entry to a deck's YAML file and syncs it to the DB.
+// Returns an error if the entry ID already exists in the deck.
+func (s *Store) AddEntry(deckID string, entry model.Entry, deckDir string) error {
+	yamlPath := filepath.Join(deckDir, deckID+".yaml")
+
+	deck, err := parser.ParseFile(yamlPath)
+	if err != nil {
+		return fmt.Errorf("add-entry: parse %s: %w", yamlPath, err)
+	}
+
+	for _, e := range deck.Entries {
+		if e.ID == entry.ID {
+			return fmt.Errorf("add-entry: entry %q already exists in deck %q", entry.ID, deckID)
+		}
+	}
+
+	deck.Entries = append(deck.Entries, entry)
+
+	data, err := yaml.Marshal(deck)
+	if err != nil {
+		return fmt.Errorf("add-entry: marshal: %w", err)
+	}
+	if err := os.WriteFile(yamlPath, data, 0644); err != nil {
+		return fmt.Errorf("add-entry: write: %w", err)
+	}
+
+	if err := s.syncDeck(yamlPath); err != nil {
+		return fmt.Errorf("add-entry: sync: %w", err)
+	}
+
+	return nil
+}
+
+// UpdateEntry replaces an existing entry's fields (same ID) in the YAML file
+// and syncs to the DB. The entry ID must match the existing entry's ID.
+func (s *Store) UpdateEntry(deckID, entryID string, entry model.Entry, deckDir string) error {
+	yamlPath := filepath.Join(deckDir, deckID+".yaml")
+
+	deck, err := parser.ParseFile(yamlPath)
+	if err != nil {
+		return fmt.Errorf("update-entry: parse %s: %w", yamlPath, err)
+	}
+
+	found := false
+	for i, e := range deck.Entries {
+		if e.ID == entryID {
+			entry.ID = entryID
+			deck.Entries[i] = entry
+			found = true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("update-entry: entry %q not found in deck %q", entryID, deckID)
+	}
+
+	data, err := yaml.Marshal(deck)
+	if err != nil {
+		return fmt.Errorf("update-entry: marshal: %w", err)
+	}
+	if err := os.WriteFile(yamlPath, data, 0644); err != nil {
+		return fmt.Errorf("update-entry: write: %w", err)
+	}
+
+	if err := s.syncDeck(yamlPath); err != nil {
+		return fmt.Errorf("update-entry: sync: %w", err)
+	}
+
+	return nil
+}
+
+// ReplaceEntryID changes an entry's ID in the YAML file and migrates progress
+// and review records from the old ID to the new ID so statistics are preserved.
+func (s *Store) ReplaceEntryID(deckID, oldID, newID string, deckDir string) error {
+	yamlPath := filepath.Join(deckDir, deckID+".yaml")
+
+	deck, err := parser.ParseFile(yamlPath)
+	if err != nil {
+		return fmt.Errorf("replace-id: parse %s: %w", yamlPath, err)
+	}
+
+	for _, e := range deck.Entries {
+		if e.ID == newID {
+			return fmt.Errorf("replace-id: entry %q already exists in deck %q", newID, deckID)
+		}
+	}
+
+	found := false
+	for i, e := range deck.Entries {
+		if e.ID == oldID {
+			deck.Entries[i].ID = newID
+			found = true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("replace-id: entry %q not found in deck %q", oldID, deckID)
+	}
+
+	data, err := yaml.Marshal(deck)
+	if err != nil {
+		return fmt.Errorf("replace-id: marshal: %w", err)
+	}
+	if err := os.WriteFile(yamlPath, data, 0644); err != nil {
+		return fmt.Errorf("replace-id: write: %w", err)
+	}
+
+	ctx := context.Background()
+	_, err = s.conn.ExecContext(ctx, "UPDATE progress SET entry_id = ? WHERE deck_id = ? AND entry_id = ?", newID, deckID, oldID)
+	if err != nil {
+		return fmt.Errorf("replace-id: progress: %w", err)
+	}
+	_, err = s.conn.ExecContext(ctx, "UPDATE reviews SET entry_id = ? WHERE deck_id = ? AND entry_id = ?", newID, deckID, oldID)
+	if err != nil {
+		return fmt.Errorf("replace-id: reviews: %w", err)
+	}
+
+	if err := s.syncDeck(yamlPath); err != nil {
+		return fmt.Errorf("replace-id: sync: %w", err)
+	}
+
+	return nil
+}
+
+// RemoveEntry deletes an entry from the YAML file, syncs to the DB, and cleans
+// up associated progress and review records.
+func (s *Store) RemoveEntry(deckID, entryID, deckDir string) error {
+	yamlPath := filepath.Join(deckDir, deckID+".yaml")
+
+	deck, err := parser.ParseFile(yamlPath)
+	if err != nil {
+		return fmt.Errorf("remove-entry: parse %s: %w", yamlPath, err)
+	}
+
+	found := false
+	for i, e := range deck.Entries {
+		if e.ID == entryID {
+			deck.Entries = append(deck.Entries[:i], deck.Entries[i+1:]...)
+			found = true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("remove-entry: entry %q not found in deck %q", entryID, deckID)
+	}
+
+	data, err := yaml.Marshal(deck)
+	if err != nil {
+		return fmt.Errorf("remove-entry: marshal: %w", err)
+	}
+	if err := os.WriteFile(yamlPath, data, 0644); err != nil {
+		return fmt.Errorf("remove-entry: write: %w", err)
+	}
+
+	if err := s.syncDeck(yamlPath); err != nil {
+		return fmt.Errorf("remove-entry: sync: %w", err)
+	}
+
+	ctx := context.Background()
+	_, err = s.conn.ExecContext(ctx, "DELETE FROM progress WHERE deck_id = ? AND entry_id = ?", deckID, entryID)
+	if err != nil {
+		return fmt.Errorf("remove-entry: progress: %w", err)
+	}
+	_, err = s.conn.ExecContext(ctx, "DELETE FROM reviews WHERE deck_id = ? AND entry_id = ?", deckID, entryID)
+	if err != nil {
+		return fmt.Errorf("remove-entry: reviews: %w", err)
+	}
+
+	return nil
+}
+
 // DB returns the underlying *sql.DB for advanced use (e.g. goose migrations outside of NewStore).
 func (s *Store) DB() *sql.DB {
 	return s.conn

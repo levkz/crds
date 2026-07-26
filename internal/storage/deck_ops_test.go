@@ -676,3 +676,297 @@ func TestDeleteDeck_FileMissing(t *testing.T) {
 		t.Errorf("deck should still be deleted from DB: %v", err)
 	}
 }
+
+// --- Entry operations ---
+
+func TestAddEntry(t *testing.T) {
+	store := newTestStore(t)
+	defer store.Close()
+
+	deckDir := setupSyncedDeck(t, store)
+
+	newEntry := model.Entry{
+		ID:   "entry_3",
+		Term: "merci",
+		Translations: []model.Translation{
+			{Text: "thank you"},
+		},
+	}
+
+	if err := store.AddEntry("test_deck", newEntry, deckDir); err != nil {
+		t.Fatalf("AddEntry: %v", err)
+	}
+
+	entries, err := store.queries.ListEntriesByDeck(context.Background(), "test_deck")
+	if err != nil {
+		t.Fatalf("ListEntriesByDeck: %v", err)
+	}
+	if len(entries) != 3 {
+		t.Fatalf("expected 3 entries in DB, got %d", len(entries))
+	}
+
+	found := false
+	for _, e := range entries {
+		if e.ID == "entry_3" && e.Term == "merci" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("entry_3 not found in DB after AddEntry")
+	}
+
+	// Verify YAML has the new entry
+	parsed, err := parser.ParseFile(filepath.Join(deckDir, "test_deck.yaml"))
+	if err != nil {
+		t.Fatalf("parse YAML: %v", err)
+	}
+	if len(parsed.Entries) != 3 {
+		t.Fatalf("expected 3 entries in YAML, got %d", len(parsed.Entries))
+	}
+}
+
+func TestAddEntry_DuplicateID(t *testing.T) {
+	store := newTestStore(t)
+	defer store.Close()
+
+	deckDir := setupSyncedDeck(t, store)
+
+	dup := model.Entry{
+		ID:   "entry_1",
+		Term: "duplicate",
+		Translations: []model.Translation{
+			{Text: "dup"},
+		},
+	}
+
+	err := store.AddEntry("test_deck", dup, deckDir)
+	if err == nil {
+		t.Fatal("expected error for duplicate entry ID")
+	}
+	if !strings.Contains(err.Error(), "already exists") {
+		t.Errorf("expected 'already exists' error, got: %v", err)
+	}
+}
+
+func TestUpdateEntry(t *testing.T) {
+	store := newTestStore(t)
+	defer store.Close()
+
+	deckDir := setupSyncedDeck(t, store)
+
+	updated := model.Entry{
+		Term: "bonjour (updated)",
+		Translations: []model.Translation{
+			{Text: "hello"},
+			{Text: "good day"},
+		},
+		Tags: []string{"greeting", "updated"},
+	}
+
+	if err := store.UpdateEntry("test_deck", "entry_1", updated, deckDir); err != nil {
+		t.Fatalf("UpdateEntry: %v", err)
+	}
+
+	parsed, err := parser.ParseFile(filepath.Join(deckDir, "test_deck.yaml"))
+	if err != nil {
+		t.Fatalf("parse YAML: %v", err)
+	}
+
+	var found *model.Entry
+	for i := range parsed.Entries {
+		if parsed.Entries[i].ID == "entry_1" {
+			found = &parsed.Entries[i]
+			break
+		}
+	}
+	if found == nil {
+		t.Fatal("entry_1 not found after update")
+	}
+	if found.Term != "bonjour (updated)" {
+		t.Errorf("expected term 'bonjour (updated)', got %q", found.Term)
+	}
+	if len(found.Translations) != 2 || found.Translations[1].Text != "good day" {
+		t.Errorf("translations not updated: %v", found.Translations)
+	}
+	if len(found.Tags) != 2 || found.Tags[1] != "updated" {
+		t.Errorf("tags not updated: %v", found.Tags)
+	}
+}
+
+func TestUpdateEntry_NotFound(t *testing.T) {
+	store := newTestStore(t)
+	defer store.Close()
+
+	deckDir := setupSyncedDeck(t, store)
+
+	err := store.UpdateEntry("test_deck", "nonexistent", model.Entry{
+		Term: "nope",
+		Translations: []model.Translation{{Text: "no"}},
+	}, deckDir)
+	if err == nil {
+		t.Fatal("expected error for nonexistent entry")
+	}
+}
+
+func TestReplaceEntryID(t *testing.T) {
+	store := newTestStore(t)
+	defer store.Close()
+
+	deckDir := setupSyncedDeck(t, store)
+
+	// Create some progress for entry_1
+	due := timeOnly("2026-07-26 12:00:00")
+	if err := store.queries.UpsertProgress(context.Background(), db.UpsertProgressParams{
+		DeckID:    "test_deck",
+		EntryID:   "entry_1",
+		Reverse:   0,
+		Ease:      2.5,
+		Interval:  1,
+		Due:       &due,
+		Correct:   3,
+		Incorrect: 0,
+	}); err != nil {
+		t.Fatalf("UpsertProgress: %v", err)
+	}
+	if err := store.RecordAnswer("test_deck", "entry_1", 3, false); err != nil {
+		t.Fatalf("RecordAnswer: %v", err)
+	}
+
+	if err := store.ReplaceEntryID("test_deck", "entry_1", "entry_1_new", deckDir); err != nil {
+		t.Fatalf("ReplaceEntryID: %v", err)
+	}
+
+	// Verify old ID no longer exists
+	_, err := store.queries.GetEntry(context.Background(), "entry_1")
+	if !errors.Is(err, sql.ErrNoRows) {
+		t.Errorf("old entry should be gone: %v", err)
+	}
+
+	// Verify new ID exists
+	got, err := store.queries.GetEntry(context.Background(), "entry_1_new")
+	if err != nil {
+		t.Fatalf("GetEntry new: %v", err)
+	}
+	if got.ID != "entry_1_new" {
+		t.Errorf("expected entry_1_new, got %q", got.ID)
+	}
+
+	// Verify progress migrated to new ID
+	p, err := store.queries.GetProgress(context.Background(), db.GetProgressParams{
+		DeckID:  "test_deck",
+		EntryID: "entry_1_new",
+		Reverse: 0,
+	})
+	if err != nil {
+		t.Fatalf("GetProgress after replace: %v", err)
+	}
+	if p.Correct != 3 {
+		t.Errorf("expected progress.correct=3, got %d", p.Correct)
+	}
+
+	// Verify reviews migrated to new ID
+	reviews, err := store.GetReviewsByEntry("entry_1_new", 10)
+	if err != nil {
+		t.Fatalf("GetReviewsByEntry: %v", err)
+	}
+	if len(reviews) != 1 {
+		t.Errorf("expected 1 review for new ID, got %d", len(reviews))
+	}
+}
+
+func TestReplaceEntryID_Duplicate(t *testing.T) {
+	store := newTestStore(t)
+	defer store.Close()
+
+	deckDir := setupSyncedDeck(t, store)
+
+	err := store.ReplaceEntryID("test_deck", "entry_1", "entry_2", deckDir)
+	if err == nil {
+		t.Fatal("expected error for duplicate target ID")
+	}
+	if !strings.Contains(err.Error(), "already exists") {
+		t.Errorf("expected 'already exists' error, got: %v", err)
+	}
+}
+
+func TestRemoveEntry(t *testing.T) {
+	store := newTestStore(t)
+	defer store.Close()
+
+	deckDir := setupSyncedDeck(t, store)
+
+	// Create progress for entry_2
+	due := timeOnly("2026-07-26 12:00:00")
+	if err := store.queries.UpsertProgress(context.Background(), db.UpsertProgressParams{
+		DeckID:    "test_deck",
+		EntryID:   "entry_2",
+		Reverse:   0,
+		Ease:      2.5,
+		Interval:  1,
+		Due:       &due,
+		Correct:   1,
+		Incorrect: 0,
+	}); err != nil {
+		t.Fatalf("UpsertProgress: %v", err)
+	}
+	if err := store.RecordAnswer("test_deck", "entry_2", 3, false); err != nil {
+		t.Fatalf("RecordAnswer: %v", err)
+	}
+
+	if err := store.RemoveEntry("test_deck", "entry_2", deckDir); err != nil {
+		t.Fatalf("RemoveEntry: %v", err)
+	}
+
+	// Verify removed from YAML
+	parsed, err := parser.ParseFile(filepath.Join(deckDir, "test_deck.yaml"))
+	if err != nil {
+		t.Fatalf("parse YAML: %v", err)
+	}
+	if len(parsed.Entries) != 1 {
+		t.Fatalf("expected 1 entry after remove, got %d", len(parsed.Entries))
+	}
+	if parsed.Entries[0].ID == "entry_2" {
+		t.Error("entry_2 should not be in YAML after remove")
+	}
+
+	// Verify removed from DB
+	entries, err := store.queries.ListEntriesByDeck(context.Background(), "test_deck")
+	if err != nil {
+		t.Fatalf("ListEntriesByDeck: %v", err)
+	}
+	if len(entries) != 1 {
+		t.Fatalf("expected 1 entry in DB, got %d", len(entries))
+	}
+
+	// Verify progress cleaned up
+	_, err = store.queries.GetProgress(context.Background(), db.GetProgressParams{
+		DeckID:  "test_deck",
+		EntryID: "entry_2",
+		Reverse: 0,
+	})
+	if !errors.Is(err, sql.ErrNoRows) {
+		t.Errorf("progress should be deleted: %v", err)
+	}
+
+	// Verify reviews cleaned up
+	reviews, err := store.GetReviewsByEntry("entry_2", 10)
+	if err != nil {
+		t.Fatalf("GetReviewsByEntry: %v", err)
+	}
+	if len(reviews) != 0 {
+		t.Errorf("expected 0 reviews after remove, got %d", len(reviews))
+	}
+}
+
+func TestRemoveEntry_NotFound(t *testing.T) {
+	store := newTestStore(t)
+	defer store.Close()
+
+	deckDir := setupSyncedDeck(t, store)
+
+	err := store.RemoveEntry("test_deck", "nonexistent", deckDir)
+	if err == nil {
+		t.Fatal("expected error for nonexistent entry")
+	}
+}

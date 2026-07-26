@@ -3,14 +3,12 @@ package cli
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/pressly/goose/v3"
 
 	"crds/internal/app"
 	"crds/internal/storage"
-	"crds/internal/ui"
 )
 
 func init() {
@@ -126,7 +124,7 @@ func TestSearchCmd_Run(t *testing.T) {
 	writeTestDeck(t, a.DataDir, "italian")
 	syncDecks(t, a)
 
-	s := &SearchCmd{Deck: "italian", Query: "hello"}
+	s := &SearchCmd{Deck: []string{"italian"}, Query: "hello"}
 	if err := s.Run(a); err != nil {
 		t.Fatalf("SearchCmd.Run: %v", err)
 	}
@@ -137,40 +135,13 @@ func TestSearchCmd_Run_NoMatch(t *testing.T) {
 	writeTestDeck(t, a.DataDir, "latin")
 	syncDecks(t, a)
 
-	s := &SearchCmd{Deck: "latin", Query: "zzzznonexistent"}
+	s := &SearchCmd{Deck: []string{"latin"}, Query: "zzzznonexistent"}
 	if err := s.Run(a); err != nil {
 		t.Fatalf("SearchCmd.Run: %v", err)
 	}
 }
 
-func TestSearchCmd_Matches(t *testing.T) {
-	card := ui.CardData{
-		Front:    "hello",
-		Back:     []string{"bonjour", "salut"},
-		Variants: []string{"hi", "hey"},
-		Notes:    "common greeting",
-	}
 
-	tests := []struct {
-		query string
-		want  bool
-	}{
-		{"hello", true},
-		{"HELLO", true},
-		{"bonjour", true},
-		{"salut", true},
-		{"greeting", true},
-		{"hi", true},
-		{"zzzz", false},
-	}
-
-	for _, tt := range tests {
-		got := matches(card, strings.ToLower(tt.query))
-		if got != tt.want {
-			t.Errorf("matches(%q) = %v, want %v", tt.query, got, tt.want)
-		}
-	}
-}
 
 func TestExportCmd_Run(t *testing.T) {
 	a := newTestApp(t)

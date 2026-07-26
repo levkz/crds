@@ -1,31 +1,25 @@
 package cli
 
 import (
+	"context"
 	"fmt"
+	"sort"
 	"strings"
 
 	"crds/internal/app"
-	"crds/internal/ui"
+	"crds/internal/storage"
 )
 
 type SearchCmd struct {
-	Deck  string `arg:"" required:"" help:"Deck to search." completion-predictor:"deck"`
-	Query string `arg:"" required:"" help:"Search query."`
+	Query string   `arg:"" optional:"" help:"Search query (empty for all entries)."`
+	Deck  []string `help:"Deck(s) to search in (repeatable, defaults to all)."`
+	Tags  []string `help:"Tags to filter by (repeatable, AND logic)."`
 }
 
 func (c *SearchCmd) Run(a *app.App) error {
-	query := strings.ToLower(c.Query)
-
-	deck, err := a.Store.LoadDeck(c.Deck)
+	results, err := a.Store.Search(context.Background(), c.Query, c.Deck, c.Tags)
 	if err != nil {
-		return fmt.Errorf("load deck %q: %w", c.Deck, err)
-	}
-
-	var results []ui.CardData
-	for _, card := range deck.Cards {
-		if matches(card, query) {
-			results = append(results, card)
-		}
+		return fmt.Errorf("search: %w", err)
 	}
 
 	if len(results) == 0 {
@@ -33,37 +27,42 @@ func (c *SearchCmd) Run(a *app.App) error {
 		return nil
 	}
 
-	fmt.Printf("%d match(es) in %q:\n\n", len(results), c.Deck)
+	type deckGroup struct {
+		Name    string
+		Entries []storage.SearchResult
+	}
+	groups := make(map[string]*deckGroup)
+	var deckOrder []string
 	for _, r := range results {
-		fmt.Printf("  %s\n", r.Front)
-		for _, b := range r.Back {
-			fmt.Printf("         %s\n", b)
+		g, ok := groups[r.DeckID]
+		if !ok {
+			g = &deckGroup{Name: r.DeckName}
+			groups[r.DeckID] = g
+			deckOrder = append(deckOrder, r.DeckID)
 		}
-		if r.Notes != "" {
-			fmt.Printf("         notes: %s\n", r.Notes)
+		g.Entries = append(g.Entries, r)
+	}
+
+	fmt.Printf("%d match(es):\n\n", len(results))
+	for _, dID := range deckOrder {
+		g := groups[dID]
+		fmt.Printf("=== %s (%s) — %d match(es) ===\n", g.Name, dID, len(g.Entries))
+		sort.Slice(g.Entries, func(i, j int) bool {
+			return g.Entries[i].Term < g.Entries[j].Term
+		})
+		for _, r := range g.Entries {
+			tags := ""
+			if len(r.Tags) > 0 {
+				tags = " [" + strings.Join(r.Tags, ",") + "]"
+			}
+			translations := strings.Join(r.Translations, ", ")
+			fmt.Printf("  %s%s  → %s\n", r.Term, tags, translations)
+			if r.Notes != "" {
+				fmt.Printf("         notes: %s\n", r.Notes)
+			}
 		}
 		fmt.Println()
 	}
 
 	return nil
-}
-
-func matches(card ui.CardData, query string) bool {
-	if strings.Contains(strings.ToLower(card.Front), query) {
-		return true
-	}
-	if strings.Contains(strings.ToLower(card.Notes), query) {
-		return true
-	}
-	for _, b := range card.Back {
-		if strings.Contains(strings.ToLower(b), query) {
-			return true
-		}
-	}
-	for _, v := range card.Variants {
-		if strings.Contains(strings.ToLower(v), query) {
-			return true
-		}
-	}
-	return false
 }

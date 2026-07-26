@@ -241,6 +241,103 @@ func (s *Store) buildCard(ctx context.Context, entry db.Entry) ui.CardData {
 	}
 }
 
+// SearchResult holds a matched entry across a search.
+type SearchResult struct {
+	DeckID       string
+	DeckName     string
+	EntryID      string
+	Term         string
+	Translations []string
+	Tags         []string
+	Notes        string
+}
+
+// Search searches entries across the given decks (or all if nil/empty).
+// Query is lowercased for case-insensitive matching. Tags are AND logic.
+func (s *Store) Search(ctx context.Context, query string, deckIDs, tags []string) ([]SearchResult, error) {
+	if len(deckIDs) == 0 {
+		names, err := s.queries.ListDeckNames(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("search: list decks: %w", err)
+		}
+		for _, n := range names {
+			deckIDs = append(deckIDs, n.ID)
+		}
+	}
+
+	query = strings.ToLower(query)
+	var results []SearchResult
+
+	for _, dID := range deckIDs {
+		d, err := s.queries.GetDeck(ctx, dID)
+		if err != nil {
+			continue
+		}
+
+		entries, err := s.queries.ListEntriesByDeck(ctx, dID)
+		if err != nil {
+			continue
+		}
+
+		for _, entry := range entries {
+			if query != "" && !matchesSearch(entry, query, ctx, s) {
+				continue
+			}
+
+			etags, _ := s.queries.GetTagsByEntry(ctx, entry.ID)
+			if !tagsMatch(etags, tags) {
+				continue
+			}
+
+			translations, _ := s.queries.GetTranslationsByEntry(ctx, entry.ID)
+
+			results = append(results, SearchResult{
+				DeckID:       dID,
+				DeckName:     d.Name,
+				EntryID:      entry.ID,
+				Term:         entry.Term,
+				Translations: translations,
+				Tags:         etags,
+				Notes:        entry.Notes,
+			})
+		}
+	}
+
+	return results, nil
+}
+
+func matchesSearch(entry db.Entry, query string, ctx context.Context, s *Store) bool {
+	if strings.Contains(strings.ToLower(entry.Term), query) {
+		return true
+	}
+	if strings.Contains(strings.ToLower(entry.Notes), query) {
+		return true
+	}
+	texts, _ := s.queries.GetTranslationsByEntry(ctx, entry.ID)
+	for _, t := range texts {
+		if strings.Contains(strings.ToLower(t), query) {
+			return true
+		}
+	}
+	return false
+}
+
+func tagsMatch(entryTags, filterTags []string) bool {
+	if len(filterTags) == 0 {
+		return true
+	}
+	set := make(map[string]bool, len(entryTags))
+	for _, t := range entryTags {
+		set[t] = true
+	}
+	for _, t := range filterTags {
+		if !set[t] {
+			return false
+		}
+	}
+	return true
+}
+
 // EnsureStoreHasDecks syncs decks on first use if not yet synced.
 func (s *Store) EnsureStoreHasDecks(deckDir string) error {
 	rows, err := s.queries.ListDeckNames(context.Background())

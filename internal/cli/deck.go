@@ -8,4 +8,5 @@ type DeckCmd struct {
 	Search SearchCmd   `cmd:"" help:"Search vocabulary in a deck."`
 	Edit   EditDeckCmd `cmd:"" help:"Edit a deck by opening its YAML file."`
 	Term   TermCmd     `cmd:"" help:"Manage individual terms in a deck."`
+	Tag    TagCmd      `cmd:"" help:"Manage tags on terms."`
 }

@@ -9,6 +9,20 @@ import (
 	"context"
 )
 
+const deleteEntryTag = `-- name: DeleteEntryTag :exec
+DELETE FROM entry_tags WHERE entry_id = ? AND tag = ?
+`
+
+type DeleteEntryTagParams struct {
+	EntryID string `db:"entry_id"`
+	Tag     string `db:"tag"`
+}
+
+func (q *Queries) DeleteEntryTag(ctx context.Context, arg DeleteEntryTagParams) error {
+	_, err := q.db.ExecContext(ctx, deleteEntryTag, arg.EntryID, arg.Tag)
+	return err
+}
+
 const deleteTagsByEntry = `-- name: DeleteTagsByEntry :exec
 DELETE FROM entry_tags WHERE entry_id = ?
 `

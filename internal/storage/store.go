@@ -695,6 +695,98 @@ func (s *Store) RemoveEntry(deckID, entryID, deckDir string) error {
 	return nil
 }
 
+// AddTagsToEntry adds tags to an entry in the YAML file and syncs to the DB.
+// Duplicate tags are ignored.
+func (s *Store) AddTagsToEntry(deckID, entryID string, tags []string, deckDir string) error {
+	yamlPath := filepath.Join(deckDir, deckID+".yaml")
+
+	deck, err := parser.ParseFile(yamlPath)
+	if err != nil {
+		return fmt.Errorf("add-tags: parse %s: %w", yamlPath, err)
+	}
+
+	var entry *model.Entry
+	for i := range deck.Entries {
+		if deck.Entries[i].ID == entryID {
+			entry = &deck.Entries[i]
+			break
+		}
+	}
+	if entry == nil {
+		return fmt.Errorf("add-tags: entry %q not found in deck %q", entryID, deckID)
+	}
+
+	existing := make(map[string]bool, len(entry.Tags))
+	for _, t := range entry.Tags {
+		existing[t] = true
+	}
+	for _, t := range tags {
+		if !existing[t] {
+			entry.Tags = append(entry.Tags, t)
+			existing[t] = true
+		}
+	}
+
+	data, err := yaml.Marshal(deck)
+	if err != nil {
+		return fmt.Errorf("add-tags: marshal: %w", err)
+	}
+	if err := os.WriteFile(yamlPath, data, 0644); err != nil {
+		return fmt.Errorf("add-tags: write: %w", err)
+	}
+
+	return s.syncDeck(yamlPath)
+}
+
+// RemoveTagsFromEntry removes specific tags from an entry in the YAML file
+// and syncs to the DB. Tags that don't exist are silently ignored.
+func (s *Store) RemoveTagsFromEntry(deckID, entryID string, tags []string, deckDir string) error {
+	yamlPath := filepath.Join(deckDir, deckID+".yaml")
+
+	deck, err := parser.ParseFile(yamlPath)
+	if err != nil {
+		return fmt.Errorf("remove-tags: parse %s: %w", yamlPath, err)
+	}
+
+	var entry *model.Entry
+	for i := range deck.Entries {
+		if deck.Entries[i].ID == entryID {
+			entry = &deck.Entries[i]
+			break
+		}
+	}
+	if entry == nil {
+		return fmt.Errorf("remove-tags: entry %q not found in deck %q", entryID, deckID)
+	}
+
+	remove := make(map[string]bool, len(tags))
+	for _, t := range tags {
+		remove[t] = true
+	}
+	filtered := make([]string, 0, len(entry.Tags))
+	for _, t := range entry.Tags {
+		if !remove[t] {
+			filtered = append(filtered, t)
+		}
+	}
+	entry.Tags = filtered
+
+	data, err := yaml.Marshal(deck)
+	if err != nil {
+		return fmt.Errorf("remove-tags: marshal: %w", err)
+	}
+	if err := os.WriteFile(yamlPath, data, 0644); err != nil {
+		return fmt.Errorf("remove-tags: write: %w", err)
+	}
+
+	return s.syncDeck(yamlPath)
+}
+
+// GetTagsByEntry returns the tags for a given entry, read from the SQLite cache.
+func (s *Store) GetTagsByEntry(entryID string) ([]string, error) {
+	return s.queries.GetTagsByEntry(context.Background(), entryID)
+}
+
 // DB returns the underlying *sql.DB for advanced use (e.g. goose migrations outside of NewStore).
 func (s *Store) DB() *sql.DB {
 	return s.conn

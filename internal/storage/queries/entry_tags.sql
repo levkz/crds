@@ -6,3 +6,6 @@ DELETE FROM entry_tags WHERE entry_id = ?;
 
 -- name: GetTagsByEntry :many
 SELECT tag FROM entry_tags WHERE entry_id = ? ORDER BY tag;
+
+-- name: DeleteEntryTag :exec
+DELETE FROM entry_tags WHERE entry_id = ? AND tag = ?;

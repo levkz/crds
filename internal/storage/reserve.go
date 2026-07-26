@@ -20,31 +20,51 @@ import (
 // The backup file is named crds-rsv-{increment}-{ddMMyyyy}-{mmss}.tar.gz.
 // Increment is auto-derived from existing backups.
 func (s *Store) CreateReserve(sharedDir string) error {
-	ctx := context.Background()
+	_, err := s.CreateReserveTo(sharedDir, "", "")
+	return err
+}
 
-	// Flush WAL for a clean DB snapshot
-	_, err := s.conn.ExecContext(ctx, "PRAGMA wal_checkpoint(TRUNCATE)")
-	if err != nil {
+// CreateReserveTo creates a reserve archive. outputDir defaults to
+// sharedDir/reserve-copies/. name defaults to an auto-generated filename.
+// If name does not end in .tar.gz the extension is appended.
+// Returns the full path of the created archive.
+func (s *Store) CreateReserveTo(sharedDir, outputDir, name string) (string, error) {
+	if outputDir == "" {
+		outputDir = filepath.Join(sharedDir, "reserve-copies")
+	}
+	if name == "" {
+		inc, err := nextReserveIncrement(outputDir)
+		if err != nil {
+			return "", fmt.Errorf("reserve: increment: %w", err)
+		}
+		now := time.Now()
+		name = fmt.Sprintf("crds-rsv-%03d-%s-%s.tar.gz",
+			inc,
+			now.Format("02012006"),
+			now.Format("150405"),
+		)
+	} else if !strings.HasSuffix(name, ".tar.gz") {
+		name += ".tar.gz"
+	}
+
+	reservePath := filepath.Join(outputDir, name)
+	if err := s.createReserveArchive(sharedDir, reservePath); err != nil {
+		return "", err
+	}
+	return reservePath, nil
+}
+
+// createReserveArchive checkpoints the WAL and writes a compressed tar archive
+// at reservePath containing state.yaml, crds.db, and decks/*.yaml.
+func (s *Store) createReserveArchive(sharedDir, reservePath string) error {
+	ctx := context.Background()
+	if _, err := s.conn.ExecContext(ctx, "PRAGMA wal_checkpoint(TRUNCATE)"); err != nil {
 		return fmt.Errorf("reserve: checkpoint: %w", err)
 	}
 
-	reserveDir := filepath.Join(sharedDir, "reserve-copies")
-	if err := os.MkdirAll(reserveDir, 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(reservePath), 0755); err != nil {
 		return fmt.Errorf("reserve: mkdir: %w", err)
 	}
-
-	increment, err := nextReserveIncrement(reserveDir)
-	if err != nil {
-		return fmt.Errorf("reserve: increment: %w", err)
-	}
-
-	now := time.Now()
-	filename := fmt.Sprintf("crds-rsv-%03d-%s-%s.tar.gz",
-		increment,
-		now.Format("02012006"),
-		now.Format("150405"),
-	)
-	reservePath := filepath.Join(reserveDir, filename)
 
 	f, err := os.Create(reservePath)
 	if err != nil {
@@ -69,6 +89,29 @@ func (s *Store) CreateReserve(sharedDir string) error {
 	}
 
 	return nil
+}
+
+// ListReserves returns full paths of reserve archives in the default reserve
+// directory, sorted newest-first (by filename which embeds an increment).
+func ListReserves(sharedDir string) ([]string, error) {
+	reserveDir := filepath.Join(sharedDir, "reserve-copies")
+	entries, err := os.ReadDir(reserveDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	var files []string
+	for _, e := range entries {
+		if !e.IsDir() && strings.HasSuffix(e.Name(), ".tar.gz") && strings.HasPrefix(e.Name(), "crds-rsv-") {
+			files = append(files, filepath.Join(reserveDir, e.Name()))
+		}
+	}
+
+	sort.Sort(sort.Reverse(sort.StringSlice(files)))
+	return files, nil
 }
 
 func addFileToTar(tw *tar.Writer, baseDir, relPath string) error {

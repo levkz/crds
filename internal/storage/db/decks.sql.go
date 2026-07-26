@@ -59,6 +59,52 @@ func (q *Queries) ListDeckNames(ctx context.Context) ([]ListDeckNamesRow, error)
 	return items, nil
 }
 
+const listDecksWithStats = `-- name: ListDecksWithStats :many
+SELECT d.id, d.name, d.language, d.translation_language,
+       COUNT(e.id) AS entry_count
+FROM decks d
+LEFT JOIN entries e ON e.deck_id = d.id
+GROUP BY d.id
+ORDER BY d.name
+`
+
+type ListDecksWithStatsRow struct {
+	ID                  string `db:"id"`
+	Name                string `db:"name"`
+	Language            string `db:"language"`
+	TranslationLanguage string `db:"translation_language"`
+	EntryCount          int64  `db:"entry_count"`
+}
+
+func (q *Queries) ListDecksWithStats(ctx context.Context) ([]ListDecksWithStatsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listDecksWithStats)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListDecksWithStatsRow{}
+	for rows.Next() {
+		var i ListDecksWithStatsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Language,
+			&i.TranslationLanguage,
+			&i.EntryCount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const upsertDeck = `-- name: UpsertDeck :exec
 INSERT INTO decks (id, name, language, translation_language, updated_at)
 VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)

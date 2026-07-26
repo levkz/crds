@@ -158,6 +158,34 @@ func (s *Store) deckNeedsSync(path string, mtime time.Time) (bool, error) {
 	return mtime.After(stored), nil
 }
 
+// DeckStats holds summary information for a listed deck.
+type DeckStats struct {
+	ID                  string
+	Name                string
+	Language            string
+	TranslationLanguage string
+	EntryCount          int64
+}
+
+// ListDecksWithStats returns all cached decks with entry counts.
+func (s *Store) ListDecksWithStats() ([]DeckStats, error) {
+	rows, err := s.queries.ListDecksWithStats(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	stats := make([]DeckStats, len(rows))
+	for i, r := range rows {
+		stats[i] = DeckStats{
+			ID:                  r.ID,
+			Name:                r.Name,
+			Language:            r.Language,
+			TranslationLanguage: r.TranslationLanguage,
+			EntryCount:          r.EntryCount,
+		}
+	}
+	return stats, nil
+}
+
 // ListDecks returns the deck IDs of all cached decks.
 func (s *Store) ListDecks() ([]string, error) {
 	rows, err := s.queries.ListDeckNames(context.Background())

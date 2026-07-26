@@ -12,3 +12,11 @@ SELECT id, name FROM decks ORDER BY name;
 
 -- name: GetDeck :one
 SELECT * FROM decks WHERE id = ?;
+
+-- name: ListDecksWithStats :many
+SELECT d.id, d.name, d.language, d.translation_language,
+       COUNT(e.id) AS entry_count
+FROM decks d
+LEFT JOIN entries e ON e.deck_id = d.id
+GROUP BY d.id
+ORDER BY d.name;

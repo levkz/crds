@@ -1,9 +1,10 @@
 package app
 
+import "crds/internal/storage"
+
 type App struct {
-	// Fill these in as the application grows.
-	//
-	// Config     *config.Config
-	// Repository *storage.Repository
-	// Parser     *parser.Parser
+	Store     *storage.Store
+	State     *storage.StateStore
+	SharedDir string
+	DataDir   string
 }

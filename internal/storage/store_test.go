@@ -56,7 +56,7 @@ func TestStoreRecordAnswer(t *testing.T) {
 	store := newTestStore(t)
 	defer store.Close()
 
-	if err := store.RecordAnswer("test_entry", 3); err != nil {
+	if err := store.RecordAnswer("", "test_entry", 3, false); err != nil {
 		t.Fatalf("RecordAnswer: %v", err)
 	}
 
@@ -81,7 +81,7 @@ func TestStoreRecordAnswerFull(t *testing.T) {
 	}
 
 	reviewID, err := store.RecordAnswerFull(
-		sessionID, "test_deck", "test_entry", 2,
+		sessionID, "test_deck", "test_entry", 2, false,
 		"useur input", "user input", 0.85,
 	)
 	if err != nil {
@@ -109,16 +109,16 @@ func TestStoreAnswerStats(t *testing.T) {
 	store := newTestStore(t)
 	defer store.Close()
 
-	if err := store.RecordAnswer("entry_a", 3); err != nil {
+	if err := store.RecordAnswer("", "entry_a", 3, false); err != nil {
 		t.Fatalf("RecordAnswer grade 3: %v", err)
 	}
-	if err := store.RecordAnswer("entry_b", 2); err != nil {
+	if err := store.RecordAnswer("", "entry_b", 2, false); err != nil {
 		t.Fatalf("RecordAnswer grade 2: %v", err)
 	}
-	if err := store.RecordAnswer("entry_c", 1); err != nil {
+	if err := store.RecordAnswer("", "entry_c", 1, false); err != nil {
 		t.Fatalf("RecordAnswer grade 1: %v", err)
 	}
-	if err := store.RecordAnswer("entry_d", 4); err != nil {
+	if err := store.RecordAnswer("", "entry_d", 4, false); err != nil {
 		t.Fatalf("RecordAnswer grade 4: %v", err)
 	}
 
@@ -136,7 +136,7 @@ func TestStoreSessionReset(t *testing.T) {
 	defer store.Close()
 
 	// Record in the first session
-	if err := store.RecordAnswer("entry1", 3); err != nil {
+	if err := store.RecordAnswer("", "entry1", 3, false); err != nil {
 		t.Fatalf("RecordAnswer: %v", err)
 	}
 	session1 := store.currentSession
@@ -150,7 +150,7 @@ func TestStoreSessionReset(t *testing.T) {
 	}
 
 	// Record in the second session
-	if err := store.RecordAnswer("entry2", 1); err != nil {
+	if err := store.RecordAnswer("", "entry2", 1, false); err != nil {
 		t.Fatalf("RecordAnswer: %v", err)
 	}
 	session2 := store.currentSession
@@ -170,13 +170,13 @@ func TestStoreWeakTypingEntries(t *testing.T) {
 	}
 
 	// Low similarity -> weak entry
-	_, err = store.RecordAnswerFull(sessionID, "deck1", "entry1", 1, "wrong", "correct", 0.3)
+	_, err = store.RecordAnswerFull(sessionID, "deck1", "entry1", 1, false, "wrong", "correct", 0.3)
 	if err != nil {
 		t.Fatalf("RecordAnswerFull weak: %v", err)
 	}
 
 	// High similarity -> not weak
-	_, err = store.RecordAnswerFull(sessionID, "deck1", "entry2", 3, "correct", "correct", 1.0)
+	_, err = store.RecordAnswerFull(sessionID, "deck1", "entry2", 3, false, "correct", "correct", 1.0)
 	if err != nil {
 		t.Fatalf("RecordAnswerFull good: %v", err)
 	}
@@ -205,6 +205,7 @@ func TestStoreProgress(t *testing.T) {
 	err := store.queries.UpsertProgress(ctx, db.UpsertProgressParams{
 		DeckID:    "french_a1",
 		EntryID:   "fr_bonjour",
+		Reverse:   0,
 		Ease:      2.5,
 		Interval:  1,
 		Due:       &due,
@@ -219,6 +220,7 @@ func TestStoreProgress(t *testing.T) {
 	p, err := store.queries.GetProgress(ctx, db.GetProgressParams{
 		DeckID:  "french_a1",
 		EntryID: "fr_bonjour",
+		Reverse: 0,
 	})
 	if err != nil {
 		t.Fatalf("GetProgress: %v", err)
@@ -236,9 +238,9 @@ func TestStoreGetReviewsByEntry(t *testing.T) {
 	store := newTestStore(t)
 	defer store.Close()
 
-	store.RecordAnswer("entry_x", 3)
-	store.RecordAnswer("entry_y", 2)
-	store.RecordAnswer("entry_x", 4)
+	store.RecordAnswer("", "entry_x", 3, false)
+	store.RecordAnswer("", "entry_y", 2, false)
+	store.RecordAnswer("", "entry_x", 4, false)
 
 	reviews, err := store.GetReviewsByEntry("entry_x", 5)
 	if err != nil {

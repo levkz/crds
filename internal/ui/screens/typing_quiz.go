@@ -114,16 +114,17 @@ func (m *TypingQuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 				if m.gradeInput() {
 					m.revealed = true
 					card := m.cards[m.cardIndex]
-					return m, func() tea.Msg {
-						return ui.SaveAnswerMsg{
-							DeckID:        m.deckName,
-							CardID:        card.Front,
-							Grade:         m.grade,
-							UserInput:     m.input.Value(),
-							CorrectAnswer: m.currentCorrectAnswer(),
-							Similarity:    m.score,
-						}
+				return m, func() tea.Msg {
+					return ui.SaveAnswerMsg{
+						DeckID:        m.deckName,
+						CardID:        card.Front,
+						Grade:         m.grade,
+						Reverse:       m.inverse,
+						UserInput:     m.input.Value(),
+						CorrectAnswer: m.currentCorrectAnswer(),
+						Similarity:    m.score,
 					}
+				}
 				}
 				return m, nil
 
@@ -134,9 +135,10 @@ func (m *TypingQuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 				card := m.cards[m.cardIndex]
 				return m, func() tea.Msg {
 					return ui.SaveAnswerMsg{
-						DeckID: m.deckName,
-						CardID: card.Front,
-						Grade:  fuzzy.Again,
+						DeckID:  m.deckName,
+						CardID:  card.Front,
+						Grade:   fuzzy.Again,
+						Reverse: m.inverse,
 					}
 				}
 

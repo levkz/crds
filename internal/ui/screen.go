@@ -57,6 +57,7 @@ type SaveAnswerMsg struct {
 	DeckID        string
 	CardID        string
 	Grade         int
+	Reverse       bool
 	UserInput     string
 	CorrectAnswer string
 	Similarity    float64

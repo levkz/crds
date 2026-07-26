@@ -142,12 +142,12 @@ func SaveStateCmd(d *Dispatcher, selected []string) tea.Msg {
 func RecordAnswerCmd(d *Dispatcher, msg ui.SaveAnswerMsg) tea.Cmd {
 	return Dispatch(d, func(d *Dispatcher) tea.Msg {
 		if d.Typing != nil && (msg.UserInput != "" || msg.CorrectAnswer != "") {
-			_, err := d.Typing.RecordAnswerFull(0, msg.DeckID, msg.CardID, msg.Grade, msg.UserInput, msg.CorrectAnswer, msg.Similarity)
+			_, err := d.Typing.RecordAnswerFull(0, msg.DeckID, msg.CardID, msg.Grade, msg.Reverse, msg.UserInput, msg.CorrectAnswer, msg.Similarity)
 			if err != nil {
 				return DataErrorMsg{Kind: MsgKindAnswer, Err: err}
 			}
 		} else {
-			if err := d.Progress.RecordAnswer(msg.CardID, msg.Grade); err != nil {
+			if err := d.Progress.RecordAnswer(msg.DeckID, msg.CardID, msg.Grade, msg.Reverse); err != nil {
 				return DataErrorMsg{Kind: MsgKindAnswer, Err: err}
 			}
 		}

@@ -5,10 +5,10 @@ import "testing"
 func TestProgressStore_RecordAnswer(t *testing.T) {
 	s := NewProgressStore()
 
-	if err := s.RecordAnswer("card1", 3); err != nil {
+	if err := s.RecordAnswer("", "card1", 3, false); err != nil {
 		t.Fatalf("RecordAnswer: %v", err)
 	}
-	if err := s.RecordAnswer("card2", 3); err != nil {
+	if err := s.RecordAnswer("", "card2", 3, false); err != nil {
 		t.Fatalf("RecordAnswer: %v", err)
 	}
 }
@@ -31,9 +31,9 @@ func TestProgressStore_Stats_Empty(t *testing.T) {
 func TestProgressStore_Stats_WithReviews(t *testing.T) {
 	s := NewProgressStore()
 
-	_ = s.RecordAnswer("card1", 4)
-	_ = s.RecordAnswer("card2", 3)
-	_ = s.RecordAnswer("card3", 1)
+	_ = s.RecordAnswer("", "card1", 4, false)
+	_ = s.RecordAnswer("", "card2", 3, false)
+	_ = s.RecordAnswer("", "card3", 1, false)
 
 	stats := s.Stats()
 
@@ -51,8 +51,8 @@ func TestProgressStore_Stats_WithReviews(t *testing.T) {
 func TestProgressStore_Stats_GradeBoundary(t *testing.T) {
 	s := NewProgressStore()
 
-	_ = s.RecordAnswer("card1", 3)
-	_ = s.RecordAnswer("card2", 2)
+	_ = s.RecordAnswer("", "card1", 3, false)
+	_ = s.RecordAnswer("", "card2", 2, false)
 
 	stats := s.Stats()
 

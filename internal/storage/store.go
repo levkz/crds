@@ -118,22 +118,27 @@ func (s *Store) ResetSession() error {
 
 // RecordAnswer persists a single quiz answer. An implicit session is created
 // on the first call and reused until ResetSession is called.
-func (s *Store) RecordAnswer(cardID string, grade int) error {
+func (s *Store) RecordAnswer(deckID, cardID string, grade int, reverse bool) error {
 	sessionID, err := s.EnsureSession()
 	if err != nil {
 		return err
 	}
+	reverseInt := int64(0)
+	if reverse {
+		reverseInt = 1
+	}
 	_, err = s.queries.CreateReview(context.Background(), db.CreateReviewParams{
 		SessionID: sessionID,
-		DeckID:    "",
+		DeckID:    deckID,
 		EntryID:   cardID,
 		Grade:     int64(grade),
+		Reverse:   reverseInt,
 	})
 	return err
 }
 
 // RecordAnswerFull records a quiz answer with all available metadata.
-func (s *Store) RecordAnswerFull(sessionID int64, deckID, entryID string, grade int, userInput, correctAnswer string, similarity float64) (int64, error) {
+func (s *Store) RecordAnswerFull(sessionID int64, deckID, entryID string, grade int, reverse bool, userInput, correctAnswer string, similarity float64) (int64, error) {
 	if sessionID == 0 {
 		var err error
 		sessionID, err = s.EnsureSession()
@@ -142,11 +147,17 @@ func (s *Store) RecordAnswerFull(sessionID int64, deckID, entryID string, grade 
 		}
 	}
 
+	reverseInt := int64(0)
+	if reverse {
+		reverseInt = 1
+	}
+
 	review, err := s.queries.CreateReview(context.Background(), db.CreateReviewParams{
 		SessionID: sessionID,
 		DeckID:    deckID,
 		EntryID:   entryID,
 		Grade:     int64(grade),
+		Reverse:   reverseInt,
 	})
 	if err != nil {
 		return 0, err

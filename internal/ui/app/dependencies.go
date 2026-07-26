@@ -14,7 +14,7 @@ type DeckProvider interface {
 
 // ProgressRecorder persists learning progress from quiz sessions.
 type ProgressRecorder interface {
-	RecordAnswer(cardID string, grade int) error
+	RecordAnswer(deckID, cardID string, grade int, reverse bool) error
 }
 
 // SessionManager creates and manages quiz sessions.
@@ -25,7 +25,7 @@ type SessionManager interface {
 
 // TypingRecorder persists typing-specific answer details.
 type TypingRecorder interface {
-	RecordAnswerFull(sessionID int64, deckID, entryID string, grade int, userInput, correctAnswer string, similarity float64) (int64, error)
+	RecordAnswerFull(sessionID int64, deckID, entryID string, grade int, reverse bool, userInput, correctAnswer string, similarity float64) (int64, error)
 }
 
 // StatsProvider provides learning statistics.

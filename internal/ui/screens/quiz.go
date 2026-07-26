@@ -82,9 +82,10 @@ func (m *QuizModel) grade(g Grade) (*QuizModel, tea.Cmd) {
 
 	return m, func() tea.Msg {
 		return ui.SaveAnswerMsg{
-			DeckID: m.deckName,
-			CardID: cardID,
-			Grade:  int(g),
+			DeckID:  m.deckName,
+			CardID:  cardID,
+			Grade:   int(g),
+			Reverse: m.inverse,
 		}
 	}
 }

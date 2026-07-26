@@ -17,14 +17,16 @@ func NewProgressStore() *ProgressStore {
 	return &ProgressStore{}
 }
 
-func (s *ProgressStore) RecordAnswer(cardID string, grade int) error {
+func (s *ProgressStore) RecordAnswer(deckID, cardID string, grade int, reverse bool) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	s.reviews = append(s.reviews, model.Review{
+		DeckID:     deckID,
 		EntryID:    cardID,
 		ReviewedAt: time.Now(),
 		Grade:      grade,
+		Reverse:    reverse,
 	})
 	return nil
 }

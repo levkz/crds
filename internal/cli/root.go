@@ -11,15 +11,9 @@ import (
 type CLI struct {
 	Debug      bool                      `help:"Enable debug output."`
 	Quiz       QuizCmd                   `cmd:"" help:"Start a quiz."`
-	Sync       SyncCmd                   `cmd:"" help:"Synchronize decks and generate missing IDs."`
 	Stats      StatsCmd                  `cmd:"" help:"Show learning statistics."`
-	Search     SearchCmd                 `cmd:"" help:"Search vocabulary."`
-	Import     ImportCmd                 `cmd:"" help:"Import a deck from a YAML file."`
-	Export     ExportCmd                 `cmd:"" help:"Export a deck to a YAML file."`
-	Delete     DeleteCmd                 `cmd:"" help:"Delete a deck."`
-	Reserve    ReserveCmd                `cmd:"" help:"Create a backup/reserve copy."`
-	Revert     RevertCmd                 `cmd:"" help:"Revert from a reserve copy."`
-	Edit       EditCmd                   `cmd:"" help:"Edit a deck entry."`
+	Deck       DeckCmd                   `cmd:"" help:"Deck operations (import, export, search, delete, edit, term)."`
+	State      StateCmd                  `cmd:"" help:"State management (reserve, revert, sync)."`
 	Completion kongcompletion.Completion `cmd:"" help:"Install shell completion."`
 }
 

@@ -9,33 +9,22 @@ import (
 )
 
 type SearchCmd struct {
+	Deck  string `arg:"" required:"" help:"Deck to search." completion-predictor:"deck"`
 	Query string `arg:"" required:"" help:"Search query."`
 }
 
 func (c *SearchCmd) Run(a *app.App) error {
-	deckIDs, err := a.Store.ListDecks()
-	if err != nil {
-		return fmt.Errorf("list decks: %w", err)
-	}
-
 	query := strings.ToLower(c.Query)
-	var results []struct {
-		deck string
-		card ui.CardData
+
+	deck, err := a.Store.LoadDeck(c.Deck)
+	if err != nil {
+		return fmt.Errorf("load deck %q: %w", c.Deck, err)
 	}
 
-	for _, id := range deckIDs {
-		deck, err := a.Store.LoadDeck(id)
-		if err != nil {
-			continue
-		}
-		for _, card := range deck.Cards {
-			if matches(card, query) {
-				results = append(results, struct {
-					deck string
-					card ui.CardData
-				}{deck: deck.Name, card: card})
-			}
+	var results []ui.CardData
+	for _, card := range deck.Cards {
+		if matches(card, query) {
+			results = append(results, card)
 		}
 	}
 
@@ -44,14 +33,14 @@ func (c *SearchCmd) Run(a *app.App) error {
 		return nil
 	}
 
-	fmt.Printf("%d match(es):\n\n", len(results))
+	fmt.Printf("%d match(es) in %q:\n\n", len(results), c.Deck)
 	for _, r := range results {
-		fmt.Printf("  [%s] %s\n", r.deck, r.card.Front)
-		for _, b := range r.card.Back {
+		fmt.Printf("  %s\n", r.Front)
+		for _, b := range r.Back {
 			fmt.Printf("         %s\n", b)
 		}
-		if r.card.Notes != "" {
-			fmt.Printf("         notes: %s\n", r.card.Notes)
+		if r.Notes != "" {
+			fmt.Printf("         notes: %s\n", r.Notes)
 		}
 		fmt.Println()
 	}

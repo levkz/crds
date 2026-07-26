@@ -226,6 +226,39 @@ func (s *Store) GetWeakTypingEntries(deckID string, limit int) ([]db.GetWeakTypi
 	})
 }
 
+// DeckStats returns aggregate statistics for a single deck.
+type DeckStats struct {
+	TotalEntries  int
+	ReviewedToday int
+	Accuracy      float64
+}
+
+// DeckStats returns per-deck learning statistics.
+func (s *Store) DeckStats(deckID string) (DeckStats, error) {
+	ctx := context.Background()
+
+	entryCount, err := s.queries.GetDeckEntryCount(ctx, deckID)
+	if err != nil {
+		return DeckStats{}, fmt.Errorf("deck stats: get entry count: %w", err)
+	}
+
+	row, err := s.queries.GetTodayStatsByDeck(ctx, deckID)
+	if err != nil {
+		return DeckStats{}, fmt.Errorf("deck stats: get today stats: %w", err)
+	}
+
+	var accuracy float64
+	if row.TotalReviews > 0 {
+		accuracy = float64(row.CorrectReviews) / float64(row.TotalReviews) * 100
+	}
+
+	return DeckStats{
+		TotalEntries:  int(entryCount),
+		ReviewedToday: int(row.TotalReviews),
+		Accuracy:      accuracy,
+	}, nil
+}
+
 // --- Deck operations ---
 
 // ImportDeck parses a YAML file, copies it into the deck directory, and syncs

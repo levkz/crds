@@ -31,6 +31,15 @@ FROM reviews
 WHERE reviewed_at >= datetime('now', 'start of day')
   AND deck_id = ?;
 
+-- name: GetTodayStatsByTag :one
+SELECT
+    CAST(COUNT(*) AS INTEGER) as total_reviews,
+    CAST(IFNULL(SUM(CASE WHEN grade >= 3 THEN 1 ELSE 0 END), 0) AS INTEGER) as correct_reviews
+FROM reviews r
+JOIN entry_tags et ON et.entry_id = r.entry_id
+WHERE reviewed_at >= datetime('now', 'start of day')
+  AND et.tag = ?;
+
 -- name: GetWeakTypingEntries :many
 SELECT
     r.entry_id,

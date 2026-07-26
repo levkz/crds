@@ -168,6 +168,28 @@ func (q *Queries) GetTodayStatsByDeck(ctx context.Context, deckID string) (GetTo
 	return i, err
 }
 
+const getTodayStatsByTag = `-- name: GetTodayStatsByTag :one
+SELECT
+    CAST(COUNT(*) AS INTEGER) as total_reviews,
+    CAST(IFNULL(SUM(CASE WHEN grade >= 3 THEN 1 ELSE 0 END), 0) AS INTEGER) as correct_reviews
+FROM reviews r
+JOIN entry_tags et ON et.entry_id = r.entry_id
+WHERE reviewed_at >= datetime('now', 'start of day')
+  AND et.tag = ?
+`
+
+type GetTodayStatsByTagRow struct {
+	TotalReviews   int64 `db:"total_reviews"`
+	CorrectReviews int64 `db:"correct_reviews"`
+}
+
+func (q *Queries) GetTodayStatsByTag(ctx context.Context, tag string) (GetTodayStatsByTagRow, error) {
+	row := q.db.QueryRowContext(ctx, getTodayStatsByTag, tag)
+	var i GetTodayStatsByTagRow
+	err := row.Scan(&i.TotalReviews, &i.CorrectReviews)
+	return i, err
+}
+
 const getWeakTypingEntries = `-- name: GetWeakTypingEntries :many
 SELECT
     r.entry_id,

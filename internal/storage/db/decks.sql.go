@@ -27,6 +27,17 @@ func (q *Queries) GetDeck(ctx context.Context, id string) (Deck, error) {
 	return i, err
 }
 
+const getDeckEntryCount = `-- name: GetDeckEntryCount :one
+SELECT CAST(COUNT(*) AS INTEGER) FROM entries WHERE deck_id = ?
+`
+
+func (q *Queries) GetDeckEntryCount(ctx context.Context, deckID string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getDeckEntryCount, deckID)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const listDeckNames = `-- name: ListDeckNames :many
 SELECT id, name FROM decks ORDER BY name
 `

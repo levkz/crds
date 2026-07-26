@@ -158,8 +158,8 @@ func (s *Store) deckNeedsSync(path string, mtime time.Time) (bool, error) {
 	return mtime.After(stored), nil
 }
 
-// DeckStats holds summary information for a listed deck.
-type DeckStats struct {
+// DeckSummary holds summary information for a listed deck.
+type DeckSummary struct {
 	ID                  string
 	Name                string
 	Language            string
@@ -168,14 +168,14 @@ type DeckStats struct {
 }
 
 // ListDecksWithStats returns all cached decks with entry counts.
-func (s *Store) ListDecksWithStats() ([]DeckStats, error) {
+func (s *Store) ListDecksWithStats() ([]DeckSummary, error) {
 	rows, err := s.queries.ListDecksWithStats(context.Background())
 	if err != nil {
 		return nil, err
 	}
-	stats := make([]DeckStats, len(rows))
+	stats := make([]DeckSummary, len(rows))
 	for i, r := range rows {
-		stats[i] = DeckStats{
+		stats[i] = DeckSummary{
 			ID:                  r.ID,
 			Name:                r.Name,
 			Language:            r.Language,

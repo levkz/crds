@@ -13,6 +13,9 @@ SELECT id, name FROM decks ORDER BY name;
 -- name: GetDeck :one
 SELECT * FROM decks WHERE id = ?;
 
+-- name: GetDeckEntryCount :one
+SELECT CAST(COUNT(*) AS INTEGER) FROM entries WHERE deck_id = ?;
+
 -- name: ListDecksWithStats :many
 SELECT d.id, d.name, d.language, d.translation_language,
        COUNT(e.id) AS entry_count

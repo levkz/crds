@@ -7,4 +7,5 @@ type Review struct {
 	EntryID    string
 	ReviewedAt time.Time
 	Grade      int
+	Reverse    bool
 }

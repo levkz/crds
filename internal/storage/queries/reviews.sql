@@ -1,16 +1,16 @@
 -- name: CreateReview :one
-INSERT INTO reviews (session_id, deck_id, entry_id, grade, reviewed_at)
-VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-RETURNING id, session_id, deck_id, entry_id, grade, reviewed_at;
+INSERT INTO reviews (session_id, deck_id, entry_id, grade, reverse, reviewed_at)
+VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+RETURNING id, session_id, deck_id, entry_id, grade, reverse, reviewed_at;
 
 -- name: GetReviewsBySession :many
-SELECT id, session_id, deck_id, entry_id, grade, reviewed_at
+SELECT id, session_id, deck_id, entry_id, grade, reverse, reviewed_at
 FROM reviews
 WHERE session_id = ?
 ORDER BY id ASC;
 
 -- name: GetReviewsByEntry :many
-SELECT id, session_id, deck_id, entry_id, grade, reviewed_at
+SELECT id, session_id, deck_id, entry_id, grade, reverse, reviewed_at
 FROM reviews
 WHERE entry_id = ?
 ORDER BY id DESC

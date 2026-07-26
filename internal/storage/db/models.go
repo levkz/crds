@@ -43,6 +43,7 @@ type Example struct {
 type Progress struct {
 	DeckID    string     `db:"deck_id"`
 	EntryID   string     `db:"entry_id"`
+	Reverse   int64      `db:"reverse"`
 	Ease      float64    `db:"ease"`
 	Interval  int64      `db:"interval"`
 	Due       *time.Time `db:"due"`
@@ -56,6 +57,7 @@ type Review struct {
 	DeckID     string    `db:"deck_id"`
 	EntryID    string    `db:"entry_id"`
 	Grade      int64     `db:"grade"`
+	Reverse    int64     `db:"reverse"`
 	ReviewedAt time.Time `db:"reviewed_at"`
 }
 

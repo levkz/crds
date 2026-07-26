@@ -14,6 +14,7 @@ CREATE TABLE reviews (
     deck_id TEXT NOT NULL,
     entry_id TEXT NOT NULL,
     grade INTEGER NOT NULL,
+    reverse INTEGER NOT NULL DEFAULT 0,
     reviewed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -27,12 +28,13 @@ CREATE TABLE typing_details (
 CREATE TABLE progress (
     deck_id TEXT NOT NULL,
     entry_id TEXT NOT NULL,
+    reverse INTEGER NOT NULL DEFAULT 0,
     ease REAL NOT NULL DEFAULT 2.5,
     interval INTEGER NOT NULL DEFAULT 0,
     due DATETIME,
     correct INTEGER NOT NULL DEFAULT 0,
     incorrect INTEGER NOT NULL DEFAULT 0,
-    PRIMARY KEY (deck_id, entry_id)
+    PRIMARY KEY (deck_id, entry_id, reverse)
 );
 
 CREATE INDEX idx_reviews_session ON reviews(session_id);

@@ -11,9 +11,9 @@ import (
 )
 
 const createReview = `-- name: CreateReview :one
-INSERT INTO reviews (session_id, deck_id, entry_id, grade, reviewed_at)
-VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-RETURNING id, session_id, deck_id, entry_id, grade, reviewed_at
+INSERT INTO reviews (session_id, deck_id, entry_id, grade, reverse, reviewed_at)
+VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+RETURNING id, session_id, deck_id, entry_id, grade, reverse, reviewed_at
 `
 
 type CreateReviewParams struct {
@@ -21,6 +21,7 @@ type CreateReviewParams struct {
 	DeckID    string `db:"deck_id"`
 	EntryID   string `db:"entry_id"`
 	Grade     int64  `db:"grade"`
+	Reverse   int64  `db:"reverse"`
 }
 
 func (q *Queries) CreateReview(ctx context.Context, arg CreateReviewParams) (Review, error) {
@@ -29,6 +30,7 @@ func (q *Queries) CreateReview(ctx context.Context, arg CreateReviewParams) (Rev
 		arg.DeckID,
 		arg.EntryID,
 		arg.Grade,
+		arg.Reverse,
 	)
 	var i Review
 	err := row.Scan(
@@ -37,13 +39,14 @@ func (q *Queries) CreateReview(ctx context.Context, arg CreateReviewParams) (Rev
 		&i.DeckID,
 		&i.EntryID,
 		&i.Grade,
+		&i.Reverse,
 		&i.ReviewedAt,
 	)
 	return i, err
 }
 
 const getReviewsByEntry = `-- name: GetReviewsByEntry :many
-SELECT id, session_id, deck_id, entry_id, grade, reviewed_at
+SELECT id, session_id, deck_id, entry_id, grade, reverse, reviewed_at
 FROM reviews
 WHERE entry_id = ?
 ORDER BY id DESC
@@ -70,6 +73,7 @@ func (q *Queries) GetReviewsByEntry(ctx context.Context, arg GetReviewsByEntryPa
 			&i.DeckID,
 			&i.EntryID,
 			&i.Grade,
+			&i.Reverse,
 			&i.ReviewedAt,
 		); err != nil {
 			return nil, err
@@ -86,7 +90,7 @@ func (q *Queries) GetReviewsByEntry(ctx context.Context, arg GetReviewsByEntryPa
 }
 
 const getReviewsBySession = `-- name: GetReviewsBySession :many
-SELECT id, session_id, deck_id, entry_id, grade, reviewed_at
+SELECT id, session_id, deck_id, entry_id, grade, reverse, reviewed_at
 FROM reviews
 WHERE session_id = ?
 ORDER BY id ASC
@@ -107,6 +111,7 @@ func (q *Queries) GetReviewsBySession(ctx context.Context, sessionID int64) ([]R
 			&i.DeckID,
 			&i.EntryID,
 			&i.Grade,
+			&i.Reverse,
 			&i.ReviewedAt,
 		); err != nil {
 			return nil, err

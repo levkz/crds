@@ -11,7 +11,7 @@ import (
 )
 
 const getDueCards = `-- name: GetDueCards :many
-SELECT deck_id, entry_id, ease, interval, due, correct, incorrect
+SELECT deck_id, entry_id, reverse, ease, interval, due, correct, incorrect
 FROM progress
 WHERE deck_id = ? AND due <= CURRENT_TIMESTAMP
 ORDER BY due ASC
@@ -29,6 +29,7 @@ func (q *Queries) GetDueCards(ctx context.Context, deckID string) ([]Progress, e
 		if err := rows.Scan(
 			&i.DeckID,
 			&i.EntryID,
+			&i.Reverse,
 			&i.Ease,
 			&i.Interval,
 			&i.Due,
@@ -49,22 +50,24 @@ func (q *Queries) GetDueCards(ctx context.Context, deckID string) ([]Progress, e
 }
 
 const getProgress = `-- name: GetProgress :one
-SELECT deck_id, entry_id, ease, interval, due, correct, incorrect
+SELECT deck_id, entry_id, reverse, ease, interval, due, correct, incorrect
 FROM progress
-WHERE deck_id = ? AND entry_id = ?
+WHERE deck_id = ? AND entry_id = ? AND reverse = ?
 `
 
 type GetProgressParams struct {
 	DeckID  string `db:"deck_id"`
 	EntryID string `db:"entry_id"`
+	Reverse int64  `db:"reverse"`
 }
 
 func (q *Queries) GetProgress(ctx context.Context, arg GetProgressParams) (Progress, error) {
-	row := q.db.QueryRowContext(ctx, getProgress, arg.DeckID, arg.EntryID)
+	row := q.db.QueryRowContext(ctx, getProgress, arg.DeckID, arg.EntryID, arg.Reverse)
 	var i Progress
 	err := row.Scan(
 		&i.DeckID,
 		&i.EntryID,
+		&i.Reverse,
 		&i.Ease,
 		&i.Interval,
 		&i.Due,
@@ -75,9 +78,9 @@ func (q *Queries) GetProgress(ctx context.Context, arg GetProgressParams) (Progr
 }
 
 const upsertProgress = `-- name: UpsertProgress :exec
-INSERT INTO progress (deck_id, entry_id, ease, interval, due, correct, incorrect)
-VALUES (?, ?, ?, ?, ?, ?, ?)
-ON CONFLICT (deck_id, entry_id) DO UPDATE SET
+INSERT INTO progress (deck_id, entry_id, reverse, ease, interval, due, correct, incorrect)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+ON CONFLICT (deck_id, entry_id, reverse) DO UPDATE SET
     ease = excluded.ease,
     interval = excluded.interval,
     due = excluded.due,
@@ -88,6 +91,7 @@ ON CONFLICT (deck_id, entry_id) DO UPDATE SET
 type UpsertProgressParams struct {
 	DeckID    string     `db:"deck_id"`
 	EntryID   string     `db:"entry_id"`
+	Reverse   int64      `db:"reverse"`
 	Ease      float64    `db:"ease"`
 	Interval  int64      `db:"interval"`
 	Due       *time.Time `db:"due"`
@@ -99,6 +103,7 @@ func (q *Queries) UpsertProgress(ctx context.Context, arg UpsertProgressParams) 
 	_, err := q.db.ExecContext(ctx, upsertProgress,
 		arg.DeckID,
 		arg.EntryID,
+		arg.Reverse,
 		arg.Ease,
 		arg.Interval,
 		arg.Due,

@@ -206,7 +206,7 @@ func TestTermRmCmd_Run(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	r := &TermRmCmd{Deck: "swedish", TermID: "e1"}
+	r := &TermRmCmd{Deck: "swedish", TermID: "e1", Force: true}
 	if err := r.Run(a); err != nil {
 		t.Fatalf("TermRmCmd.Run: %v", err)
 	}

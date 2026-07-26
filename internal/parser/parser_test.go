@@ -56,6 +56,11 @@ func TestParseFile(t *testing.T) {
 			file:      "comments.yaml",
 			wantError: false,
 		},
+		{
+			name:      "auto ids",
+			file:      "auto_ids.yaml",
+			wantError: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -132,6 +137,34 @@ func TestValidDeckContents(t *testing.T) {
 
 	if len(first.Tags) != 2 {
 		t.Errorf("expected 2 tags")
+	}
+}
+
+func TestAutoIDs(t *testing.T) {
+	deck, err := ParseFile(filepath.Join("testdata", "auto_ids.yaml"))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(deck.Entries) != 3 {
+		t.Fatalf("expected 3 entries, got %d", len(deck.Entries))
+	}
+
+	tests := []struct {
+		index   int
+		wantID  string
+		wantErr bool
+	}{
+		{index: 0, wantID: "bonjour"},
+		{index: 1, wantID: "mange"},
+		{index: 2, wantID: "s_il_vous_plaît"},
+	}
+
+	for _, tt := range tests {
+		got := deck.Entries[tt.index].ID
+		if got != tt.wantID {
+			t.Errorf("entry %d: id = %q, want %q", tt.index, got, tt.wantID)
+		}
 	}
 }
 

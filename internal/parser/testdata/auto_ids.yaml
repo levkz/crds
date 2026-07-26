@@ -9,10 +9,10 @@ entries:
     translations:
       - text: hello
 
-  - term: bonjour
+  - term: mang[er/ez/e/ons/ent]
 
     translations:
-      - text: good morning
+      - text: eat
 
   - term: s'il vous plaît
 

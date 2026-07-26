@@ -81,6 +81,16 @@ func TestExpandVariants(t *testing.T) {
 			text:   "il/elle/on",
 			expect: []string{"il/elle/on"},
 		},
+		{
+			name:   "verb conjugation optional",
+			text:   "mang(er/es/e/ons/ez/ent)",
+			expect: []string{"mang", "manger", "manges", "mange", "mangons", "mangez", "mangent"},
+		},
+		{
+			name:   "required prefix alternatives",
+			text:   "[une/la] baguette",
+			expect: []string{"une baguette", "la baguette"},
+		},
 	}
 
 	for _, tt := range tests {

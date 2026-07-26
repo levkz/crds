@@ -12,7 +12,7 @@ import (
 
 type SearchCmd struct {
 	Query string   `arg:"" optional:"" help:"Search query (empty for all entries)."`
-	Deck  []string `help:"Deck(s) to search in (repeatable, defaults to all)."`
+	Deck  []string `help:"Deck(s) to search in (repeatable, defaults to all)." completion-predictor:"deck"`
 	Tags  []string `help:"Tags to filter by (repeatable, AND logic)."`
 }
 

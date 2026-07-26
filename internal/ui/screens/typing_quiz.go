@@ -7,6 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"crds/internal/fuzzy"
+	"crds/internal/model"
 	"crds/internal/ui"
 	components "crds/internal/ui/components/display"
 	icomp "crds/internal/ui/components/interactive"
@@ -24,6 +25,7 @@ type TypingQuizModel struct {
 	grade     int
 	score     float64
 	deckName  string
+	inverse   bool
 	width     int
 	height    int
 	matcher   *fuzzy.FuzzyMatcher
@@ -63,6 +65,7 @@ func (m *TypingQuizModel) SetDeck(deck ui.DeckData) {
 	m.cardIndex = 0
 	m.progress = 0
 	m.revealed = false
+	m.inverse = false
 	m.grade = 0
 	m.score = 0
 	m.input.SetValue("")
@@ -70,12 +73,26 @@ func (m *TypingQuizModel) SetDeck(deck ui.DeckData) {
 
 func (m *TypingQuizModel) Init() tea.Cmd { return nil }
 
+func (m *TypingQuizModel) currentVariants() []string {
+	if m.inverse {
+		return model.ExpandText(m.cards[m.cardIndex].Front)
+	}
+	return m.cards[m.cardIndex].Variants
+}
+
+func (m *TypingQuizModel) currentCorrectAnswer() string {
+	if m.inverse {
+		return m.cards[m.cardIndex].Front
+	}
+	return strings.Join(m.cards[m.cardIndex].Back, ", ")
+}
+
 func (m *TypingQuizModel) gradeInput() bool {
 	answer := m.input.Value()
 	if answer == "" {
 		return false
 	}
-	variants := m.cards[m.cardIndex].Variants
+	variants := m.currentVariants()
 	m.grade = m.matcher.Grade(answer, variants)
 	score, _ := m.matcher.Check(answer, variants)
 	m.score = score
@@ -97,14 +114,13 @@ func (m *TypingQuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 				if m.gradeInput() {
 					m.revealed = true
 					card := m.cards[m.cardIndex]
-					translations := strings.Join(card.Back, ", ")
 					return m, func() tea.Msg {
 						return ui.SaveAnswerMsg{
 							DeckID:        m.deckName,
 							CardID:        card.Front,
 							Grade:         m.grade,
 							UserInput:     m.input.Value(),
-							CorrectAnswer: translations,
+							CorrectAnswer: m.currentCorrectAnswer(),
 							Similarity:    m.score,
 						}
 					}
@@ -123,6 +139,13 @@ func (m *TypingQuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 						Grade:  fuzzy.Again,
 					}
 				}
+
+			case keymap.DefaultTypingQuiz.Inverse.Match(msg):
+				m.inverse = !m.inverse
+				m.revealed = false
+				m.grade = 0
+				m.score = 0
+				m.input.SetValue("")
 
 			default:
 				updated, cmd := m.input.Update(msg)
@@ -178,16 +201,27 @@ func (m TypingQuizModel) View() string {
 	if headerTitle == "" {
 		headerTitle = "Typing Quiz"
 	}
+	if m.inverse {
+		headerTitle += " (inverse)"
+	}
 
 	card := m.cards[m.cardIndex]
+	displayCard := card
+	if m.inverse {
+		displayCard = components.Card{
+			Front: strings.Join(card.Back, ", "),
+			Back:  []string{card.Front},
+			Notes: card.Notes,
+		}
+	}
 
 	var items []string
-	items = append(items, components.RenderCard(card, m.revealed, m.width))
+	items = append(items, components.RenderCard(displayCard, m.revealed, m.width))
 	items = append(items, components.ProgressBar(m.progress))
 	items = append(items, m.input.View(m.width))
 
 	if m.revealed {
-		translations := strings.Join(card.Back, ", ")
+		correctAnswer := m.currentCorrectAnswer()
 
 		var gradeIndicator string
 		switch m.grade {
@@ -210,7 +244,7 @@ func (m TypingQuizModel) View() string {
 			answerLine = styles.Error().Render("✗ " + m.input.Value())
 		}
 
-		correctLine := styles.MutedText().Render("Correct: " + translations)
+		correctLine := styles.MutedText().Render("Correct: " + correctAnswer)
 
 		items = append(items, layout.Column(gradeIndicator, correctLine, answerLine))
 	}

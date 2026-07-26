@@ -60,23 +60,25 @@ type Quiz struct {
 	Hard    Binding
 	Good    Binding
 	Easy    Binding
+	Inverse Binding
 }
 
 func (km Quiz) Unrevealed() string {
-	return BindingList{km.Reveal}.Help()
+	return BindingList{km.Reveal, km.Inverse}.Help()
 }
 
 func (km Quiz) Revealed() string {
-	return BindingList{km.Again, km.Hard, km.Good, km.Easy}.Help()
+	return BindingList{km.Again, km.Hard, km.Good, km.Easy, km.Inverse}.Help()
 }
 
 type TypingQuiz struct {
-	Submit Binding
-	Reveal Binding
+	Submit  Binding
+	Reveal  Binding
+	Inverse Binding
 }
 
 func (km TypingQuiz) Footer() string {
-	return BindingList{km.Submit, km.Reveal}.Help()
+	return BindingList{km.Submit, km.Reveal, km.Inverse}.Help()
 }
 
 type Decks struct {
@@ -130,8 +132,10 @@ func (r Registry) Bindings() []NamedBinding {
 		{"Quiz", "Hard", r.Quiz.Hard},
 		{"Quiz", "Good", r.Quiz.Good},
 		{"Quiz", "Easy", r.Quiz.Easy},
+		{"Quiz", "Inverse", r.Quiz.Inverse},
 		{"TypingQuiz", "Submit", r.TypingQuiz.Submit},
 		{"TypingQuiz", "Reveal", r.TypingQuiz.Reveal},
+		{"TypingQuiz", "Inverse", r.TypingQuiz.Inverse},
 		{"Decks", "Toggle", r.Decks.Toggle},
 		{"Decks", "ToggleAll", r.Decks.ToggleAll},
 		{"Search", "Open", r.Search.Open},
@@ -164,16 +168,18 @@ var DefaultList = List{
 }
 
 var DefaultQuiz = Quiz{
-	Reveal: Binding{Keys: []string{"enter"}, Help: "enter reveal"},
-	Again:  Binding{Keys: []string{"1"}, Help: "1 again"},
-	Hard:   Binding{Keys: []string{"2"}, Help: "2 hard"},
-	Good:   Binding{Keys: []string{"3"}, Help: "3 good"},
-	Easy:   Binding{Keys: []string{"4"}, Help: "4 easy"},
+	Reveal:  Binding{Keys: []string{"enter"}, Help: "enter reveal"},
+	Again:   Binding{Keys: []string{"1"}, Help: "1 again"},
+	Hard:    Binding{Keys: []string{"2"}, Help: "2 hard"},
+	Good:    Binding{Keys: []string{"3"}, Help: "3 good"},
+	Easy:    Binding{Keys: []string{"4"}, Help: "4 easy"},
+	Inverse: Binding{Keys: []string{"tab"}, Help: "tab inverse"},
 }
 
 var DefaultTypingQuiz = TypingQuiz{
-	Submit: Binding{Keys: []string{"enter"}, Help: "enter submit"},
-	Reveal: Binding{Keys: []string{"tab"},  Help: "tab reveal"},
+	Submit:  Binding{Keys: []string{"enter"},   Help: "enter submit"},
+	Reveal:  Binding{Keys: []string{"ctrl+r"},  Help: "ctrl+r reveal"},
+	Inverse: Binding{Keys: []string{"tab"},     Help: "tab inverse"},
 }
 
 var DefaultDecks = Decks{
@@ -219,15 +225,17 @@ type KeymapConfig struct {
 		Select *BindingOverride `yaml:"select,omitempty"`
 	} `yaml:"list,omitempty"`
 	Quiz *struct {
-		Reveal *BindingOverride `yaml:"reveal,omitempty"`
-		Again  *BindingOverride `yaml:"again,omitempty"`
-		Hard   *BindingOverride `yaml:"hard,omitempty"`
-		Good   *BindingOverride `yaml:"good,omitempty"`
-		Easy   *BindingOverride `yaml:"easy,omitempty"`
+		Reveal  *BindingOverride `yaml:"reveal,omitempty"`
+		Again   *BindingOverride `yaml:"again,omitempty"`
+		Hard    *BindingOverride `yaml:"hard,omitempty"`
+		Good    *BindingOverride `yaml:"good,omitempty"`
+		Easy    *BindingOverride `yaml:"easy,omitempty"`
+		Inverse *BindingOverride `yaml:"inverse,omitempty"`
 	} `yaml:"quiz,omitempty"`
 	TypingQuiz *struct {
-		Submit *BindingOverride `yaml:"submit,omitempty"`
-		Reveal *BindingOverride `yaml:"reveal,omitempty"`
+		Submit  *BindingOverride `yaml:"submit,omitempty"`
+		Reveal  *BindingOverride `yaml:"reveal,omitempty"`
+		Inverse *BindingOverride `yaml:"inverse,omitempty"`
 	} `yaml:"typing_quiz,omitempty"`
 	Decks *struct {
 		Toggle    *BindingOverride `yaml:"toggle,omitempty"`
@@ -291,6 +299,9 @@ func ApplyDefaultOverrides(cfg KeymapConfig) {
 		if cfg.Quiz.Easy != nil {
 			DefaultQuiz.Easy = applyOverride(DefaultQuiz.Easy, *cfg.Quiz.Easy)
 		}
+		if cfg.Quiz.Inverse != nil {
+			DefaultQuiz.Inverse = applyOverride(DefaultQuiz.Inverse, *cfg.Quiz.Inverse)
+		}
 	}
 	if cfg.TypingQuiz != nil {
 		if cfg.TypingQuiz.Submit != nil {
@@ -298,6 +309,9 @@ func ApplyDefaultOverrides(cfg KeymapConfig) {
 		}
 		if cfg.TypingQuiz.Reveal != nil {
 			DefaultTypingQuiz.Reveal = applyOverride(DefaultTypingQuiz.Reveal, *cfg.TypingQuiz.Reveal)
+		}
+		if cfg.TypingQuiz.Inverse != nil {
+			DefaultTypingQuiz.Inverse = applyOverride(DefaultTypingQuiz.Inverse, *cfg.TypingQuiz.Inverse)
 		}
 	}
 	if cfg.Decks != nil {

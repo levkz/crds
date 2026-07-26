@@ -1,6 +1,8 @@
 package screens
 
 import (
+	"strings"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"crds/internal/ui"
 	components "crds/internal/ui/components/display"
@@ -15,6 +17,7 @@ type QuizModel struct {
 	Progress  int
 	Cards     []components.Card
 	deckName  string
+	inverse   bool
 
 	width  int
 	height int
@@ -54,6 +57,7 @@ func (m *QuizModel) SetDeck(deck ui.DeckData) {
 	m.CardIndex = 0
 	m.Progress = 0
 	m.Revealed = false
+	m.inverse = false
 }
 
 func (m *QuizModel) grade(g Grade) (*QuizModel, tea.Cmd) {
@@ -108,6 +112,10 @@ func (m *QuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 		case keymap.DefaultQuiz.Easy.Match(msg):
 			updated, cmd := m.grade(Easy)
 			return updated, cmd
+
+		case keymap.DefaultQuiz.Inverse.Match(msg):
+			m.inverse = !m.inverse
+			m.Revealed = false
 		}
 	}
 
@@ -142,10 +150,23 @@ func (m QuizModel) View() string {
 	if headerTitle == "" {
 		headerTitle = "Quiz"
 	}
+	if m.inverse {
+		headerTitle += " (inverse)"
+	}
+
+	displayCard := m.Cards[m.CardIndex]
+	if m.inverse {
+		displayCard = components.Card{
+			Front: strings.Join(displayCard.Back, ", "),
+			Back:  []string{displayCard.Front},
+			Notes: displayCard.Notes,
+		}
+	}
+
 	return layout.Page(
 		components.Header(headerTitle, m.width),
 		layout.Column(
-			components.RenderCard(m.Cards[m.CardIndex], m.Revealed, m.width),
+			components.RenderCard(displayCard, m.Revealed, m.width),
 			components.ProgressBar(m.Progress),
 		),
 		footer,

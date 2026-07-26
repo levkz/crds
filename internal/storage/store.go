@@ -30,6 +30,7 @@ var migrationsFS embed.FS
 type Store struct {
 	queries *db.Queries
 	conn    *sql.DB
+	dbPath  string
 
 	mu              sync.Mutex
 	currentSession  int64 // 0 = no active session
@@ -58,6 +59,7 @@ func NewStore(dbPath string) (*Store, error) {
 	return &Store{
 		queries: db.New(conn),
 		conn:    conn,
+		dbPath:  dbPath,
 	}, nil
 }
 

@@ -468,6 +468,60 @@ func (s *Store) ChangeDeckID(deckID, newID, deckDir string) error {
 	return nil
 }
 
+// DeleteDeck removes a deck from the database and filesystem. It deletes
+// associated progress, reviews, and the source YAML file. The deck row is
+// removed via ON DELETE CASCADE which cleans up entries, translations,
+// examples, and entry_tags automatically.
+func (s *Store) DeleteDeck(deckID, deckDir string) error {
+	ctx := context.Background()
+
+	_, err := s.queries.GetDeck(ctx, deckID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("delete: deck %q not found", deckID)
+		}
+		return fmt.Errorf("delete: check deck %q: %w", deckID, err)
+	}
+
+	yamlPath := filepath.Join(deckDir, deckID+".yaml")
+
+	tx, err := s.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("delete: begin tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	_, err = tx.ExecContext(ctx, "DELETE FROM progress WHERE deck_id = ?", deckID)
+	if err != nil {
+		return fmt.Errorf("delete: progress: %w", err)
+	}
+
+	_, err = tx.ExecContext(ctx, "DELETE FROM reviews WHERE deck_id = ?", deckID)
+	if err != nil {
+		return fmt.Errorf("delete: reviews: %w", err)
+	}
+
+	_, err = tx.ExecContext(ctx, "DELETE FROM sync_state WHERE path = ?", yamlPath)
+	if err != nil {
+		return fmt.Errorf("delete: sync_state: %w", err)
+	}
+
+	_, err = tx.ExecContext(ctx, "DELETE FROM decks WHERE id = ?", deckID)
+	if err != nil {
+		return fmt.Errorf("delete: deck: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("delete: commit: %w", err)
+	}
+
+	if err := os.Remove(yamlPath); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("delete: remove file %s: %w", yamlPath, err)
+	}
+
+	return nil
+}
+
 // DB returns the underlying *sql.DB for advanced use (e.g. goose migrations outside of NewStore).
 func (s *Store) DB() *sql.DB {
 	return s.conn

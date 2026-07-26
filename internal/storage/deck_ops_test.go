@@ -576,3 +576,103 @@ func TestExportDeckFromCache_RendersYamlCorrectly(t *testing.T) {
 		t.Errorf("entry 1 examples: got %d", len(e1.Examples))
 	}
 }
+
+// --- DeleteDeck ---
+
+func TestDeleteDeck(t *testing.T) {
+	store := newTestStore(t)
+	defer store.Close()
+
+	deckDir := setupSyncedDeck(t, store)
+
+	if err := store.DeleteDeck("test_deck", deckDir); err != nil {
+		t.Fatalf("DeleteDeck: %v", err)
+	}
+
+	_, err := store.queries.GetDeck(context.Background(), "test_deck")
+	if !errors.Is(err, sql.ErrNoRows) {
+		t.Errorf("deck should be gone from DB: %v", err)
+	}
+
+	yamlPath := filepath.Join(deckDir, "test_deck.yaml")
+	if _, err := os.Stat(yamlPath); !os.IsNotExist(err) {
+		t.Errorf("YAML file should be removed")
+	}
+
+	entries, err := store.queries.ListEntriesByDeck(context.Background(), "test_deck")
+	if err != nil {
+		t.Fatalf("ListEntriesByDeck: %v", err)
+	}
+	if len(entries) != 0 {
+		t.Errorf("expected 0 entries, got %d", len(entries))
+	}
+}
+
+func TestDeleteDeck_NotFound(t *testing.T) {
+	store := newTestStore(t)
+	defer store.Close()
+
+	err := store.DeleteDeck("nonexistent", t.TempDir())
+	if err == nil {
+		t.Fatal("expected error for nonexistent deck")
+	}
+}
+
+func TestDeleteDeck_WithProgress(t *testing.T) {
+	store := newTestStore(t)
+	defer store.Close()
+
+	deckDir := setupSyncedDeck(t, store)
+
+	due := timeOnly("2026-07-26 12:00:00")
+	if err := store.queries.UpsertProgress(context.Background(), db.UpsertProgressParams{
+		DeckID:    "test_deck",
+		EntryID:   "entry_1",
+		Reverse:   0,
+		Ease:      2.5,
+		Interval:  1,
+		Due:       &due,
+		Correct:   5,
+		Incorrect: 1,
+	}); err != nil {
+		t.Fatalf("UpsertProgress: %v", err)
+	}
+
+	if err := store.RecordAnswer("test_deck", "entry_1", 3, false); err != nil {
+		t.Fatalf("RecordAnswer: %v", err)
+	}
+	if err := store.RecordAnswer("test_deck", "entry_2", 1, true); err != nil {
+		t.Fatalf("RecordAnswer: %v", err)
+	}
+
+	if err := store.DeleteDeck("test_deck", deckDir); err != nil {
+		t.Fatalf("DeleteDeck: %v", err)
+	}
+
+	_, err := store.queries.GetDeck(context.Background(), "test_deck")
+	if !errors.Is(err, sql.ErrNoRows) {
+		t.Errorf("deck should be gone")
+	}
+}
+
+func TestDeleteDeck_FileMissing(t *testing.T) {
+	store := newTestStore(t)
+	defer store.Close()
+
+	deckDir := setupSyncedDeck(t, store)
+
+	// Remove the YAML file before deleting (simulates partial state)
+	yamlPath := filepath.Join(deckDir, "test_deck.yaml")
+	if err := os.Remove(yamlPath); err != nil {
+		t.Fatalf("remove yaml: %v", err)
+	}
+
+	if err := store.DeleteDeck("test_deck", deckDir); err != nil {
+		t.Fatalf("DeleteDeck with missing file: %v", err)
+	}
+
+	_, err := store.queries.GetDeck(context.Background(), "test_deck")
+	if !errors.Is(err, sql.ErrNoRows) {
+		t.Errorf("deck should still be deleted from DB: %v", err)
+	}
+}

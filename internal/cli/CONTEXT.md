@@ -24,18 +24,26 @@ Flat commands (Quiz, Stats, Completion) remain at root. Deck, state, and profile
 
 ```go
 type DeckCmd struct {
+    List   ListCmd     `cmd:"" help:"List all decks with entry counts."`
     Import ImportCmd   `cmd:"" help:"Import a deck from a YAML file."`
     Export ExportCmd   `cmd:"" help:"Export a deck to a YAML file."`
     Delete DeleteCmd   `cmd:"" help:"Delete a deck."`
-    Search SearchCmd   `cmd:"" help:"Search vocabulary in a deck."`
+    Search SearchCmd   `cmd:"" help:"Search vocabulary across decks."`
     Edit   EditDeckCmd `cmd:"" help:"Edit a deck's full YAML file."`
     Term   TermCmd     `cmd:"" help:"Manage individual terms in a deck."`
+    Tag    TagCmd      `cmd:"" help:"Manage tags on terms."`
 }
 
 type TermCmd struct {
     Add  TermAddCmd  `cmd:"" help:"Add a new term."`
     Rm   TermRmCmd   `cmd:"" help:"Remove a term."`
     Edit TermEditCmd `cmd:"" help:"Edit a term."`
+}
+
+type TagCmd struct {
+    Add  TagAddCmd  `cmd:"" help:"Add tags to a term."`
+    Rm   TagRmCmd   `cmd:"" help:"Remove tags from a term."`
+    List TagListCmd `cmd:"" help:"List tags on a term."`
 }
 
 type StateCmd struct {
@@ -70,16 +78,24 @@ parser, err := kong.New(&c, kong.Name("crds"), kong.Bind(a))
 ### How parsing dispatches
 
 ```
-crds                            → CLI.Run(a, ctx)           → TUI
-crds quiz --deck foo            → CLI.Quiz.Run(a)           → TUI with pre-selected deck
-crds state sync                 → StateCmd.Sync.Run(a)      → sync
-crds deck export <deck>         → DeckCmd.Export.Run(a)     → export
-crds deck term add <deck>       → DeckCmd.Term.Add.Run(a)  → add entry
-crds deck term edit <deck> <id> → DeckCmd.Term.Edit.Run(a) → edit entry
-crds deck term rm <deck> <id>   → DeckCmd.Term.Rm.Run(a)   → remove entry
-crds deck edit <deck>           → DeckCmd.Edit.Run(a)       → full deck edit
-crds profile export             → ProfileCmd.Export.Run(a)  → profile export
-crds profile import <file>      → ProfileCmd.Import.Run(a)  → profile import
+crds                              → CLI.Run(a, ctx)           → TUI
+crds quiz --deck foo              → CLI.Quiz.Run(a)           → TUI with pre-selected deck
+crds state sync                   → StateCmd.Sync.Run(a)      → sync
+crds deck list                    → DeckCmd.List.Run(a)       → list decks
+crds deck import <file> --replace → DeckCmd.Import.Run(a)     → import (with replace)
+crds deck export <deck>           → DeckCmd.Export.Run(a)     → export
+crds deck export --all            → DeckCmd.Export.Run(a)     → export all
+crds deck edit <deck>             → DeckCmd.Edit.Run(a)       → full deck edit
+crds deck search <query> --tags   → DeckCmd.Search.Run(a)     → search with filters
+crds deck term add <deck> -t ...  → DeckCmd.Term.Add.Run(a)  → add entry inline
+crds deck term edit <deck> <id>   → DeckCmd.Term.Edit.Run(a) → edit entry
+crds deck term rm <deck> <id> -f  → DeckCmd.Term.Rm.Run(a)   → remove entry (force)
+crds deck tag add <deck> <id> ... → DeckCmd.Tag.Add.Run(a)   → add tags
+crds deck tag rm <deck> <id> ...  → DeckCmd.Tag.Rm.Run(a)    → remove tags
+crds deck tag list <deck> <id>    → DeckCmd.Tag.List.Run(a)  → list tags
+crds stats --deck <deck>          → CLI.Stats.Run(a)          → per-deck stats
+crds profile export               → ProfileCmd.Export.Run(a)  → profile export
+crds profile import <file>        → ProfileCmd.Import.Run(a)  → profile import
 ```
 
 When a subcommand is matched, Kong's `RunNode` walks from the selected node up to the root calling every `Run()` it finds. Subcommand `Run()` executes first, then `CLI.Run()` receives `ctx.Selected() != nil` and returns immediately without launching the TUI.

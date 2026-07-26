@@ -46,22 +46,27 @@ Most work ahead: wiring CLI commands → parser → storage → quiz/scheduler l
 ## Commit workflow
 
 After each feature is implemented and tests pass (`make test` + `make build`), commit
-using `commit.sh` (run `./commit.sh --execute`). It groups changed files by feature
-into 9 logical commits. If something needs fixing, reset the last commit with
-`git reset --soft HEAD~1`, fix, test, and re-run `./commit.sh --execute` (the script
-stages and commits incrementally — already-committed groups are skipped).
+manually with logical grouping:
 
-The shared boilerplate lives in `scripts/commit_group.sh` — source it in new commit
-scripts to get the `commit()` helper and dry-run handling. Feed `COMMIT_EXECUTE=1`
-as the environment variable (or set it via a `--execute` flag in your wrapper).
+1. `git add <files>` for each logical change
+2. `git commit -m "scope: description"` with a short subject line and a blank line
+   followed by a brief body explaining what and why
+3. Repeat for each independent concern (feature, refactor, tests, docs)
+
+Group related files together. Separate unrelated changes into distinct commits.
+Keep the subject line under 72 characters. Use imperative mood.
+
+If something needs fixing after a commit, use `git reset --soft HEAD~1`, fix, test,
+and re-commit.
 
 ## Parser specifics
 
-- Uses `go.yaml.in/yaml/v3` (NOT the standard `gopkg.in/yaml.v3`)
+- Uses `go.yaml.in/yaml/v3` (NOT the standard `gopkg.in/yaml/v3`)
 - `Normalize()` trims whitespace on all fields in-place
-- `Validate()` checks: deck id/name/language required, entry id required, no duplicate IDs, term required, ≥1 translation
-- Test fixtures in `internal/parser/testdata/` (12 YAML files)
-- `testdata/auto_ids.yaml` tests entries without explicit IDs (not yet wired to validation)
+- `assignIDs()` generates IDs for entries missing them: expands the term via `ExpandText`, picks the shortest variant, sanitises
+- `Validate()` checks: deck id/name/language required, entry id required (auto-filled), no duplicate IDs, term required, ≥1 translation
+- Test fixtures in `internal/parser/testdata/` (13 YAML files)
+- `testdata/auto_ids.yaml` tests entries without explicit IDs
 
 ## Theme specifics
 

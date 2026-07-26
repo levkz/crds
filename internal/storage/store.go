@@ -4,13 +4,19 @@ import (
 	"context"
 	"database/sql"
 	"embed"
+	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
+	"crds/internal/model"
+	"crds/internal/parser"
 	"crds/internal/storage/db"
 	"crds/internal/ui"
 
+	"go.yaml.in/yaml/v3"
 	_ "modernc.org/sqlite"
 
 	"github.com/pressly/goose/v3"
@@ -216,6 +222,248 @@ func (s *Store) GetWeakTypingEntries(deckID string, limit int) ([]db.GetWeakTypi
 		DeckID: deckID,
 		Limit:  int64(limit),
 	})
+}
+
+// --- Deck operations ---
+
+// ImportDeck parses a YAML file, copies it into the deck directory, and syncs
+// it into the SQLite cache. Returns an error if the deck ID already exists in
+// the database or if a file with the deck ID already exists in the directory.
+func (s *Store) ImportDeck(srcPath, deckDir string) error {
+	ctx := context.Background()
+
+	deck, err := parser.ParseFile(srcPath)
+	if err != nil {
+		return fmt.Errorf("import: parse %s: %w", srcPath, err)
+	}
+
+	_, err = s.queries.GetDeck(ctx, deck.ID)
+	if err == nil {
+		return fmt.Errorf("import: deck %q already exists in database", deck.ID)
+	}
+	if !errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("import: check deck %q: %w", deck.ID, err)
+	}
+
+	dstPath := filepath.Join(deckDir, deck.ID+".yaml")
+	if _, err := os.Stat(dstPath); err == nil {
+		return fmt.Errorf("import: file %q already exists", dstPath)
+	}
+
+	data, err := os.ReadFile(srcPath)
+	if err != nil {
+		return fmt.Errorf("import: read %s: %w", srcPath, err)
+	}
+	if err := os.WriteFile(dstPath, data, 0644); err != nil {
+		return fmt.Errorf("import: write %s: %w", dstPath, err)
+	}
+
+	if err := s.syncDeck(dstPath); err != nil {
+		os.Remove(dstPath)
+		return fmt.Errorf("import: sync %s: %w", dstPath, err)
+	}
+
+	return nil
+}
+
+// ExportDeck copies the source YAML file for a deck to the destination path.
+// Returns an error if the deck or source file does not exist.
+func (s *Store) ExportDeck(deckID, dstPath, deckDir string) error {
+	_, err := s.queries.GetDeck(context.Background(), deckID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("export: deck %q not found", deckID)
+		}
+		return fmt.Errorf("export: get deck %q: %w", deckID, err)
+	}
+
+	srcPath := filepath.Join(deckDir, deckID+".yaml")
+	data, err := os.ReadFile(srcPath)
+	if err != nil {
+		return fmt.Errorf("export: read %s: %w", srcPath, err)
+	}
+	if err := os.WriteFile(dstPath, data, 0644); err != nil {
+		return fmt.Errorf("export: write %s: %w", dstPath, err)
+	}
+
+	return nil
+}
+
+// ExportDeckFromCache reconstructs a deck from the SQLite cache and writes it
+// as canonical YAML to the destination path. Preserves no comments or original
+// formatting. Works even if the source YAML file has been deleted.
+func (s *Store) ExportDeckFromCache(deckID, dstPath string) error {
+	ctx := context.Background()
+
+	d, err := s.queries.GetDeck(ctx, deckID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("export-cache: deck %q not found", deckID)
+		}
+		return fmt.Errorf("export-cache: get deck %q: %w", deckID, err)
+	}
+
+	entries, err := s.queries.ListEntriesByDeck(ctx, deckID)
+	if err != nil {
+		return fmt.Errorf("export-cache: list entries: %w", err)
+	}
+
+	deck := &model.Deck{
+		ID:                  d.ID,
+		Name:                d.Name,
+		Language:            d.Language,
+		TranslationLanguage: d.TranslationLanguage,
+	}
+
+	for _, entry := range entries {
+		e := model.Entry{
+			ID:    entry.ID,
+			Term:  entry.Term,
+			Notes: entry.Notes,
+		}
+
+		texts, _ := s.queries.GetTranslationsByEntry(ctx, entry.ID)
+		for _, t := range texts {
+			e.Translations = append(e.Translations, model.Translation{Text: t})
+		}
+
+		examples, _ := s.queries.GetExamplesByEntry(ctx, entry.ID)
+		for _, ex := range examples {
+			e.Examples = append(e.Examples, model.Example{
+				Text:        ex.Text,
+				Translation: ex.Translation,
+			})
+		}
+
+		tags, _ := s.queries.GetTagsByEntry(ctx, entry.ID)
+		e.Tags = tags
+
+		deck.Entries = append(deck.Entries, e)
+	}
+
+	data, err := yaml.Marshal(deck)
+	if err != nil {
+		return fmt.Errorf("export-cache: marshal: %w", err)
+	}
+
+	if err := os.WriteFile(dstPath, data, 0644); err != nil {
+		return fmt.Errorf("export-cache: write %s: %w", dstPath, err)
+	}
+
+	return nil
+}
+
+// RenameDeck changes the name of a deck in both the source YAML file and the
+// SQLite cache.
+func (s *Store) RenameDeck(deckID, newName, deckDir string) error {
+	yamlPath := filepath.Join(deckDir, deckID+".yaml")
+
+	deck, err := parser.ParseFile(yamlPath)
+	if err != nil {
+		return fmt.Errorf("rename: parse %s: %w", yamlPath, err)
+	}
+
+	deck.Name = newName
+
+	data, err := yaml.Marshal(deck)
+	if err != nil {
+		return fmt.Errorf("rename: marshal: %w", err)
+	}
+	if err := os.WriteFile(yamlPath, data, 0644); err != nil {
+		return fmt.Errorf("rename: write %s: %w", yamlPath, err)
+	}
+
+	_, err = s.conn.ExecContext(context.Background(),
+		"UPDATE decks SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+		newName, deckID)
+	if err != nil {
+		return fmt.Errorf("rename: update db: %w", err)
+	}
+
+	return nil
+}
+
+// ChangeDeckID changes the ID of a deck in the source YAML file, SQLite cache,
+// and all referencing tables (entries, progress, reviews, sync_state).
+func (s *Store) ChangeDeckID(deckID, newID, deckDir string) error {
+	ctx := context.Background()
+
+	_, err := s.queries.GetDeck(ctx, newID)
+	if err == nil {
+		return fmt.Errorf("change-id: deck %q already exists", newID)
+	}
+	if !errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("change-id: check deck %q: %w", newID, err)
+	}
+
+	yamlPath := filepath.Join(deckDir, deckID+".yaml")
+	deck, err := parser.ParseFile(yamlPath)
+	if err != nil {
+		return fmt.Errorf("change-id: parse %s: %w", yamlPath, err)
+	}
+
+	deck.ID = newID
+
+	newYamlPath := filepath.Join(deckDir, newID+".yaml")
+	data, err := yaml.Marshal(deck)
+	if err != nil {
+		return fmt.Errorf("change-id: marshal: %w", err)
+	}
+	if err := os.WriteFile(newYamlPath, data, 0644); err != nil {
+		return fmt.Errorf("change-id: write %s: %w", newYamlPath, err)
+	}
+
+	tx, err := s.conn.BeginTx(ctx, nil)
+	if err != nil {
+		os.Remove(newYamlPath)
+		return fmt.Errorf("change-id: begin tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	_, err = tx.ExecContext(ctx,
+		`INSERT INTO decks (id, name, language, translation_language, created_at, updated_at)
+		 SELECT ?, name, language, translation_language, created_at, CURRENT_TIMESTAMP
+		 FROM decks WHERE id = ?`,
+		newID, deckID)
+	if err != nil {
+		return fmt.Errorf("change-id: insert deck: %w", err)
+	}
+
+	_, err = tx.ExecContext(ctx, "UPDATE entries SET deck_id = ? WHERE deck_id = ?", newID, deckID)
+	if err != nil {
+		return fmt.Errorf("change-id: update entries: %w", err)
+	}
+
+	_, err = tx.ExecContext(ctx, "UPDATE progress SET deck_id = ? WHERE deck_id = ?", newID, deckID)
+	if err != nil {
+		return fmt.Errorf("change-id: update progress: %w", err)
+	}
+
+	_, err = tx.ExecContext(ctx, "UPDATE reviews SET deck_id = ? WHERE deck_id = ?", newID, deckID)
+	if err != nil {
+		return fmt.Errorf("change-id: update reviews: %w", err)
+	}
+
+	_, err = tx.ExecContext(ctx, "UPDATE sync_state SET path = ? WHERE path = ?", newYamlPath, yamlPath)
+	if err != nil {
+		return fmt.Errorf("change-id: update sync_state: %w", err)
+	}
+
+	_, err = tx.ExecContext(ctx, "DELETE FROM decks WHERE id = ?", deckID)
+	if err != nil {
+		return fmt.Errorf("change-id: delete old deck: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		os.Remove(newYamlPath)
+		return fmt.Errorf("change-id: commit: %w", err)
+	}
+
+	if err := os.Remove(yamlPath); err != nil {
+		return fmt.Errorf("change-id: remove old file %s: %w", yamlPath, err)
+	}
+
+	return nil
 }
 
 // DB returns the underlying *sql.DB for advanced use (e.g. goose migrations outside of NewStore).

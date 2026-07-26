@@ -1,16 +1,11 @@
 package cli
 
 import (
-	"log"
-	"os"
-	"path/filepath"
-
+	"github.com/alecthomas/kong"
 	kongcompletion "github.com/jotaen/kong-completion"
-	"github.com/pressly/goose/v3"
 
 	"crds/internal/app"
 	uiapp "crds/internal/ui/app"
-	"crds/internal/storage"
 )
 
 type CLI struct {
@@ -19,46 +14,29 @@ type CLI struct {
 	Sync       SyncCmd                   `cmd:"" help:"Synchronize decks and generate missing IDs."`
 	Stats      StatsCmd                  `cmd:"" help:"Show learning statistics."`
 	Search     SearchCmd                 `cmd:"" help:"Search vocabulary."`
+	Import     ImportCmd                 `cmd:"" help:"Import a deck from a YAML file."`
+	Export     ExportCmd                 `cmd:"" help:"Export a deck to a YAML file."`
+	Delete     DeleteCmd                 `cmd:"" help:"Delete a deck."`
+	Reserve    ReserveCmd                `cmd:"" help:"Create a backup/reserve copy."`
+	Revert     RevertCmd                 `cmd:"" help:"Revert from a reserve copy."`
+	Edit       EditCmd                   `cmd:"" help:"Edit a deck entry."`
 	Completion kongcompletion.Completion `cmd:"" help:"Install shell completion."`
 }
 
-func (c *CLI) Run(a *app.App) error {
-	if !c.Debug {
-		goose.SetLogger(goose.NopLogger())
+func (c *CLI) Run(a *app.App, ctx *kong.Context) error {
+	if ctx.Selected() != nil {
+		return nil
 	}
 
-	home, err := os.UserHomeDir()
-	if err != nil {
-		home = "."
-	}
-
-	sharedDir := filepath.Join(home, ".local", "share", "crds")
-	dataDir := filepath.Join(sharedDir, "decks")
-
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
+	if err := a.Store.SyncDecks(a.DataDir); err != nil {
 		return err
 	}
 
-	stateStore := storage.NewStateStore(sharedDir)
-
-	// Open the SQLite database
-	dbPath := filepath.Join(sharedDir, "crds.db")
-	sqliteStore, err := storage.NewStore(dbPath)
-	if err != nil {
-		log.Fatalf("failed to open database: %v", err)
-	}
-	defer sqliteStore.Close()
-
-	// Sync decks from YAML to SQLite cache (only if files changed)
-	if err := sqliteStore.SyncDecks(dataDir); err != nil {
-		log.Fatalf("failed to sync decks: %v", err)
-	}
-
 	deps := uiapp.Dependencies{
-		Decks:    sqliteStore,
-		Progress: sqliteStore,
-		Stats:    sqliteStore,
-		State:    stateStore,
+		Decks:    a.Store,
+		Progress: a.Store,
+		Stats:    a.Store,
+		State:    a.State,
 	}
 
 	return uiapp.RunWithDefaults(deps)

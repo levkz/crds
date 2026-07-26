@@ -2,114 +2,59 @@
 
 ## Kong Wiring
 
-The CLI uses [Kong v1.16](https://github.com/alecthomas/kong) for command-line parsing. Declarative struct tags define flags, arguments, and help text. Every command implements `Run(a *app.App) error`.
+The CLI uses [Kong v1.16](https://github.com/alecthomas/kong) for command-line parsing. Declarative struct tags define flags, arguments, and help text. Every command implements `Run(a *app.App) error`. The root struct also receives `*kong.Context` to detect subcommand dispatch.
 
 ### Root `CLI` struct (`root.go`)
 
 ```go
 type CLI struct {
-    Debug      bool                      `help:"Enable debug output."`
-    Quiz       QuizCmd                   `cmd:"" help:"Start a quiz."`
-    Sync       SyncCmd                   `cmd:"" help:"Synchronize decks."`
-    Stats      StatsCmd                  `cmd:"" help:"Show learning statistics."`
-    Search     SearchCmd                 `cmd:"" help:"Search vocabulary."`
-    Completion kongcompletion.Completion `cmd:"" help:"Install shell completion."`
+    Debug      bool
+    Quiz       QuizCmd
+    Sync       SyncCmd
+    Stats      StatsCmd
+    Search     SearchCmd
+    Import     ImportCmd
+    Export     ExportCmd
+    Delete     DeleteCmd
+    Reserve    ReserveCmd
+    Revert     RevertCmd
+    Edit       EditCmd
+    Completion kongcompletion.Completion
 }
 ```
 
-Field name = command name unless overridden. CLI commands are registered as fields; the base `Run(a *app.App)` starts the TUI when no subcommand is given.
+Field name = command name. All subcommands have `cmd:""` tags. `CLI.Run(a, ctx)` starts the TUI when no subcommand is given, using `ctx.Selected()` to skip TUI launch after a subcommand has already run.
 
 ### Registration in `main.go`
 
-Kong is initialised in `cmd/crds/main.go`:
+Kong is initialised in `cmd/crds/main.go`. The `*app.App` is pre-wired with Store/State/SharedDir/DataDir before dispatch:
 
 ```go
-var c cli.CLI
-parser, err := kong.New(
-    &c,
-    kong.Name("crds"),
-    kong.Description("Terminal flashcard application."),
-    kong.Bind(&app.App{}),
-)
-```
-
-Kong binds `*app.App` into the context so every `Run(a *app.App)` receives it.
-
-### How parsing dispatches
-
-```
-crds                  → CLI.Run(a)            → TUI
-crds quiz --deck foo  → CLI.Quiz.Run(a)       → quiz subcommand
-crds sync             → CLI.Sync.Run(a)       → sync subcommand
-```
-
----
-
-## Current state of CLI commands
-
-| Command | File | Struct | Implementation |
-|---------|------|--------|----------------|
-| `quiz` | `quiz.go` | `QuizCmd` | Stub — prints args |
-| `sync` | `sync.go` | `SyncCmd` | Stub — prints args |
-| `stats` | `stats.go` | `StatsCmd` | Stub — no Run method |
-| `search` | `search.go` | `SearchCmd` | Stub — no Run method |
-
-All `Run()` methods need to be implemented. Some have no `Run()` yet (Kong will call it via the method set; missing Run panics).
-
----
-
-## The Store access problem
-
-Currently Kong only binds `*app.App` which is an empty struct:
-
-```go
-type App struct {
-    // empty
-}
-```
-
-CLI commands **cannot access** the SQLite `*storage.Store` because it's created inside `CLI.Run()` (for the TUI path), not before command dispatch.
-
-**To wire CLI commands, add Store fields to `app.App`** and initialise them in `main.go`:
-
-```go
-type App struct {
-    Store     *storage.Store
-    State     *storage.StateStore
-    SharedDir string
-    DataDir   string
-}
-```
-
-Then in `main.go`:
-
-```go
-sharedDir := filepath.Join(home, ".local", "share", "crds")
-dataDir := filepath.Join(sharedDir, "decks")
-os.MkdirAll(dataDir, 0755)
-
-sqliteStore, _ := storage.NewStore(filepath.Join(sharedDir, "crds.db"))
-stateStore := storage.NewStateStore(sharedDir)
-
 a := &app.App{
     Store:     sqliteStore,
     State:     stateStore,
     SharedDir: sharedDir,
     DataDir:   dataDir,
 }
-
 parser, err := kong.New(&c, kong.Name("crds"), kong.Bind(a))
 ```
 
-Now every command's `Run(a *app.App)` has direct access to `a.Store`, `a.State`, `a.SharedDir`, and `a.DataDir`.
+### How parsing dispatches
 
-The TUI path (`CLI.Run`) can reuse the same pre-wired App instead of creating its own store.
+```
+crds                        → CLI.Run(a, ctx)       → TUI
+crds quiz --deck foo        → CLI.Quiz.Run(a)        → TUI with pre-selected deck
+crds sync                   → CLI.Sync.Run(a)        → sync subcommand
+crds export <deck>          → CLI.Export.Run(a)      → export subcommand
+```
+
+When a subcommand is matched, Kong's `RunNode` walks from the selected node up to the root calling every `Run()` it finds. Subcommand `Run()` executes first, then `CLI.Run()` receives `ctx.Selected() != nil` and returns immediately without launching the TUI.
 
 ---
 
 ## Paths
 
-Constructed from `os.UserHomeDir()` in `app.App`:
+Constructed from `os.UserHomeDir()` in `main.go`:
 
 | Variable | Path |
 |----------|------|
@@ -131,9 +76,6 @@ All methods on `*storage.Store`. All paths use `deckDir` (the directory containi
 |--------|------------|-----------|
 | `ImportDeck` | `srcPath, deckDir` | Parse YAML, copy to deckDir, sync to DB |
 | `ExportDeck` | `deckID, dstPath, deckDir` | Copy source YAML file to dstPath (preserves comments) |
-| `ExportDeckFromCache` | `deckID, dstPath` | Reconstruct from SQLite as canonical YAML (no comments) |
-| `RenameDeck` | `deckID, newName, deckDir` | Rename in YAML + DB |
-| `ChangeDeckID` | `deckID, newID, deckDir` | Change ID in YAML, DB, cascade to entries/progress/reviews/sync_state |
 | `DeleteDeck` | `deckID, deckDir` | Remove from DB (cascade), YAML, progress, reviews |
 | `ListDecks` | `() ([]string, error)` | List deck IDs from SQLite |
 | `SyncDecks` | `deckDir` | Re-sync all YAML files to SQLite cache |
@@ -144,27 +86,22 @@ All methods on `*storage.Store`. All paths use `deckDir` (the directory containi
 |--------|------------|-----------|
 | `AddEntry` | `deckID, entry, deckDir` | Append entry to YAML + sync |
 | `UpdateEntry` | `deckID, entryID, entry, deckDir` | Replace fields in-place (same ID) |
-| `ReplaceEntryID` | `deckID, oldID, newID, deckDir` | Change ID, migrate progress/reviews |
-| `RemoveEntry` | `deckID, entryID, deckDir` | Delete from YAML + DB, clean progress/reviews |
 
 ### Reserve operations
 
 | Method | Parameters | Behaviour |
 |--------|------------|-----------|
-| `CreateReserve` | `sharedDir` | Backup DB + state.yaml + decks/ to `reserve-copies/` |
+| `CreateReserve` | `sharedDir` | Backup DB + state.yaml + decks/ to `reserve-copies/` (default auto-name) |
+| `CreateReserveTo` | `sharedDir, outputDir, name` | Same but with custom output dir and/or name; returns full path |
 | `RevertReserve` | `sharedDir, reservePath` | Restore from backup, auto pre-backup, close/reopen DB |
+| `ListReserves` | `sharedDir` (standalone) | Returns reserve archive paths, newest-first |
 
 ### Session and stats
 
 | Method | Parameters | Behaviour |
 |--------|------------|-----------|
 | `EnsureSession` | `() (int64, error)` | Create or return current session |
-| `ResetSession` | `() error` | Close current session |
-| `RecordAnswer` | `deckID, cardID, grade, reverse` | Log a review |
-| `RecordAnswerFull` | `sessionID, deckID, entryID, grade, reverse, userInput, correctAnswer, similarity` | Log with typing detail |
 | `Stats` | `() ui.Stats` | Today's aggregate |
-| `GetReviewsByEntry` | `entryID, limit` | Last N reviews |
-| `GetWeakTypingEntries` | `deckID, limit` | Weakest typed answers |
 
 ---
 
@@ -183,7 +120,7 @@ Opens `$EDITOR` (fallback: nano, vim, vi) with a temp file. CLI commands should:
 3. Parse the returned YAML into the target struct
 4. Call the appropriate `Store` method
 
-Helper for entries:
+Helpers for entries:
 
 ```go
 entry, _ := editor.EditEntry(&existingEntry)  // marshal → edit → unmarshal
@@ -192,21 +129,16 @@ template := editor.EntryTemplate()             // blank YAML buffer
 
 ---
 
-## Completing a deck name in shell
+## Shell completion predictors
 
-A `deckPredictor` is registered in `main.go` for the `"deck"` completion tag:
+Two predictors are registered in `main.go`:
 
-```go
-type deckPredictor struct{ store *storage.DeckStore }
-```
+| Predictor | Type | Behaviour |
+|-----------|------|-----------|
+| `"deck"` | `*deckPredictor` | Lists deck IDs from SQLite `Store.ListDecks()` |
+| `"reserve"` | `*reservePredictor` | Lists `.tar.gz` files from default `reserve-copies/` directory |
 
-Kong completion uses `completion-predictor:"deck"` on arg/flag tags:
-
-```go
-Deck string `arg:"" completion-predictor:"deck"`
-```
-
-The predictor currently uses the legacy `DeckStore` (filesystem only). When the SQLite `Store` is wired via `App`, this should switch to `a.Store.ListDecks()`.
+Used via `completion-predictor:"deck"` / `completion-predictor:"reserve"` on struct field tags.
 
 ---
 
@@ -214,11 +146,10 @@ The predictor currently uses the legacy `DeckStore` (filesystem only). When the 
 
 1. **Create the file** `internal/cli/<name>.go` with a struct and `Run` method.
 2. **Register** the struct as a field on `CLI` in `root.go` with `cmd:"" help:"..."` tag.
-3. **Wire App** in `main.go` so `a.Store`, `a.SharedDir`, `a.DataDir` are available.
-4. **Implement Run**: parse args, call store methods, print or edit.
-5. **Add `completion-predictor:"deck"`** for any deck-name argument.
-6. **If using the editor**: import `crds/internal/editor` and call `editor.Edit` or `editor.EditEntry`.
-7. **Tests**: unit-test the Run logic if it contains non-trivial branching; otherwise test the store methods directly.
+3. **Implement Run**: parse args, call store methods, print or edit.
+4. **Add `completion-predictor:"deck"`** for any deck-name argument.
+5. **If using the editor**: import `crds/internal/editor` and call `editor.Edit` or `editor.EditEntry`.
+6. **Tests**: unit-test the Run logic if it contains non-trivial branching; otherwise test the store methods directly.
 
 ### Example command template
 
@@ -258,7 +189,6 @@ func (c *ImportCmd) Run(a *app.App) error {
 
 ## Known limitations
 
-- `app.App` is empty — must be extended with Store/State/SharedDir/DataDir fields before CLI commands can work
-- `CLI.Run()` (TUI path) currently creates its own Store — should reuse the one from App
-- `DeckStore` (legacy, filesystem-only) is used for completion prediction; should switch to SQLite `Store.ListDecks()`
-- `goose.SetNopLogger()` is called in `CLI.Run()` only, not for CLI command paths — need to suppress goose output in CLI commands too
+- `QuizCmd` has `--limit` and `--reverse` flags acknowledged with stderr warnings but not wired to the TUI
+- Grade scale mismatch: Flashcard uses 0-3, Typing uses 1-3 (needs normalization)
+- `scheduler/`, `search/`, `quiz/` implementations don't exist yet in the storage layer — only the UI and CLI wiring are done

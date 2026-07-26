@@ -92,9 +92,9 @@ The project is divided into several independent subsystems.
 
 | Subsystem | Responsibility | Status |
 |---|---|---|
-| CLI | Command-line interface and command dispatch | Stubs only |
+| CLI | Command-line interface and command dispatch | Fully implemented (11 commands, Kong dispatch, TUI launch) |
 | Parser | Loading and validating vocabulary files | Complete |
-| Storage | Persisting user-specific state | Partially implemented (DeckStore + in-memory ProgressStore) |
+| Storage | Persisting user-specific state | Fully implemented via `Store` (SQLite, goose, sqlc) |
 | Quiz | Learning session orchestration | Not implemented |
 | Scheduler | Determining review order | Not implemented |
 | Search | Vocabulary lookup | Not implemented |
@@ -251,7 +251,7 @@ Startup responsibilities include:
 
 Business logic should never exist in the application entry point.
 
-**Current state:** `cmd/crds/main.go` uses Kong to route to `cli.CLI` commands. Most commands are stubs. The TUI is launched via `cli.CLI.Run()`, which creates `DeckStore` (filesystem YAML reader) and `ProgressStore` (in-memory progress), wires them as `DeckProvider`/`ProgressRecorder`/`StatsProvider`, and starts Bubble Tea. A `deck` completion predictor reads deck names from the filesystem for tab completion.
+**Current state:** `cmd/crds/main.go` pre-wires a fully populated `app.App` with `Store` (SQLite), `StateStore`, `SharedDir`, and `DataDir`. All 11 CLI commands are fully implemented. When no subcommand is given, `CLI.Run()` syncs decks and launches Bubble Tea. Two shell completion predictors are registered: `"deck"` (from SQLite `Store.ListDecks()`) and `"reserve"` (from the default `reserve-copies/` directory).
 
 ---
 
@@ -405,8 +405,8 @@ internal/
 ├── model/          Domain types (Deck, Entry, Progress, Review, Session, TypingDetail)
 ├── parser/         YAML parsing + validation + normalization
 ├── config/         User configuration from ~/.config/crds/
-├── app/            Empty composition root (aspirational)
-├── cli/            Kong command stubs
+├── app/            Composition root (Store, State, SharedDir, DataDir)
+├── cli/            Kong commands (11 subcommands) + CLI tests
 ├── ui/             Terminal UI (Bubble Tea)
 │   ├── app/        Root model, event dispatch, lifecycle
 │   ├── screens/    Screen implementations
@@ -472,7 +472,7 @@ docs/
 # Known Issues
 
 - `duplicate_terms` test expects error but validation only checks duplicate IDs
-- CLI commands (quiz, sync, stats, search) are stubs — only the TUI launches
+- CLI commands (quiz, sync, stats, search, import, export, delete, reserve, revert, edit) are fully implemented
 - Deck selection screen exists but empty selection means no quiz (must pick at least one deck)
 - Grade scale mismatch: Flashcard uses 0-3, Typing uses 1-3 (needs normalization)
 

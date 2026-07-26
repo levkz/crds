@@ -70,10 +70,11 @@ Run everything from repo root.
 ## Project Documentation
 
 | Document | Purpose |
-|---|---|
+|---|---|---|
 | `AGENTS.md` | Instructions for AI coding agents and contributors |
 | `docs/ARCHITECTURE.md` | High-level system architecture |
 | `docs/DATAMODEL.md` | Vocabulary and persistence model |
+| `docs/DECK_CREATION_GUIDE.md` | How to create and manage vocabulary decks |
 | `docs/CONTEXT.md` | This document |
 | `docs/DESIGN.md` | Design decisions |
 
@@ -119,7 +120,7 @@ Most implementation work happens inside `internal/`.
 | Package | Description | Tests |
 |---|---|---|
 | `internal/model/` | Domain types: Deck, Entry, Progress, Review, Session | — |
-| `internal/parser/` | YAML parsing, validation, normalization | 12 test fixtures in `testdata/` |
+| `internal/parser/` | YAML parsing, validation, normalization, auto-ID generation | 13 test fixtures in `testdata/` |
 | `internal/config/` | User configuration from `~/.config/crds/` | 13 tests |
 | `internal/ui/theme/` | Design system: 15-color palette, typography, icons, borders, spacing, 4 built-in themes | 68+ tests |
 | `internal/ui/styles/` | 12 semantic style definitions | 60 tests |
@@ -156,7 +157,6 @@ Most implementation work happens inside `internal/`.
 
 # Known Issues
 
-- `duplicate_terms` test expects error but `validate.go` only checks duplicate IDs, not duplicate terms
 - Deck selection screen exists but empty selection means no quiz (must pick at least one deck)
 - CLI commands (quiz, sync, stats, search) are stubs — only the TUI launches
 - Grade scale mismatch: Flashcard uses 0-3, Typing uses 1-3 (needs normalization)

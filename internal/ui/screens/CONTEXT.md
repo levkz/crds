@@ -82,13 +82,15 @@ TypingQuizScreen
 
 ### QuizModel (`quiz.go`)
 
-- **State**: `CardIndex`, `Revealed`, `Progress`, `Cards`
-- **Keys**: `enter` (reveal), `1`–`4` (grade)
+- **State**: `CardIndex`, `Revealed`, `Progress`, `Cards`, `Inverse` (mode toggle)
+- **Keys**: `enter` (reveal), `1`–`4` (grade), `tab` (toggle inverse mode)
 - **Behavior**: Displays a flashcard. On enter, reveals the answer. Grading
-  keys (`1`–`4`) record difficulty via `grade()` helper.
-- **Renders**: Header + card + progress bar + footer with grading options
+  keys (`1`–`4`) record difficulty via `grade()` helper. Tab toggles inverse
+  mode — shows translations as the question and the term as the answer.
+- **Renders**: Header + card + progress bar + footer with grading options.
+  Header shows "(inverse)" suffix in inverse mode.
 - **Known issues**: `Cards` is pre-populated — no data loading wired yet.
-  Progress always 0. Grading returns no-op command.
+  Grading returns no-op command.
 
 ### SearchModel (`search.go`)
 
@@ -145,12 +147,17 @@ TypingQuizScreen
 
 ### TypingQuizModel (`typing_quiz.go`)
 
-- **State**: `CardIndex`, `Input` (text input), `Feedback`, `Progress`, `Cards`
-- **Keys**: `enter` (submit answer), `tab` (reveal without grading)
+- **State**: `CardIndex`, `Input` (text input), `Feedback`, `Progress`, `Cards`,
+  `Inverse` (mode toggle)
+- **Keys**: `enter` (submit answer), `ctrl+r` (reveal without grading),
+  `tab` (toggle inverse mode)
 - **Behavior**: Displays a term, user types the translation. Uses
-  `fuzzy.LevenshteinMatcher` to grade the typed answer. Tab reveals the
-  correct answer (records `Again`, grade 1).
-- **Renders**: Header + term + text input + feedback line + progress bar + footer
+  `fuzzy.LevenshteinMatcher` to grade the typed answer. `ctrl+r` reveals the
+  correct answer (records `Again`, grade 1). Tab toggles inverse mode —
+  shows translations as the prompt and expects the term as the answer;
+  term variants use the same `()`/`[]` expansion syntax as translations.
+- **Renders**: Header + term + text input + feedback line + progress bar + footer.
+  Header shows "(inverse)" suffix in inverse mode.
 
 ---
 
@@ -228,7 +235,7 @@ Return `true` if the screen consumed the event. Currently implemented by
 Screens do NOT depend on:
 - `crds/internal/ui/app`
 - `crds/internal/ui/navigation`
-- `crds/internal/parser`, `crds/internal/model`
+- `crds/internal/parser`
 
 ---
 

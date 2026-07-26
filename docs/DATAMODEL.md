@@ -80,44 +80,25 @@ entries:
 
 Each entry has a stable identifier.
 
-IDs are generated automatically when missing.
+IDs are generated automatically when missing (see `DECK_CREATION_GUIDE.md` for details).
 
-Format:
+Generation rules:
 
-```text
-<language>_<normalized_word>
+1. The term is expanded into all its variants (see variant syntax below).
+2. The shortest variant is selected.
+3. It is sanitised: lowercased, spaces/apostrophes/hyphens become `_`, letters and digits are kept.
 
-Examples
-
-fr_bonjour
-
-fr_au_revoir
-
-fr_s_il_vous_plait
-```
-
-If duplicate terms exist:
+Examples:
 
 ```text
-fr_bonjour
-
-fr_bonjour_2
-
-fr_bonjour_3
+bonjour          → bonjour
+mang[er/ez/e/ons/ent] → mange
+(un)necessary    → necessary
+s'il vous plaît → s_il_vous_plaît
+[une/la] baguette → la_baguette
 ```
 
-Normalization rules:
-
-- lowercase
-- remove accents
-- replace whitespace with `_`
-- replace apostrophes with `_`
-- remove remaining punctuation
-- collapse repeated `_`
-
-IDs should remain stable after generation.
-
-The `sync` command is responsible for generating missing IDs.
+If the generated ID collides with an existing ID, a numeric suffix is appended: `bonjour`, `bonjour_2`, `bonjour_3`.
 
 ---
 

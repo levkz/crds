@@ -310,8 +310,9 @@ ui/
 │   └── testdata/       6 YAML fixtures
 
 ├── keymap/             Centralized keybinding definitions
-│   ├── keymap.go       Binding, BindingList, Global, List, Quiz, Search,
-│   │                   Registry, NamedBinding, KeymapConfig, ApplyDefaultOverrides
+│   ├── keymap.go       Binding, BindingList, Global, List, Quiz, TypingQuiz,
+│   │                   Decks, Search, Registry, NamedBinding, KeymapConfig,
+│   │                   ApplyDefaultOverrides
 │   ├── keymap_test.go  16 tests
 │   ├── CONTEXT.md      Package context
 │   └── TODO.md         Progress tracker
@@ -405,7 +406,7 @@ Navigation should be testable through emitted events.
 - **Screens** (`screens/`): All 8 screens implemented — Home (activity menu), Quiz (flashcard), TypingQuiz (typing-based with fuzzy matching), Decks (multi-deck selection), Search (text input + results), Statistics (metrics display), Settings (theme switching), Detail (entry view)
 - **Navigation** (`navigation/`): Complete with 82 black-box tests including Manager, stack, and registry
 - **App** (`app/`): Root Bubble Tea model, events, lifecycle, commands, config, theme loading, overlay/notification system. `New()` wires keymap overrides (`keymaps.yaml`), user themes (`themes/`), and app config (`config.yaml`) from `~/.config/crds/`
-- **Keymap** (`keymap/`): Centralized keybinding definitions. `Binding` with `Match()`, `BindingList` with `Help()`, per-screen structs (`Global`, `List`, `Quiz`, `Search`) with `Footer()`/`Revealed()`/`Unrevealed()`, `Registry` with `Bindings()`/`FindBinding()`, `KeymapConfig` + `ApplyDefaultOverrides()` for user-defined overrides. 16 tests.
+- **Keymap** (`keymap/`): Centralized keybinding definitions. `Binding` with `Match()`, `BindingList` with `Help()`, per-screen structs (`Global`, `List`, `Quiz`, `TypingQuiz`, `Decks`, `Search`) with `Footer()` helpers, `Registry` with `Bindings()`/`FindBinding()`, `KeymapConfig` + `ApplyDefaultOverrides()` for user-defined overrides. 16 tests.
 - **Config** (`internal/config/`): User configuration directory (`~/.config/crds/`). Auto-creates directory tree with default files. Loads `config.yaml` (theme, animation, quiz limit), `keymaps.yaml` (keybinding overrides), and discovers `themes/*.yaml`. 13 tests.
 
 ## Placeholder Directories

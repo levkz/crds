@@ -10,20 +10,41 @@ The CLI uses [Kong v1.16](https://github.com/alecthomas/kong) for command-line p
 type CLI struct {
     Debug      bool
     Quiz       QuizCmd
-    Sync       SyncCmd
     Stats      StatsCmd
-    Search     SearchCmd
-    Import     ImportCmd
-    Export     ExportCmd
-    Delete     DeleteCmd
-    Reserve    ReserveCmd
-    Revert     RevertCmd
-    Edit       EditCmd
+    Deck       DeckCmd      `cmd:"" help:"Deck operations."`
+    State      StateCmd     `cmd:"" help:"State management."`
     Completion kongcompletion.Completion
 }
 ```
 
-Field name = command name. All subcommands have `cmd:""` tags. `CLI.Run(a, ctx)` starts the TUI when no subcommand is given, using `ctx.Selected()` to skip TUI launch after a subcommand has already run.
+Flat commands (Quiz, Stats, Completion) remain at root. Deck and state operations are grouped under `DeckCmd` and `StateCmd`.
+
+### Command groups (`deck.go`, `state.go`, `term.go`)
+
+```go
+type DeckCmd struct {
+    Import ImportCmd   `cmd:"" help:"Import a deck from a YAML file."`
+    Export ExportCmd   `cmd:"" help:"Export a deck to a YAML file."`
+    Delete DeleteCmd   `cmd:"" help:"Delete a deck."`
+    Search SearchCmd   `cmd:"" help:"Search vocabulary in a deck."`
+    Edit   EditDeckCmd `cmd:"" help:"Edit a deck's full YAML file."`
+    Term   TermCmd     `cmd:"" help:"Manage individual terms in a deck."`
+}
+
+type TermCmd struct {
+    Add  TermAddCmd  `cmd:"" help:"Add a new term."`
+    Rm   TermRmCmd   `cmd:"" help:"Remove a term."`
+    Edit TermEditCmd `cmd:"" help:"Edit a term."`
+}
+
+type StateCmd struct {
+    Reserve ReserveCmd `cmd:"" help:"Create a backup/reserve copy."`
+    Revert  RevertCmd  `cmd:"" help:"Revert from a reserve copy."`
+    Sync    SyncCmd    `cmd:"" help:"Synchronize decks."`
+}
+```
+
+Each subcommand accepts its own positional args (e.g. `ExportCmd.Deck`, `TermEditCmd.Deck` / `TermEditCmd.TermID`).
 
 ### Registration in `main.go`
 
@@ -42,10 +63,14 @@ parser, err := kong.New(&c, kong.Name("crds"), kong.Bind(a))
 ### How parsing dispatches
 
 ```
-crds                        → CLI.Run(a, ctx)       → TUI
-crds quiz --deck foo        → CLI.Quiz.Run(a)        → TUI with pre-selected deck
-crds sync                   → CLI.Sync.Run(a)        → sync subcommand
-crds export <deck>          → CLI.Export.Run(a)      → export subcommand
+crds                            → CLI.Run(a, ctx)           → TUI
+crds quiz --deck foo            → CLI.Quiz.Run(a)           → TUI with pre-selected deck
+crds state sync                 → StateCmd.Sync.Run(a)      → sync
+crds deck export <deck>         → DeckCmd.Export.Run(a)     → export
+crds deck term add <deck>       → DeckCmd.Term.Add.Run(a)  → add entry
+crds deck term edit <deck> <id> → DeckCmd.Term.Edit.Run(a) → edit entry
+crds deck term rm <deck> <id>   → DeckCmd.Term.Rm.Run(a)   → remove entry
+crds deck edit <deck>           → DeckCmd.Edit.Run(a)       → full deck edit
 ```
 
 When a subcommand is matched, Kong's `RunNode` walks from the selected node up to the root calling every `Run()` it finds. Subcommand `Run()` executes first, then `CLI.Run()` receives `ctx.Selected() != nil` and returns immediately without launching the TUI.
@@ -79,6 +104,7 @@ All methods on `*storage.Store`. All paths use `deckDir` (the directory containi
 | `DeleteDeck` | `deckID, deckDir` | Remove from DB (cascade), YAML, progress, reviews |
 | `ListDecks` | `() ([]string, error)` | List deck IDs from SQLite |
 | `SyncDecks` | `deckDir` | Re-sync all YAML files to SQLite cache |
+| `LoadDeck` | `id (ui.DeckData, error)` | Full deck data from cache for search/display |
 
 ### Entry-level operations
 
@@ -86,6 +112,8 @@ All methods on `*storage.Store`. All paths use `deckDir` (the directory containi
 |--------|------------|-----------|
 | `AddEntry` | `deckID, entry, deckDir` | Append entry to YAML + sync |
 | `UpdateEntry` | `deckID, entryID, entry, deckDir` | Replace fields in-place (same ID) |
+| `RemoveEntry` | `deckID, entryID, deckDir` | Delete from YAML, sync, clean progress + reviews |
+| `ReplaceEntryID` | `deckID, oldID, newID, deckDir` | Migrate ID in YAML + progress + reviews |
 
 ### Reserve operations
 
@@ -127,27 +155,47 @@ entry, _ := editor.EditEntry(&existingEntry)  // marshal → edit → unmarshal
 template := editor.EntryTemplate()             // blank YAML buffer
 ```
 
+### `crds deck edit <deck>` — full deck edit flow
+
+Opens a **copy** of the full `deck.yaml` in `$EDITOR`. After the editor exits, the flow is:
+
+1. Try `parser.Parse()` on the edited YAML
+   - **Parse/validate fails** → prompt: `[d]iscard, [c]ontinue editing, [s]ave anyway`
+     - discard → no changes
+     - continue → re-open editor
+     - save anyway → writes raw bytes to disk (sync will skip broken file)
+2. **Parse succeeds** → diff against original entries:
+   a. **Same term, changed ID** → for each: prompt `[m]igrate stats` / `[c]reate new entry`
+      - migrate → calls `Store.ReplaceEntryID(deck, oldID, newID, deckDir)`
+      - create new → leaves as-is (old entry falls out, stats orphaned)
+   b. **Deleted entries** → after ID migrations resolved: prompt `[c]lear all cache` / `[r]evert all` / `[r]eview each`
+      - clear all → `Store.RemoveEntry()` for each deleted ID
+      - revert all → re-adds deleted entries from original
+      - review each → per entry: clear / revert / skip
+3. Write final deck YAML to disk → sync
+
 ---
 
 ## Shell completion predictors
 
-Two predictors are registered in `main.go`:
+Three predictors are registered in `main.go`:
 
 | Predictor | Type | Behaviour |
 |-----------|------|-----------|
 | `"deck"` | `*deckPredictor` | Lists deck IDs from SQLite `Store.ListDecks()` |
 | `"reserve"` | `*reservePredictor` | Lists `.tar.gz` files from default `reserve-copies/` directory |
+| `"term"` | `*entryPredictor` | Lists entry IDs for the deck typed before the cursor (from `Store.LoadDeck()`) |
 
-Used via `completion-predictor:"deck"` / `completion-predictor:"reserve"` on struct field tags.
+Used via `completion-predictor:"deck"` / `completion-predictor:"reserve"` / `completion-predictor:"term"` on struct field tags.
 
 ---
 
 ## Adding a new command — step by step
 
 1. **Create the file** `internal/cli/<name>.go` with a struct and `Run` method.
-2. **Register** the struct as a field on `CLI` in `root.go` with `cmd:"" help:"..."` tag.
+2. **Register** the struct as a field on the appropriate group (`DeckCmd`, `StateCmd`, `TermCmd`, or root `CLI`) in `*.go` with `cmd:"" help:"..."` tag.
 3. **Implement Run**: parse args, call store methods, print or edit.
-4. **Add `completion-predictor:"deck"`** for any deck-name argument.
+4. **Add `completion-predictor:"deck"`** for any deck-name argument, `completion-predictor:"term"` for entry IDs.
 5. **If using the editor**: import `crds/internal/editor` and call `editor.Edit` or `editor.EditEntry`.
 6. **Tests**: unit-test the Run logic if it contains non-trivial branching; otherwise test the store methods directly.
 
@@ -158,8 +206,6 @@ package cli
 
 import (
     "crds/internal/app"
-    "crds/internal/editor"
-    "crds/internal/model"
 )
 
 type ImportCmd struct {
@@ -183,7 +229,8 @@ func (c *ImportCmd) Run(a *app.App) error {
 | `help:"..."` | `Deck string \`help:"Deck name."\`` | Help text |
 | `short:"n"` | `Limit int \`short:"n"\`` | Short flag (`-n`) |
 | `default:"20"` | `Limit int \`default:"20"\`` | Default value |
-| `completion-predictor:"deck"` | `Deck string \`completion-predictor:"deck"\`` | Shell completion |
+| `completion-predictor:"deck"` | `Deck string \`completion-predictor:"deck"\`` | Deck ID completion |
+| `completion-predictor:"term"` | `TermID string \`completion-predictor:"term"\`` | Entry ID completion |
 
 ---
 
@@ -192,3 +239,4 @@ func (c *ImportCmd) Run(a *app.App) error {
 - `QuizCmd` has `--limit` and `--reverse` flags acknowledged with stderr warnings but not wired to the TUI
 - Grade scale mismatch: Flashcard uses 0-3, Typing uses 1-3 (needs normalization)
 - `scheduler/`, `search/`, `quiz/` implementations don't exist yet in the storage layer — only the UI and CLI wiring are done
+- `crds deck edit` prompts cannot be tested automatically (interactive stdin reader)

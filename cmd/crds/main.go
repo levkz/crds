@@ -44,6 +44,30 @@ func (p *reservePredictor) Predict(_ complete.Args) []string {
 	return paths
 }
 
+type entryPredictor struct {
+	store *storage.Store
+}
+
+func newEntryPredictor(store *storage.Store) *entryPredictor {
+	return &entryPredictor{store: store}
+}
+
+func (p *entryPredictor) Predict(args complete.Args) []string {
+	if len(args.Completed) == 0 {
+		return nil
+	}
+	deck := args.Completed[len(args.Completed)-1]
+	entries, err := p.store.LoadDeck(deck)
+	if err != nil {
+		return nil
+	}
+	ids := make([]string, len(entries.Cards))
+	for i, card := range entries.Cards {
+		ids[i] = card.ID
+	}
+	return ids
+}
+
 func main() {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -89,6 +113,7 @@ func main() {
 	kongcompletion.Register(parser,
 		kongcompletion.WithPredictor("deck", newDeckPredictor(sqliteStore)),
 		kongcompletion.WithPredictor("reserve", &reservePredictor{}),
+		kongcompletion.WithPredictor("term", newEntryPredictor(sqliteStore)),
 	)
 
 	ctx, err := parser.Parse(os.Args[1:])

@@ -126,7 +126,7 @@ func TestSearchCmd_Run(t *testing.T) {
 	writeTestDeck(t, a.DataDir, "italian")
 	syncDecks(t, a)
 
-	s := &SearchCmd{Query: "hello"}
+	s := &SearchCmd{Deck: "italian", Query: "hello"}
 	if err := s.Run(a); err != nil {
 		t.Fatalf("SearchCmd.Run: %v", err)
 	}
@@ -137,7 +137,7 @@ func TestSearchCmd_Run_NoMatch(t *testing.T) {
 	writeTestDeck(t, a.DataDir, "latin")
 	syncDecks(t, a)
 
-	s := &SearchCmd{Query: "zzzznonexistent"}
+	s := &SearchCmd{Deck: "latin", Query: "zzzznonexistent"}
 	if err := s.Run(a); err != nil {
 		t.Fatalf("SearchCmd.Run: %v", err)
 	}
@@ -194,5 +194,30 @@ func TestReserveCmd_Run(t *testing.T) {
 	r := &ReserveCmd{}
 	if err := r.Run(a); err != nil {
 		t.Fatalf("ReserveCmd.Run: %v", err)
+	}
+}
+
+func TestTermRmCmd_Run(t *testing.T) {
+	a := newTestApp(t)
+	writeTestDeck(t, a.DataDir, "swedish")
+	syncDecks(t, a)
+
+	if err := a.Store.SyncDecks(a.DataDir); err != nil {
+		t.Fatal(err)
+	}
+
+	r := &TermRmCmd{Deck: "swedish", TermID: "e1"}
+	if err := r.Run(a); err != nil {
+		t.Fatalf("TermRmCmd.Run: %v", err)
+	}
+
+	deck, err := a.Store.LoadDeck("swedish")
+	if err != nil {
+		t.Fatalf("LoadDeck: %v", err)
+	}
+	for _, card := range deck.Cards {
+		if card.ID == "e1" {
+			t.Fatal("entry e1 was not removed")
+		}
 	}
 }

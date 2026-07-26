@@ -92,7 +92,7 @@ The project is divided into several independent subsystems.
 
 | Subsystem | Responsibility | Status |
 |---|---|---|
-| CLI | Command-line interface and command dispatch | Fully implemented (11 commands, Kong dispatch, TUI launch) |
+| CLI | Command-line interface and command dispatch | Fully implemented (3 command groups + top-level Quiz/Stats, Kong dispatch, TUI launch) |
 | Parser | Loading and validating vocabulary files | Complete |
 | Storage | Persisting user-specific state | Fully implemented via `Store` (SQLite, goose, sqlc) |
 | Quiz | Learning session orchestration | Not implemented |
@@ -251,7 +251,7 @@ Startup responsibilities include:
 
 Business logic should never exist in the application entry point.
 
-**Current state:** `cmd/crds/main.go` pre-wires a fully populated `app.App` with `Store` (SQLite), `StateStore`, `SharedDir`, and `DataDir`. All 11 CLI commands are fully implemented. When no subcommand is given, `CLI.Run()` syncs decks and launches Bubble Tea. Two shell completion predictors are registered: `"deck"` (from SQLite `Store.ListDecks()`) and `"reserve"` (from the default `reserve-copies/` directory).
+**Current state:** `cmd/crds/main.go` pre-wires a fully populated `app.App` with `Store` (SQLite), `StateStore`, `SharedDir`, and `DataDir`. All CLI commands are fully implemented across 3 groups (DeckCmd, TermCmd, StateCmd) plus top-level Quiz/Stats. When no subcommand is given, `CLI.Run()` syncs decks and launches Bubble Tea. Three shell completion predictors are registered: `"deck"` (from SQLite `Store.ListDecks()`), `"reserve"` (from the default `reserve-copies/` directory), and `"term"` (from `Store.LoadDeck()` for entry IDs).
 
 ---
 
@@ -406,7 +406,7 @@ internal/
 ├── parser/         YAML parsing + validation + normalization
 ├── config/         User configuration from ~/.config/crds/
 ├── app/            Composition root (Store, State, SharedDir, DataDir)
-├── cli/            Kong commands (11 subcommands) + CLI tests
+├── cli/            Kong commands (3 groups: DeckCmd, TermCmd, StateCmd) + CLI tests
 ├── ui/             Terminal UI (Bubble Tea)
 │   ├── app/        Root model, event dispatch, lifecycle
 │   ├── screens/    Screen implementations
@@ -472,7 +472,7 @@ docs/
 # Known Issues
 
 - `duplicate_terms` test expects error but validation only checks duplicate IDs
-- CLI commands (quiz, sync, stats, search, import, export, delete, reserve, revert, edit) are fully implemented
+- CLI commands fully implemented: quiz, stats, deck (import/export/delete/search/edit/term-add/edit/rm), state (reserve/revert/sync)
 - Deck selection screen exists but empty selection means no quiz (must pick at least one deck)
 - Grade scale mismatch: Flashcard uses 0-3, Typing uses 1-3 (needs normalization)
 

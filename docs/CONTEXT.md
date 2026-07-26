@@ -140,7 +140,7 @@ Most implementation work happens inside `internal/`.
 | Package | Status |
 |---|---|
 | `internal/storage/` | SQLite fully implemented via `Store` (goose + sqlc). Deck+entry CRUD, reserve/backup, revert all implemented. `DeckStore` reads YAML decks (legacy, not wired). `StateStore` persists selected decks. `ProgressStore` legacy remains but is not wired. |
-| `internal/cli/` | 11 commands fully implemented via Kong. All `Run()` methods wired to `*storage.Store`. See `internal/cli/CONTEXT.md`. |
+| `internal/cli/` | 12 commands across 3 groups (DeckCmd, TermCmd, StateCmd) fully implemented via Kong. Full-deck edit flow with validation prompts. See `internal/cli/CONTEXT.md`. |
 | `internal/app/` | Composition root with Store/State/SharedDir/DataDir fields, pre-wired before Kong dispatch. |
 | `internal/editor/` | Implemented (`$EDITOR` + YAML buffer) but has no tests yet. |
 
@@ -161,7 +161,7 @@ Most implementation work happens inside `internal/`.
 # Known Issues
 
 - Deck selection screen exists but empty selection means no quiz (must pick at least one deck)
-- CLI commands fully implemented: quiz, sync, stats, search, import, export, delete, reserve, revert, edit
+- CLI commands fully implemented: quiz, stats, deck (import/export/delete/search/edit/term-add/edit/rm), state (reserve/revert/sync)
 - `app.App` composition root populated with Store/State/SharedDir/DataDir
 - Grade scale mismatch: Flashcard uses 0-3, Typing uses 1-3 (needs normalization)
 

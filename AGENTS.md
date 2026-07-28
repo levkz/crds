@@ -27,7 +27,6 @@
 - `scheduler/`, `search/`, `quiz/` implementations don't exist yet — those are aspirational (docs/ outruns code)
 - CLI commands are all stubs — see `internal/cli/CONTEXT.md` for the wiring guide
 - `app.App` is empty — must be extended with Store/State/SharedDir/DataDir before CLI commands can work
-- Grade scale mismatch: Flashcard uses 0-3, Typing uses 1-3 (needs normalization)
 - Background fill ANSI nesting: `fillBackground()` must split at every `\033[0m` (full reset) and re-wrap each segment — otherwise inner resets destroy outer backgrounds. This is handled in `app/view.go` but any new ANSI-producing code must account for it.
 
 ## Architecture (current vs docs)
@@ -78,6 +77,21 @@ and re-commit.
 - `theme.Store` pre-registers "default", "dark", "light", "tokyonight"
 - Config supports custom themes via YAML with named palette references or direct ANSI/hex values
 - `fillBackground()` wraps every line with the theme background — handles ANSI reset codes by splitting and re-wrapping segments
+
+## Quiz rendering
+
+- Shared rendering functions in `internal/ui/screens/quiz_shared.go`: `renderQuizBottomSection`, `renderQuizTags`, `renderQuizExamplesBlock`, `renderQuizExamplesSingleCol`, `renderQuizExamplesTwoCol`, `renderQuizExampleCell`, `quizExamplesPerPage`
+- Both `QuizModel` and `TypingQuizModel` use these shared functions, computing `topBodyLines` from their own `renderTopBody()`
+- `renderTopBody()` is model-specific (flashcard includes grade menu, typing doesn't) and stays in each file
+- `renderFooter()` is model-specific (different key references) and stays in each file
+
+## Grade scale
+
+Unified 0-3 scale across both quiz types:
+- `Again=0`, `Hard=1`, `Good=2`, `Easy=3` (flashcard only; typing has no Easy)
+- Constants defined in `internal/fuzzy/fuzzy.go` for Again/Hard/Good
+- Flashcard adds `Easy = 3` locally in `internal/ui/screens/quiz.go`
+- `ProgressStore.Stats()` considers `Grade >= 2` (Good or above) as correct
 
 ## Style
 

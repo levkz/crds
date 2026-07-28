@@ -7,10 +7,10 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"crds/internal/fuzzy"
 	"crds/internal/ui"
 	"crds/internal/ui/keymap"
 	"crds/internal/ui/layout"
-	"crds/internal/ui/renderer"
 	"crds/internal/ui/styles"
 )
 
@@ -25,14 +25,7 @@ type QuizModel struct {
 	height       int
 }
 
-type Grade int
-
-const (
-	Again Grade = iota
-	Hard
-	Good
-	Easy
-)
+const Easy = 3
 
 func NewQuiz() *QuizModel {
 	return &QuizModel{}
@@ -61,7 +54,7 @@ func (m *QuizModel) currentCorrectAnswer() string {
 	return strings.Join(m.cards[m.cardIndex].Back, ", ")
 }
 
-func (m *QuizModel) grade(g Grade) (*QuizModel, tea.Cmd) {
+func (m *QuizModel) grade(g int) (*QuizModel, tea.Cmd) {
 	if m.cardIndex >= len(m.cards) {
 		return m, nil
 	}
@@ -85,7 +78,7 @@ func (m *QuizModel) grade(g Grade) (*QuizModel, tea.Cmd) {
 		return ui.SaveAnswerMsg{
 			DeckID:  m.deckName,
 			CardID:  cardID,
-			Grade:   int(g),
+			Grade:   g,
 			Reverse: m.inverse,
 		}
 	}
@@ -114,25 +107,26 @@ func (m *QuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 		default:
 			switch {
 			case keymap.DefaultQuiz.Again.Match(msg):
-				return m.grade(Again)
+				return m.grade(fuzzy.Again)
 			case keymap.DefaultQuiz.Hard.Match(msg):
-				return m.grade(Hard)
+				return m.grade(fuzzy.Hard)
 			case keymap.DefaultQuiz.Good.Match(msg):
-				return m.grade(Good)
+				return m.grade(fuzzy.Good)
 			case keymap.DefaultQuiz.Easy.Match(msg):
 				return m.grade(Easy)
 
 			case keymap.DefaultQuiz.PrevExample.Match(msg):
-				card := m.cards[m.cardIndex]
-				pp := m.examplesPerPage(card.Examples)
-				if pp > 0 && m.examplesPage > 0 {
-					m.examplesPage--
-				}
+			topBodyLines := strings.Count(m.renderTopBody(), "\n") + 1
+			pp := quizExamplesPerPage(m.width, m.height, topBodyLines)
+			if pp > 0 && m.examplesPage > 0 {
+				m.examplesPage--
+			}
 
-			case keymap.DefaultQuiz.NextExample.Match(msg):
-				card := m.cards[m.cardIndex]
-				pp := m.examplesPerPage(card.Examples)
-				if pp > 0 {
+		case keymap.DefaultQuiz.NextExample.Match(msg):
+			card := m.cards[m.cardIndex]
+			topBodyLines := strings.Count(m.renderTopBody(), "\n") + 1
+			pp := quizExamplesPerPage(m.width, m.height, topBodyLines)
+			if pp > 0 {
 					maxPage := (len(card.Examples) + pp - 1) / pp
 					if m.examplesPage < maxPage-1 {
 						m.examplesPage++
@@ -191,7 +185,8 @@ func (m *QuizModel) View() string {
 	}
 
 	if m.revealed {
-		bottomContent := m.renderBottomSection(card)
+		topBodyLines := strings.Count(m.renderTopBody(), "\n") + 1
+		bottomContent := renderQuizBottomSection(card, m.width, m.height, m.examplesPage, topBodyLines)
 		if bottomContent != "" {
 			b.WriteString("\n\n")
 			b.WriteString(bottomContent)
@@ -258,148 +253,10 @@ func renderMenuLetterItem(name, primary string) string {
 	return ui.Theme.Muted.Render(name) + " " + highlight.Render("["+display+"]")
 }
 
-func (m *QuizModel) renderBottomSection(card ui.CardData) string {
-	sidePad := lipgloss.NewStyle().PaddingLeft(8).PaddingRight(8)
-	var parts []string
-
-	if card.Notes != "" {
-		parts = append(parts, sidePad.Render(styles.MutedText().Render("note: "+card.Notes)))
-	}
-
-	if len(card.Tags) > 0 {
-		parts = append(parts, sidePad.Render(m.renderTags(card.Tags)))
-	}
-
-	if len(card.Examples) > 0 {
-		parts = append(parts, sidePad.Render(m.renderExamplesBlock(card.Examples)))
-	}
-
-	return strings.Join(parts, "\n\n")
-}
-
-func (m *QuizModel) renderTags(tags []string) string {
-	var styled []string
-	tagStyle := styles.PrimaryBg().Padding(0, 1)
-	for _, t := range tags {
-		styled = append(styled, tagStyle.Render(t))
-	}
-	return strings.Join(styled, " ")
-}
-
-func (m *QuizModel) renderExamplesBlock(examples []ui.ExampleData) string {
-	pp := m.examplesPerPage(examples)
-	if pp <= 0 {
-		pp = 1
-	}
-	start := m.examplesPage * pp
-	if start >= len(examples) {
+func (m *QuizModel) renderTopBody() string {
+	if m.cardIndex >= len(m.cards) {
 		return ""
 	}
-	end := start + pp
-	if end > len(examples) {
-		end = len(examples)
-	}
-	page := examples[start:end]
-
-	if m.width > 80 {
-		return m.renderExamplesTwoCol(page)
-	}
-	return m.renderExamplesSingleCol(page)
-}
-
-func (m *QuizModel) renderExamplesSingleCol(examples []ui.ExampleData) string {
-	colWidth := m.width - 2
-	if colWidth < 10 {
-		colWidth = 10
-	}
-	var blocks []string
-	for _, ex := range examples {
-		var blockLines []string
-		blockLines = append(blockLines, renderer.Wrap("- "+ex.Text, colWidth)...)
-		if ex.Translation != "" {
-			blockLines = append(blockLines, renderer.Wrap("  "+ex.Translation, colWidth)...)
-		}
-		blocks = append(blocks, strings.Join(blockLines, "\n"))
-	}
-	return strings.Join(blocks, "\n\n")
-}
-
-func (m *QuizModel) renderExamplesTwoCol(examples []ui.ExampleData) string {
-	colWidth := (m.width - 3) / 2
-	if colWidth < 10 {
-		colWidth = 10
-	}
-
-	var rows []string
-	for i := 0; i < len(examples); i += 2 {
-		left := m.renderExampleCell(examples[i], colWidth)
-		var right []string
-		if i+1 < len(examples) {
-			right = m.renderExampleCell(examples[i+1], colWidth)
-		}
-		maxH := len(left)
-		if len(right) > maxH {
-			maxH = len(right)
-		}
-		for len(left) < maxH {
-			left = append(left, strings.Repeat(" ", colWidth))
-		}
-		for len(right) < maxH {
-			right = append(right, strings.Repeat(" ", colWidth))
-		}
-		for j := 0; j < maxH; j++ {
-			rows = append(rows, left[j]+" "+right[j])
-		}
-		rows = append(rows, "")
-	}
-
-	return strings.Join(rows, "\n")
-}
-
-func (m *QuizModel) renderExampleCell(ex ui.ExampleData, width int) []string {
-	var lines []string
-	lines = append(lines, renderer.Wrap("- "+ex.Text, width)...)
-	if ex.Translation != "" {
-		lines = append(lines, renderer.Wrap("  "+ex.Translation, width)...)
-	}
-	for i, l := range lines {
-		if w := renderer.VisibleWidth(l); w < width {
-			lines[i] = l + strings.Repeat(" ", width-w)
-		}
-	}
-	return lines
-}
-
-func (m *QuizModel) examplesPerPage(examples []ui.ExampleData) int {
-	if len(examples) == 0 {
-		return 0
-	}
-	bodyStr := m.renderTopBody()
-	topLines := strings.Count(bodyStr, "\n") + 1
-	availLines := m.height - topLines - 3
-
-	if availLines < 3 {
-		return 1
-	}
-
-	if m.width > 80 {
-		perRow := 2
-		linesPerItem := 2
-		itemsPerPage := (availLines / (linesPerItem + 1)) * perRow
-		if itemsPerPage < perRow {
-			itemsPerPage = perRow
-		}
-		return itemsPerPage
-	}
-	linesPerItem := 3
-	itemsPerPage := availLines / (linesPerItem + 1)
-	if itemsPerPage < 1 {
-		itemsPerPage = 1
-	}
-	return itemsPerPage
-}
-
-func (m *QuizModel) renderTopBody() string {
 	var b strings.Builder
 	topPad := m.height / 4
 	if m.height < 10 {
@@ -436,7 +293,8 @@ func (m *QuizModel) renderFooter(card ui.CardData) string {
 
 		totalExamples := len(card.Examples)
 		if totalExamples > 0 {
-			pp := m.examplesPerPage(card.Examples)
+			topBodyLines := strings.Count(m.renderTopBody(), "\n") + 1
+			pp := quizExamplesPerPage(m.width, m.height, topBodyLines)
 			maxPage := (totalExamples + pp - 1) / pp
 			if maxPage > 1 {
 				startEx := m.examplesPage*pp + 1

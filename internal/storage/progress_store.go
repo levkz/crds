@@ -44,7 +44,7 @@ func (s *ProgressStore) Stats() ui.Stats {
 	for _, r := range s.reviews {
 		if r.ReviewedAt.After(todayStart) {
 			reviewedToday++
-			if r.Grade >= 3 {
+			if r.Grade >= 2 {
 				correctToday++
 			}
 		}

@@ -56,9 +56,9 @@ func (m *LevenshteinMatcher) Similarity(a, b string) float64 {
 }
 
 const (
-	Again = 1
-	Hard  = 2
-	Good  = 3
+	Again = 0
+	Hard  = 1
+	Good  = 2
 )
 
 type FuzzyMatcher struct {

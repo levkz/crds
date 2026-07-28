@@ -83,15 +83,17 @@ PaletteScreen
 
 ### QuizModel (`quiz.go`)
 
-- **State**: `CardIndex`, `Revealed`, `Progress`, `Cards`, `Inverse` (mode toggle)
-- **Keys**: `enter` (reveal), `1`–`4` (grade), `tab` (toggle inverse mode)
-- **Behavior**: Displays a flashcard. On enter, reveals the answer. Grading
-  keys (`1`–`4`) record difficulty via `grade()` helper. Tab toggles inverse
-  mode — shows translations as the question and the term as the answer.
-- **Renders**: Header + card + progress bar + footer with grading options.
-  Header shows "(inverse)" suffix in inverse mode.
+- **State**: `cardIndex`, `revealed`, `cards`, `examplesPage`, `inverse`
+- **Keys**: `enter` (reveal), `tab` (inverse), `a`/`h`/`o`/`e` or `1`/`2`/`3`/`4` (grade), `[`/`left` (prev example), `]`/`right` (next example)
+- **Behavior**: Displays a flashcard. On enter, reveals the answer and shows
+  the grade menu (`[a]gain`, `[h]ard`, `[o]kay`, `[e]asy`). Grading advances
+  to the next card; navigating to Statistics when deck finishes. Tab toggles
+  inverse mode — shows translations as the question and the term as the answer.
+- **Renders**: Term (centered, vertically padded at height/4) + (if revealed)
+  correct answer + centered grade menu + bottom section (notes, tags as PrimaryBg pills,
+  paginated examples in single/two-column layout, 8-char side padding) +
+  progress "card N/M" + footer shortcuts.
 - **Known issues**: `Cards` is pre-populated — no data loading wired yet.
-  Grading returns no-op command.
 
 ### SearchModel (`search.go`)
 
@@ -266,6 +268,7 @@ screens/
 ├── CONTEXT.md
 ├── home.go          HomeModel — activity menu
 ├── quiz.go          QuizModel — flashcard quiz
+├── quiz_shared.go   Shared quiz rendering (tags, examples, bottom section, pagination)
 ├── search.go        SearchModel — text input + results
 ├── statistics.go    StatisticsModel — study metrics
 ├── settings.go      SettingsModel — theme switching

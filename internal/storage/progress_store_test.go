@@ -51,8 +51,8 @@ func TestProgressStore_Stats_WithReviews(t *testing.T) {
 func TestProgressStore_Stats_GradeBoundary(t *testing.T) {
 	s := NewProgressStore()
 
-	_ = s.RecordAnswer("", "card1", 3, false)
-	_ = s.RecordAnswer("", "card2", 2, false)
+	_ = s.RecordAnswer("", "card1", 2, false)
+	_ = s.RecordAnswer("", "card2", 1, false)
 
 	stats := s.Stats()
 

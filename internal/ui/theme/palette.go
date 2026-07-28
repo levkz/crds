@@ -25,7 +25,7 @@ var DefaultPalette = Palette{
 	Green:      lipgloss.Color("42"),
 	Orange:     lipgloss.Color("214"),
 	Red:        lipgloss.Color("196"),
-	Gray:       lipgloss.Color("240"),
+	Gray:       lipgloss.Color("248"),
 	White:      lipgloss.Color("255"),
 	Background: lipgloss.Color("0"),
 	Selection:  lipgloss.Color("27"),

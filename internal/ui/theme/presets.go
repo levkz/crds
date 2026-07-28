@@ -7,7 +7,7 @@ var DarkPalette = Palette{
 	Green:      lipgloss.Color("84"),
 	Orange:     lipgloss.Color("215"),
 	Red:        lipgloss.Color("203"),
-	Gray:       lipgloss.Color("242"),
+	Gray:       lipgloss.Color("249"),
 	White:      lipgloss.Color("255"),
 	Background: lipgloss.Color("233"),
 	Selection:  lipgloss.Color("27"),
@@ -51,7 +51,7 @@ var TokyonightPalette = Palette{
 	Green:      lipgloss.Color("#9ece6a"),
 	Orange:     lipgloss.Color("#ff9e64"),
 	Red:        lipgloss.Color("#f7768e"),
-	Gray:       lipgloss.Color("#565f89"),
+	Gray:       lipgloss.Color("#7982a8"),
 	White:      lipgloss.Color("#c0caf5"),
 	Background: lipgloss.Color("#1a1b26"),
 	Selection:  lipgloss.Color("#283457"),
@@ -62,6 +62,28 @@ var TokyonightPalette = Palette{
 	Purple:     lipgloss.Color("#9d7cd8"),
 	Cyan:       lipgloss.Color("#7dcfff"),
 	Yellow:     lipgloss.Color("#e0af68"),
+}
+
+var MochaPalette = Palette{
+	Blue:       lipgloss.Color("#fab283"),
+	Green:      lipgloss.Color("#7fd88f"),
+	Orange:     lipgloss.Color("#f5a742"),
+	Red:        lipgloss.Color("#e06c75"),
+	Gray:       lipgloss.Color("#888888"),
+	White:      lipgloss.Color("#eeeeee"),
+	Background: lipgloss.Color("#0e0e0e"),
+	Selection:  lipgloss.Color("#2a2a2a"),
+	Border:     lipgloss.Color("#333333"),
+	Link:       lipgloss.Color("#56b6c2"),
+	Surface:    lipgloss.Color("#181818"),
+	Magenta:    lipgloss.Color("#9d7cd8"),
+	Purple:     lipgloss.Color("#b48ead"),
+	Cyan:       lipgloss.Color("#56b6c2"),
+	Yellow:     lipgloss.Color("#e5c07b"),
+}
+
+func MochaTheme() Theme {
+	return NewTheme(MochaPalette)
 }
 
 func TokyonightTheme() Theme {

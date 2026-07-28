@@ -18,6 +18,7 @@ func NewStore() *Store {
 	s.themes["dark"] = DarkTheme()
 	s.themes["light"] = LightTheme()
 	s.themes["tokyonight"] = TokyonightTheme()
+	s.themes["mocha"] = MochaTheme()
 	s.current = "default"
 	return s
 }
@@ -84,9 +85,9 @@ func (s *Store) Len() int {
 
 var DefaultStore = NewStore()
 
-func Register(name string, t Theme)   { DefaultStore.Register(name, t) }
+func Register(name string, t Theme)        { DefaultStore.Register(name, t) }
 func RegisterPath(name, path string) error { return DefaultStore.RegisterPath(name, path) }
-func Names() []string                 { return DefaultStore.Names() }
-func Current() Theme                  { return DefaultStore.Current() }
-func CurrentName() string             { return DefaultStore.CurrentName() }
-func Switch(name string) (Theme, error) { return DefaultStore.Switch(name) }
+func Names() []string                      { return DefaultStore.Names() }
+func Current() Theme                       { return DefaultStore.Current() }
+func CurrentName() string                  { return DefaultStore.CurrentName() }
+func Switch(name string) (Theme, error)    { return DefaultStore.Switch(name) }

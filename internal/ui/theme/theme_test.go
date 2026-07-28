@@ -19,7 +19,7 @@ func TestDefaultPalette(t *testing.T) {
 		{"Green", DefaultPalette.Green, "42"},
 		{"Orange", DefaultPalette.Orange, "214"},
 		{"Red", DefaultPalette.Red, "196"},
-		{"Gray", DefaultPalette.Gray, "240"},
+		{"Gray", DefaultPalette.Gray, "248"},
 		{"White", DefaultPalette.White, "255"},
 		{"Background", DefaultPalette.Background, "0"},
 		{"Selection", DefaultPalette.Selection, "27"},
@@ -693,8 +693,8 @@ func TestLoadThemeCreatesStyles(t *testing.T) {
 
 func TestNewStore(t *testing.T) {
 	s := NewStore()
-	if s.Len() != 4 {
-		t.Errorf("expected 4 themes (default, dark, light, tokyonight), got %d", s.Len())
+	if s.Len() != 5 {
+		t.Errorf("expected 5 themes (default, dark, light, tokyonight, mocha), got %d", s.Len())
 	}
 	if name := s.CurrentName(); name != "default" {
 		t.Errorf("expected 'default', got %q", name)
@@ -716,8 +716,8 @@ func TestStoreRegister(t *testing.T) {
 	if !s.Has("custom") {
 		t.Error("expected 'custom' to be registered")
 	}
-	if s.Len() != 5 {
-		t.Errorf("expected 5 themes, got %d", s.Len())
+	if s.Len() != 6 {
+		t.Errorf("expected 6 themes, got %d", s.Len())
 	}
 }
 
@@ -764,7 +764,7 @@ func TestStoreNames(t *testing.T) {
 	s.Register("b", NewTheme(DefaultPalette))
 	names := s.Names()
 	sort.Strings(names)
-	expected := []string{"a", "b", "dark", "default", "light", "tokyonight"}
+	expected := []string{"a", "b", "dark", "default", "light", "mocha", "tokyonight"}
 	if len(names) != len(expected) {
 		t.Fatalf("expected %d names, got %d: %v", len(expected), len(names), names)
 	}
@@ -849,7 +849,7 @@ func TestTokyonightPalette(t *testing.T) {
 		{"Green", TokyonightPalette.Green, "#9ece6a"},
 		{"Orange", TokyonightPalette.Orange, "#ff9e64"},
 		{"Red", TokyonightPalette.Red, "#f7768e"},
-		{"Gray", TokyonightPalette.Gray, "#565f89"},
+		{"Gray", TokyonightPalette.Gray, "#7982a8"},
 		{"White", TokyonightPalette.White, "#c0caf5"},
 		{"Background", TokyonightPalette.Background, "#1a1b26"},
 		{"Selection", TokyonightPalette.Selection, "#283457"},

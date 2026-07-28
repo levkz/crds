@@ -88,10 +88,12 @@ and re-commit.
 ## Grade scale
 
 Unified 0-3 scale across both quiz types:
-- `Again=0`, `Hard=1`, `Good=2`, `Easy=3` (flashcard only; typing has no Easy)
-- Constants defined in `internal/fuzzy/fuzzy.go` for Again/Hard/Good
-- Flashcard adds `Easy = 3` locally in `internal/ui/screens/quiz.go`
-- `ProgressStore.Stats()` considers `Grade >= 2` (Good or above) as correct
+- `GradeAgain=0`, `GradeHard=1`, `GradeGood=2`, `GradeEasy=3`
+- Type defined in `internal/ui/grade.go` as `ui.Grade`
+- Flashcard uses `ui.Grade*` constants directly
+- Typing quiz uses `fuzzy.*` constants internally; converts to `ui.Grade` at the `SaveAnswerMsg` boundary via `ui.Grade(fuzzyGrade)`
+- `ProgressStore.Stats()` considers `Grade >= ui.GradeGood` as correct
+- `SaveAnswerMsg.Grade` is typed as `ui.Grade`; cast to `int` at the storage boundary in `commands.go`
 
 ## Style
 

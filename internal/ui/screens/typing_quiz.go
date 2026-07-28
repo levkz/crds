@@ -105,7 +105,7 @@ func (m *TypingQuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 						return ui.SaveAnswerMsg{
 							DeckID:        m.deckName,
 							CardID:        card.Front,
-							Grade:         m.grade,
+							Grade:         ui.Grade(m.grade),
 							Reverse:       m.inverse,
 							UserInput:     m.input,
 							CorrectAnswer: m.currentCorrectAnswer(),
@@ -124,7 +124,7 @@ func (m *TypingQuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 					return ui.SaveAnswerMsg{
 						DeckID:  m.deckName,
 						CardID:  card.Front,
-						Grade:   fuzzy.Again,
+						Grade:   ui.Grade(fuzzy.Again),
 						Reverse: m.inverse,
 					}
 				}

@@ -71,7 +71,7 @@ type ShowDeckSelectionMsg struct{}
 type SaveAnswerMsg struct {
 	DeckID        string
 	CardID        string
-	Grade         int
+	Grade         Grade
 	Reverse       bool
 	UserInput     string
 	CorrectAnswer string

@@ -7,7 +7,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"crds/internal/fuzzy"
 	"crds/internal/ui"
 	"crds/internal/ui/keymap"
 	"crds/internal/ui/layout"
@@ -24,8 +23,6 @@ type QuizModel struct {
 	width        int
 	height       int
 }
-
-const Easy = 3
 
 func NewQuiz() *QuizModel {
 	return &QuizModel{}
@@ -54,7 +51,7 @@ func (m *QuizModel) currentCorrectAnswer() string {
 	return strings.Join(m.cards[m.cardIndex].Back, ", ")
 }
 
-func (m *QuizModel) grade(g int) (*QuizModel, tea.Cmd) {
+func (m *QuizModel) grade(g ui.Grade) (*QuizModel, tea.Cmd) {
 	if m.cardIndex >= len(m.cards) {
 		return m, nil
 	}
@@ -107,13 +104,13 @@ func (m *QuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 		default:
 			switch {
 			case keymap.DefaultQuiz.Again.Match(msg):
-				return m.grade(fuzzy.Again)
+				return m.grade(ui.GradeAgain)
 			case keymap.DefaultQuiz.Hard.Match(msg):
-				return m.grade(fuzzy.Hard)
+				return m.grade(ui.GradeHard)
 			case keymap.DefaultQuiz.Good.Match(msg):
-				return m.grade(fuzzy.Good)
+				return m.grade(ui.GradeGood)
 			case keymap.DefaultQuiz.Easy.Match(msg):
-				return m.grade(Easy)
+				return m.grade(ui.GradeEasy)
 
 			case keymap.DefaultQuiz.PrevExample.Match(msg):
 			topBodyLines := strings.Count(m.renderTopBody(), "\n") + 1

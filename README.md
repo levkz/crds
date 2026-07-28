@@ -102,7 +102,7 @@ Delete a deck from both the filesystem YAML and the SQLite cache. Cascades to re
 
 Prompts `Delete deck "name"? [y/N]` unless `-f` is passed.
 
-#### `crds deck search <query> [--deck <deck>] [--tags <tag>]`
+#### `crds deck search <query> [--deck <deck>] [--tags <tag>] [--color <mode>]`
 
 Search for entries across all decks. Results are grouped by deck, sorted by term, and show tags, translations, and notes.
 
@@ -110,6 +110,7 @@ Search for entries across all decks. Results are grouped by deck, sorted by term
 |-----------------|-------------|
 | `--deck <d>`    | Limit search to specific deck(s), repeatable |
 | `--tags <t>`    | Filter by tags (AND logic), repeatable |
+| `--color <mode>`| Highlight matches: `auto` (default, TTY only), `always`, `never`. Respects `GREP_COLORS` / `GREP_COLOR` env vars |
 
 Output format:
 ```

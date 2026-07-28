@@ -86,7 +86,7 @@ crds deck import <file> --replace → DeckCmd.Import.Run(a)     → import (with
 crds deck export <deck>           → DeckCmd.Export.Run(a)     → export
 crds deck export --all            → DeckCmd.Export.Run(a)     → export all
 crds deck edit <deck>             → DeckCmd.Edit.Run(a)       → full deck edit
-crds deck search <query> --tags   → DeckCmd.Search.Run(a)     → search with filters
+crds deck search <query> --tags --color auto → DeckCmd.Search.Run(a) → search with filters
 crds deck term add <deck> -t ...  → DeckCmd.Term.Add.Run(a)  → add entry inline
 crds deck term edit <deck> <id>   → DeckCmd.Term.Edit.Run(a) → edit entry
 crds deck term rm <deck> <id> -f  → DeckCmd.Term.Rm.Run(a)   → remove entry (force)

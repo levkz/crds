@@ -15,6 +15,10 @@ const (
 	DetailScreen
 )
 
+// NoScreen is a sentinel value used by menu items that trigger overlays
+// instead of screen navigation.
+const NoScreen ScreenIndex = -1
+
 type Screen interface {
 	Init() tea.Cmd
 	Update(tea.Msg) (Screen, tea.Cmd)
@@ -49,6 +53,9 @@ type NavigateToDetailMsg struct {
 	Screen ScreenIndex
 	Entry  CardData
 }
+
+// ShowDeckSelectionMsg is emitted by the home screen to request showing the deck selection overlay.
+type ShowDeckSelectionMsg struct{}
 
 // SaveAnswerMsg is emitted by a Quiz screen when a card is graded.
 // For flashcard quiz: only CardID, Grade, DeckID are set.

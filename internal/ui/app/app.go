@@ -87,8 +87,9 @@ func New(deps Dependencies, cfg Config) Model {
 	}
 
 	return Model{
-		Config:     cfg,
-		Navigator:  n,
+		Config:      cfg,
+		Navigator:   n,
+		DeckOverlay: NewDeckSelectionOverlay(),
 		Dispatcher: &Dispatcher{
 			Decks:    deps.Decks,
 			Progress: deps.Progress,

@@ -38,6 +38,9 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 		if screen, ok := m.Navigator.CurrentScreen(); ok {
 			screen.SetSize(msg.Width, msg.Height)
 		}
+		if m.DeckOverlay != nil {
+			m.DeckOverlay.SetSize(msg.Width, msg.Height)
+		}
 		return m, nil
 
 	case tea.KeyMsg:
@@ -58,6 +61,16 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 	case SetLoadingMsg:
 		return m.WithLoading(msg.Loading), nil
 
+	case ui.ShowDeckSelectionMsg:
+		if m.DeckOverlay != nil {
+			m.DeckOverlay.SetData(m.AllDecks, m.SelectedDecks)
+			m.DeckOverlay.SetSize(m.Width, m.Height)
+		}
+		return m.WithOverlay(DeckSelectionOverlay), nil
+
+	case DeckOverlayConfirmMsg:
+		return m.handleDeckSelection(msg.Selected)
+
 	case ui.NavigateToMsg:
 		return m.transitionTo(msg.Screen)
 
@@ -70,21 +83,7 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 		return m.pushTo(msg.Screen)
 
 	case ui.DeckSelectionChangedMsg:
-		m.SelectedDecks = msg.Selected
-		var cmds []tea.Cmd
-		cmds = append(cmds, func() tea.Msg {
-			return SaveStateCmd(m.Dispatcher, msg.Selected)
-		})
-		cmds = append(cmds, ResetSessionCmd(m.Dispatcher))
-		if len(msg.Selected) > 0 {
-			cmds = append(cmds, LoadSelectedDecksCmd(m.Dispatcher, msg.Selected))
-		} else {
-			m.CurrentDeck = nil
-			cmds = append(cmds, func() tea.Msg {
-				return DataLoadedMsg{Kind: MsgKindDeck, Data: ui.DeckData{}}
-			})
-		}
-		return m, tea.Batch(cmds...)
+		return m.handleDeckSelection(msg.Selected)
 
 	case DataLoadedMsg:
 		return m.handleDataLoaded(msg)
@@ -229,6 +228,24 @@ func (m Model) handleDataLoaded(msg DataLoadedMsg) (Model, tea.Cmd) {
 	return m, nil
 }
 
+func (m Model) handleDeckSelection(selected []string) (Model, tea.Cmd) {
+	m = m.WithDeckSelection(selected)
+	var cmds []tea.Cmd
+	cmds = append(cmds, func() tea.Msg {
+		return SaveStateCmd(m.Dispatcher, selected)
+	})
+	cmds = append(cmds, ResetSessionCmd(m.Dispatcher))
+	if len(selected) > 0 {
+		cmds = append(cmds, LoadSelectedDecksCmd(m.Dispatcher, selected))
+	} else {
+		m.CurrentDeck = nil
+		cmds = append(cmds, func() tea.Msg {
+			return DataLoadedMsg{Kind: MsgKindDeck, Data: ui.DeckData{}}
+		})
+	}
+	return m, tea.Batch(cmds...)
+}
+
 // dispatchKeyEvent handles global keyboard shortcuts.
 func (m Model) dispatchKeyEvent(msg tea.KeyMsg) (Model, tea.Cmd) {
 	switch {
@@ -251,6 +268,13 @@ func (m Model) dispatchKeyEvent(msg tea.KeyMsg) (Model, tea.Cmd) {
 		}
 		return m.transitionTo(ui.HomeScreen)
 	}
+
+	// Route keys to deck selection overlay if active
+	if m.Global.Overlay == DeckSelectionOverlay && m.DeckOverlay != nil {
+		cmd := m.DeckOverlay.Update(msg)
+		return m, cmd
+	}
+
 	return m.forwardToScreen(msg)
 }
 

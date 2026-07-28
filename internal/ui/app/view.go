@@ -15,7 +15,7 @@ func (m Model) View() string {
 	var b strings.Builder
 
 	if m.Global.Overlay != NoOverlay {
-		b.WriteString(renderOverlay(m.Global.Overlay))
+		b.WriteString(m.renderOverlay(m.Global.Overlay))
 	} else {
 		if screen, ok := m.Navigator.CurrentScreen(); ok {
 			b.WriteString(screen.View())
@@ -74,10 +74,15 @@ func fillBackground(s string, width int) string {
 	return strings.Join(lines, "\n")
 }
 
-func renderOverlay(t OverlayType) string {
+func (m Model) renderOverlay(t OverlayType) string {
 	switch t {
 	case HelpOverlay:
 		return renderHelpOverlay()
+	case DeckSelectionOverlay:
+		if m.DeckOverlay != nil {
+			return m.DeckOverlay.View()
+		}
+		return ""
 	default:
 		return ""
 	}

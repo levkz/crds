@@ -101,6 +101,18 @@ func (km Search) Footer() string {
 	return BindingList{km.List.Up, km.List.Down, km.Open}.Help()
 }
 
+type Home struct {
+	Left  Binding
+	Right Binding
+
+	FlashCards    Binding
+	TypingQuiz    Binding
+	Statistics    Binding
+	Search        Binding
+	Configuration Binding
+	DeckSelect    Binding
+}
+
 // NamedBinding pairs a Binding with its group and action name for display.
 type NamedBinding struct {
 	Group   string
@@ -112,6 +124,7 @@ type NamedBinding struct {
 type Registry struct {
 	Global     Global
 	List       List
+	Home       Home
 	Quiz       Quiz
 	TypingQuiz TypingQuiz
 	Decks      Decks
@@ -127,6 +140,14 @@ func (r Registry) Bindings() []NamedBinding {
 		{"List", "Up", r.List.Up},
 		{"List", "Down", r.List.Down},
 		{"List", "Select", r.List.Select},
+		{"Home", "Left", r.Home.Left},
+		{"Home", "Right", r.Home.Right},
+		{"Home", "FlashCards", r.Home.FlashCards},
+		{"Home", "TypingQuiz", r.Home.TypingQuiz},
+		{"Home", "Statistics", r.Home.Statistics},
+		{"Home", "Search", r.Home.Search},
+		{"Home", "Configuration", r.Home.Configuration},
+		{"Home", "DeckSelect", r.Home.DeckSelect},
 		{"Quiz", "Reveal", r.Quiz.Reveal},
 		{"Quiz", "Again", r.Quiz.Again},
 		{"Quiz", "Hard", r.Quiz.Hard},
@@ -194,10 +215,23 @@ var DefaultSearch = Search{
 	List:       DefaultList,
 }
 
+var DefaultHome = Home{
+	Left:  Binding{Keys: []string{"h", "left", "k", "up"}, Help: ""},
+	Right: Binding{Keys: []string{"l", "right", "j", "down"}, Help: ""},
+
+	FlashCards:    Binding{Keys: []string{"f"}, Help: ""},
+	TypingQuiz:    Binding{Keys: []string{"t"}, Help: ""},
+	Statistics:    Binding{Keys: []string{"i"}, Help: ""},
+	Search:        Binding{Keys: []string{"s"}, Help: ""},
+	Configuration: Binding{Keys: []string{"c"}, Help: ""},
+	DeckSelect:    Binding{Keys: []string{"ctrl+f"}, Help: ""},
+}
+
 // DefaultRegistry is the default keybinding configuration for the application.
 var DefaultRegistry = Registry{
 	Global:     DefaultGlobal,
 	List:       DefaultList,
+	Home:       DefaultHome,
 	Quiz:       DefaultQuiz,
 	TypingQuiz: DefaultTypingQuiz,
 	Decks:      DefaultDecks,
@@ -224,6 +258,17 @@ type KeymapConfig struct {
 		Down   *BindingOverride `yaml:"down,omitempty"`
 		Select *BindingOverride `yaml:"select,omitempty"`
 	} `yaml:"list,omitempty"`
+	Home *struct {
+		Left  *BindingOverride `yaml:"left,omitempty"`
+		Right *BindingOverride `yaml:"right,omitempty"`
+
+		FlashCards    *BindingOverride `yaml:"flash_cards,omitempty"`
+		TypingQuiz    *BindingOverride `yaml:"typing_quiz,omitempty"`
+		Statistics    *BindingOverride `yaml:"statistics,omitempty"`
+		Search        *BindingOverride `yaml:"search,omitempty"`
+		Configuration *BindingOverride `yaml:"configuration,omitempty"`
+		DeckSelect    *BindingOverride `yaml:"deck_select,omitempty"`
+	} `yaml:"home,omitempty"`
 	Quiz *struct {
 		Reveal  *BindingOverride `yaml:"reveal,omitempty"`
 		Again   *BindingOverride `yaml:"again,omitempty"`
@@ -283,6 +328,32 @@ func ApplyDefaultOverrides(cfg KeymapConfig) {
 			DefaultList.Select = applyOverride(DefaultList.Select, *cfg.List.Select)
 		}
 	}
+	if cfg.Home != nil {
+		if cfg.Home.Left != nil {
+			DefaultHome.Left = applyOverride(DefaultHome.Left, *cfg.Home.Left)
+		}
+		if cfg.Home.Right != nil {
+			DefaultHome.Right = applyOverride(DefaultHome.Right, *cfg.Home.Right)
+		}
+		if cfg.Home.FlashCards != nil {
+			DefaultHome.FlashCards = applyOverride(DefaultHome.FlashCards, *cfg.Home.FlashCards)
+		}
+		if cfg.Home.TypingQuiz != nil {
+			DefaultHome.TypingQuiz = applyOverride(DefaultHome.TypingQuiz, *cfg.Home.TypingQuiz)
+		}
+		if cfg.Home.Statistics != nil {
+			DefaultHome.Statistics = applyOverride(DefaultHome.Statistics, *cfg.Home.Statistics)
+		}
+		if cfg.Home.Search != nil {
+			DefaultHome.Search = applyOverride(DefaultHome.Search, *cfg.Home.Search)
+		}
+		if cfg.Home.Configuration != nil {
+			DefaultHome.Configuration = applyOverride(DefaultHome.Configuration, *cfg.Home.Configuration)
+		}
+		if cfg.Home.DeckSelect != nil {
+			DefaultHome.DeckSelect = applyOverride(DefaultHome.DeckSelect, *cfg.Home.DeckSelect)
+		}
+	}
 	if cfg.Quiz != nil {
 		if cfg.Quiz.Reveal != nil {
 			DefaultQuiz.Reveal = applyOverride(DefaultQuiz.Reveal, *cfg.Quiz.Reveal)
@@ -334,6 +405,7 @@ func ApplyDefaultOverrides(cfg KeymapConfig) {
 	DefaultRegistry = Registry{
 		Global:     DefaultGlobal,
 		List:       DefaultList,
+		Home:       DefaultHome,
 		Quiz:       DefaultQuiz,
 		TypingQuiz: DefaultTypingQuiz,
 		Decks:      DefaultDecks,

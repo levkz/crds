@@ -147,6 +147,52 @@ func TestDefaultSearchFooter(t *testing.T) {
 	}
 }
 
+func TestDefaultHomeKeys(t *testing.T) {
+	tests := []struct {
+		name string
+		b    Binding
+		key  string
+	}{
+		{"Left h", DefaultHome.Left, "h"},
+		{"Left left", DefaultHome.Left, "left"},
+		{"Left k", DefaultHome.Left, "k"},
+		{"Left up", DefaultHome.Left, "up"},
+		{"Right l", DefaultHome.Right, "l"},
+		{"Right right", DefaultHome.Right, "right"},
+		{"Right j", DefaultHome.Right, "j"},
+		{"Right down", DefaultHome.Right, "down"},
+		{"FlashCards", DefaultHome.FlashCards, "f"},
+		{"TypingQuiz", DefaultHome.TypingQuiz, "t"},
+		{"Statistics", DefaultHome.Statistics, "i"},
+		{"Search", DefaultHome.Search, "s"},
+		{"Configuration", DefaultHome.Configuration, "c"},
+		{"DeckSelect", DefaultHome.DeckSelect, "ctrl+f"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var match bool
+			if tt.key == "ctrl+f" {
+				match = tt.b.Match(tea.KeyMsg(tea.Key{Type: tea.KeyCtrlF}))
+			} else if tt.key == "left" {
+				match = tt.b.Match(tea.KeyMsg(tea.Key{Type: tea.KeyLeft}))
+			} else if tt.key == "right" {
+				match = tt.b.Match(tea.KeyMsg(tea.Key{Type: tea.KeyRight}))
+			} else if tt.key == "up" {
+				match = tt.b.Match(tea.KeyMsg(tea.Key{Type: tea.KeyUp}))
+			} else if tt.key == "down" {
+				match = tt.b.Match(tea.KeyMsg(tea.Key{Type: tea.KeyDown}))
+			} else if tt.key == "enter" {
+				match = tt.b.Match(tea.KeyMsg(tea.Key{Type: tea.KeyEnter}))
+			} else {
+				match = tt.b.Match(tea.KeyMsg(tea.Key{Type: tea.KeyRunes, Runes: []rune(tt.key)}))
+			}
+			if !match {
+				t.Errorf("%s should match key %q", tt.name, tt.key)
+			}
+		})
+	}
+}
+
 func TestDefaultRegistryBindings(t *testing.T) {
 	all := DefaultRegistry.Bindings()
 	if len(all) == 0 {
@@ -162,6 +208,9 @@ func TestDefaultRegistryBindings(t *testing.T) {
 	if groups["List"] == 0 {
 		t.Error("missing List bindings")
 	}
+	if groups["Home"] == 0 {
+		t.Error("missing Home bindings")
+	}
 	if groups["Quiz"] == 0 {
 		t.Error("missing Quiz bindings")
 	}
@@ -173,9 +222,11 @@ func TestDefaultRegistryBindings(t *testing.T) {
 func TestApplyDefaultOverrides(t *testing.T) {
 	// Save originals to restore after test.
 	saveGlobal, saveList, saveQuiz, saveSearch := DefaultGlobal, DefaultList, DefaultQuiz, DefaultSearch
+	saveHome := DefaultHome
 	defer func() {
 		DefaultGlobal, DefaultList, DefaultQuiz, DefaultSearch = saveGlobal, saveList, saveQuiz, saveSearch
-		DefaultRegistry = Registry{Global: saveGlobal, List: saveList, Quiz: saveQuiz, Search: saveSearch}
+		DefaultHome = saveHome
+		DefaultRegistry = Registry{Global: saveGlobal, List: saveList, Home: saveHome, Quiz: saveQuiz, Search: saveSearch}
 	}()
 
 	helpStr := "? help"
@@ -237,6 +288,13 @@ func TestDefaultRegistryFindBinding(t *testing.T) {
 		{"down", false, "List", "Down"},
 		{"j", false, "List", "Down"},
 		{"enter", false, "List", "Select"},
+		{"h", false, "Home", "Left"},
+		{"l", false, "Home", "Right"},
+		{"f", false, "Home", "FlashCards"},
+		{"t", false, "Home", "TypingQuiz"},
+		{"i", false, "Home", "Statistics"},
+		{"s", false, "Home", "Search"},
+		{"c", false, "Home", "Configuration"},
 		{"1", false, "Quiz", "Again"},
 		{"2", false, "Quiz", "Hard"},
 		{"3", false, "Quiz", "Good"},

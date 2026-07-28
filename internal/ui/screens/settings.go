@@ -73,7 +73,7 @@ func (m SettingsModel) View() string {
 		items = append(items, line)
 	}
 	return layout.Page(
-		components.Header("Settings", m.width),
+		components.Header("Configuration", m.width),
 		layout.Column(items...),
 		components.Footer(keymap.DefaultList.Footer()+" · "+keymap.DefaultGlobal.Back.Help, m.width),
 		m.height,

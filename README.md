@@ -2,7 +2,7 @@
 
 Keyboard-first vocabulary learning with flashcards and typing quizzes, entirely in your terminal.
 
-**Philosophy:** Vocabulary belongs in YAML. User progress belongs in SQLite.
+Vocabulary belongs in YAML for easy manipulation. User progress belongs in SQLite 'f.
 
 ## Features
 

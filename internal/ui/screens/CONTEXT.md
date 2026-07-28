@@ -78,7 +78,7 @@ TypingQuizScreen
 - **Keys**: `up`/`k`, `down`/`j`, `enter`
 - **Behavior**: Menu of activities (Study, Search, Statistics, Settings).
   Enter navigates to the selected screen.
-- **Renders**: Header + component list + footer
+- **Renders**: ASCII logo (from `assets/logo.txt`) + menu list (centered vertically) + footer (pinned to bottom)
 
 ### QuizModel (`quiz.go`)
 
@@ -176,7 +176,7 @@ footer via `components.Footer(...)`.
 
 ### Rendering
 
-Every screen uses layout primitives for consistent structure:
+Screens use layout primitives for consistent structure:
 
 ```go
 return layout.Page(
@@ -188,6 +188,10 @@ return layout.Page(
 
 `layout.Page()` handles header/body/footer with `"\n\n"` separators.
 `layout.Column()` composes body sections with `"\n\n"` separators.
+
+**Exception:** `HomeModel` does its own vertical centering — it computes
+`topPad`/`bottomPad` to center the logo + menu body above a pinned footer,
+so the footer stays at the terminal bottom while the body floats vertically.
 
 Prefer `components.*` over raw `ui.Theme.*` calls for consistency.
 

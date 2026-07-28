@@ -72,6 +72,26 @@ func (m *SearchModel) SetSearchData(cards []ui.CardData) {
 	m.mode = searchInput
 }
 
+func (m *SearchModel) topPadding() int {
+	if m.height < 10 {
+		return 0
+	}
+	n := m.height/4 - 3
+	if n < 0 {
+		return 0
+	}
+	return n
+}
+
+func (m *SearchModel) maxVisible() int {
+	n := m.topPadding()
+	avail := m.height - n - 9
+	if avail < 1 {
+		return 1
+	}
+	return avail
+}
+
 func (m *SearchModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -152,13 +172,6 @@ func (m *SearchModel) HandleBack() bool {
 		return true
 	}
 	return false
-}
-
-func (m *SearchModel) maxVisible() int {
-	if m.height <= 9 {
-		return 1
-	}
-	return m.height - 9
 }
 
 func (m *SearchModel) adjustScroll() {
@@ -393,8 +406,10 @@ func (m SearchModel) View() string {
 	}
 
 	return layout.Page(
-		components.Header("Search", m.width),
-		layout.Column(layout.Center(m.renderInput(), m.width), m.renderCenteredResults()),
+		ui.Theme.Muted.Render("search"),
+		layout.VSpace(m.topPadding())+
+			layout.Center(m.renderInput(), m.width)+"\n\n"+
+			m.renderCenteredResults(),
 		components.Footer(footer, m.width),
 		m.height,
 	)

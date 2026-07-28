@@ -20,10 +20,10 @@ func (s *SyncCmd) Run(a *app.App) error {
 	fmt.Println("Decks synchronized.")
 
 	if s.Write {
-		// TODO: write auto-generated IDs back to YAML files.
-		// Requires round-trip YAML (preserving comments) or re-marshalling
-		// after `assignIDs()` fills empty IDs.
-		fmt.Println("Write flag set — ID backfill not yet implemented.")
+		if err := a.Store.WriteBackIDs(a.DataDir); err != nil {
+			return fmt.Errorf("write-back IDs: %w", err)
+		}
+		fmt.Println("Auto-generated IDs written to YAML files.")
 	}
 
 	return nil

@@ -1,7 +1,7 @@
 package screens
 
 import (
-	"os"
+	_ "embed"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -15,12 +15,11 @@ import (
 
 var logoASCII string
 
+//go:embed logo.txt
+var logoData string
+
 func init() {
-	data, err := os.ReadFile("assets/logo.txt")
-	if err != nil {
-		data = []byte("CRDS")
-	}
-	logoASCII = strings.TrimRight(string(data), "\n")
+	logoASCII = strings.TrimRight(logoData, "\n")
 }
 
 type menuItem struct {
@@ -44,6 +43,7 @@ func NewHome() *HomeModel {
 		{"search", ui.SearchScreen, &keymap.DefaultHome.Search},
 		{"configuration", ui.SettingsScreen, &keymap.DefaultHome.Configuration},
 		{"deck selection", ui.NoScreen, &keymap.DefaultHome.DeckSelect},
+		{"theme palette", ui.PaletteScreen, &keymap.DefaultHome.Palette},
 	}
 	return &HomeModel{menuItems: items}
 }

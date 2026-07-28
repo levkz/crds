@@ -13,6 +13,7 @@ const (
 	StatisticsScreen
 	SettingsScreen
 	DetailScreen
+	PaletteScreen
 )
 
 // NoScreen is a sentinel value used by menu items that trigger overlays
@@ -30,12 +31,19 @@ type NavigateToMsg struct {
 	Screen ScreenIndex
 }
 
+type ExampleData struct {
+	Text        string
+	Translation string
+}
+
 type CardData struct {
 	ID       string
 	Front    string
 	Back     []string
 	Variants []string
 	Notes    string
+	Tags     []string
+	Examples []ExampleData
 }
 
 type DeckData struct {

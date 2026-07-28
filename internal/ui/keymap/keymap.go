@@ -72,13 +72,19 @@ func (km Quiz) Revealed() string {
 }
 
 type TypingQuiz struct {
-	Submit  Binding
-	Reveal  Binding
-	Inverse Binding
+	Submit       Binding
+	Reveal       Binding
+	Inverse      Binding
+	PrevExample  Binding
+	NextExample  Binding
 }
 
 func (km TypingQuiz) Footer() string {
-	return BindingList{km.Submit, km.Reveal, km.Inverse}.Help()
+	return BindingList{km.Submit, km.Reveal, km.Inverse, km.PrevExample, km.NextExample}.Help()
+}
+
+func (km TypingQuiz) ExamplesFooter() string {
+	return BindingList{km.Inverse, km.PrevExample, km.NextExample}.Help()
 }
 
 type Decks struct {
@@ -111,6 +117,7 @@ type Home struct {
 	Search        Binding
 	Configuration Binding
 	DeckSelect    Binding
+	Palette       Binding
 }
 
 // NamedBinding pairs a Binding with its group and action name for display.
@@ -148,6 +155,7 @@ func (r Registry) Bindings() []NamedBinding {
 		{"Home", "Search", r.Home.Search},
 		{"Home", "Configuration", r.Home.Configuration},
 		{"Home", "DeckSelect", r.Home.DeckSelect},
+		{"Home", "Palette", r.Home.Palette},
 		{"Quiz", "Reveal", r.Quiz.Reveal},
 		{"Quiz", "Again", r.Quiz.Again},
 		{"Quiz", "Hard", r.Quiz.Hard},
@@ -157,6 +165,8 @@ func (r Registry) Bindings() []NamedBinding {
 		{"TypingQuiz", "Submit", r.TypingQuiz.Submit},
 		{"TypingQuiz", "Reveal", r.TypingQuiz.Reveal},
 		{"TypingQuiz", "Inverse", r.TypingQuiz.Inverse},
+		{"TypingQuiz", "PrevExample", r.TypingQuiz.PrevExample},
+		{"TypingQuiz", "NextExample", r.TypingQuiz.NextExample},
 		{"Decks", "Toggle", r.Decks.Toggle},
 		{"Decks", "ToggleAll", r.Decks.ToggleAll},
 		{"Search", "Open", r.Search.Open},
@@ -198,9 +208,11 @@ var DefaultQuiz = Quiz{
 }
 
 var DefaultTypingQuiz = TypingQuiz{
-	Submit:  Binding{Keys: []string{"enter"},   Help: "enter submit"},
-	Reveal:  Binding{Keys: []string{"ctrl+r"},  Help: "ctrl+r reveal"},
-	Inverse: Binding{Keys: []string{"tab"},     Help: "tab inverse"},
+	Submit:       Binding{Keys: []string{"enter"},     Help: "enter submit"},
+	Reveal:       Binding{Keys: []string{"ctrl+r"},    Help: "ctrl+r reveal"},
+	Inverse:      Binding{Keys: []string{"tab"},       Help: "tab inverse"},
+	PrevExample:  Binding{Keys: []string{"left", "["}, Help: "[ previous"},
+	NextExample:  Binding{Keys: []string{"right", "]"},Help: "] next"},
 }
 
 var DefaultDecks = Decks{
@@ -225,6 +237,7 @@ var DefaultHome = Home{
 	Search:        Binding{Keys: []string{"s"}, Help: ""},
 	Configuration: Binding{Keys: []string{"c"}, Help: ""},
 	DeckSelect:    Binding{Keys: []string{"ctrl+f"}, Help: ""},
+	Palette:       Binding{Keys: []string{"p"}, Help: ""},
 }
 
 // DefaultRegistry is the default keybinding configuration for the application.
@@ -268,6 +281,7 @@ type KeymapConfig struct {
 		Search        *BindingOverride `yaml:"search,omitempty"`
 		Configuration *BindingOverride `yaml:"configuration,omitempty"`
 		DeckSelect    *BindingOverride `yaml:"deck_select,omitempty"`
+		Palette       *BindingOverride `yaml:"palette,omitempty"`
 	} `yaml:"home,omitempty"`
 	Quiz *struct {
 		Reveal  *BindingOverride `yaml:"reveal,omitempty"`
@@ -278,9 +292,11 @@ type KeymapConfig struct {
 		Inverse *BindingOverride `yaml:"inverse,omitempty"`
 	} `yaml:"quiz,omitempty"`
 	TypingQuiz *struct {
-		Submit  *BindingOverride `yaml:"submit,omitempty"`
-		Reveal  *BindingOverride `yaml:"reveal,omitempty"`
-		Inverse *BindingOverride `yaml:"inverse,omitempty"`
+		Submit       *BindingOverride `yaml:"submit,omitempty"`
+		Reveal       *BindingOverride `yaml:"reveal,omitempty"`
+		Inverse      *BindingOverride `yaml:"inverse,omitempty"`
+		PrevExample  *BindingOverride `yaml:"prev_example,omitempty"`
+		NextExample  *BindingOverride `yaml:"next_example,omitempty"`
 	} `yaml:"typing_quiz,omitempty"`
 	Decks *struct {
 		Toggle    *BindingOverride `yaml:"toggle,omitempty"`
@@ -353,6 +369,9 @@ func ApplyDefaultOverrides(cfg KeymapConfig) {
 		if cfg.Home.DeckSelect != nil {
 			DefaultHome.DeckSelect = applyOverride(DefaultHome.DeckSelect, *cfg.Home.DeckSelect)
 		}
+		if cfg.Home.Palette != nil {
+			DefaultHome.Palette = applyOverride(DefaultHome.Palette, *cfg.Home.Palette)
+		}
 	}
 	if cfg.Quiz != nil {
 		if cfg.Quiz.Reveal != nil {
@@ -383,6 +402,12 @@ func ApplyDefaultOverrides(cfg KeymapConfig) {
 		}
 		if cfg.TypingQuiz.Inverse != nil {
 			DefaultTypingQuiz.Inverse = applyOverride(DefaultTypingQuiz.Inverse, *cfg.TypingQuiz.Inverse)
+		}
+		if cfg.TypingQuiz.PrevExample != nil {
+			DefaultTypingQuiz.PrevExample = applyOverride(DefaultTypingQuiz.PrevExample, *cfg.TypingQuiz.PrevExample)
+		}
+		if cfg.TypingQuiz.NextExample != nil {
+			DefaultTypingQuiz.NextExample = applyOverride(DefaultTypingQuiz.NextExample, *cfg.TypingQuiz.NextExample)
 		}
 	}
 	if cfg.Decks != nil {

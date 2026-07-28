@@ -264,7 +264,8 @@ Registry (ScreenIndex → Screen)
   ├── SearchScreen       → SearchModel       (text search)
   ├── StatisticsScreen   → StatisticsModel   (metrics)
   ├── SettingsScreen     → SettingsModel     (theme switch)
-  └── DetailScreen       → DetailModel       (entry view)
+  ├── DetailScreen       → DetailModel       (entry view)
+  └── PaletteScreen      → PaletteModel      (theme palette test)
 ```
 
 Screens are stored in a `navigation.Registry` and managed by the
@@ -379,7 +380,7 @@ Animations should remain optional.
   - Theme store with runtime switching
 - **Styles** (`styles/`): 12 style definitions with 60 tests (Header, Footer, SelectedItem, FocusedInput, Error, Warning, Success, Hint, MutedText, Card, Panel, Modal)
 - **Components** (`components/`): 29 components across `display/` (20 stateless) and `interactive/` (9 stateful) — all implemented
-- **Screens** (`screens/`): All 8 screens — Home (activity menu), Quiz (flashcard), TypingQuiz (typing-based with inverse mode), Decks (multi-deck selection), Search (two-phase: input + results), Statistics (metrics), Settings (theme switch), Detail (entry view)
+- **Screens** (`screens/`): All 9 screens — Home (activity menu), Quiz (flashcard), TypingQuiz (typing-based with inverse mode), Decks (multi-deck selection), Search (two-phase: input + results), Statistics (metrics), Settings (theme switch), Detail (entry view), Palette (theme palette test with live preview)
 - **Keymap** (`keymap/`): Centralized keybinding definitions with `Binding.Match()`, `BindingList.Help()`, per-screen keymap structs (`Global`, `List`, `Quiz`, `TypingQuiz`, `Decks`, `Search`) with `Footer()` methods, `Registry` with `Bindings()`/`FindBinding()`, `KeymapConfig` for user overrides, and 16 tests. All screens and the root model use `keymap.Default*` instead of hardcoded strings.
 - **Config** (`internal/config/`): User configuration from `~/.config/crds/` — directory auto-creation, `config.yaml` loading, `keymaps.yaml` loading with `keymap.ApplyDefaultOverrides()`, theme discovery from `themes/*.yaml`. 13 tests.
 - **Events** (`events/`): 4 centralized event types (`TickMsg`, `ThemeSwitchMsg`, `ShowNotificationMsg`, `HideNotificationMsg`)

@@ -57,6 +57,7 @@ func New(deps Dependencies, cfg Config) Model {
 	reg.Register(ui.StatisticsScreen, screens.NewStatistics())
 	reg.Register(ui.SettingsScreen, screens.NewSettings())
 	reg.Register(ui.DetailScreen, screens.NewDetail())
+	reg.Register(ui.PaletteScreen, screens.NewPaletteModel())
 	n.SetRegistry(reg)
 
 	// Apply theme from config, preferring explicit ThemePath over config.yaml's theme name

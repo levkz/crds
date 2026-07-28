@@ -66,6 +66,7 @@ SettingsScreen
 DetailScreen
 DecksScreen
 TypingQuizScreen
+PaletteScreen
 ```
 
 ---
@@ -158,6 +159,19 @@ TypingQuizScreen
   term variants use the same `()`/`[]` expansion syntax as translations.
 - **Renders**: Header + term + text input + feedback line + progress bar + footer.
   Header shows "(inverse)" suffix in inverse mode.
+
+### PaletteModel (`palette.go`)
+
+- **State**: `scrollOffset`, `width`, `height`
+- **Keys**: `↑`/`k` (scroll up), `↓`/`j` (scroll down), `esc` (back to Home)
+- **Behavior**: Scrollable dev/debug screen showing every visual property of the
+  current theme live. Displays 7 sections: theme info, 15 palette colors as
+  colored pill swatches with ANSI/hex values and purpose descriptions, 14
+  semantic styles with sample text, 6 typography roles, 10 icon slots with
+  current glyphs, 5 border styles as rendered boxes, and 7 spacing tiers as
+  bar charts. Updates instantly when theme is switched via Settings.
+- **Renders**: Custom scrollable layout — builds full content, applies scroll
+  offset, renders visible slice + pinned footer.
 
 ---
 
@@ -255,7 +269,8 @@ screens/
 ├── settings.go      SettingsModel — theme switching
 ├── detail.go        DetailModel — entry detail
 ├── decks.go         DecksModel — deck selection
-└── typing_quiz.go   TypingQuizModel — typing quiz
+├── typing_quiz.go   TypingQuizModel — typing quiz
+└── palette.go       PaletteModel — theme palette test
 ```
 
 ---

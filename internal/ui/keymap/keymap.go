@@ -55,12 +55,14 @@ func (km List) Footer() string {
 }
 
 type Quiz struct {
-	Reveal  Binding
-	Again   Binding
-	Hard    Binding
-	Good    Binding
-	Easy    Binding
-	Inverse Binding
+	Reveal       Binding
+	Again        Binding
+	Hard         Binding
+	Good         Binding
+	Easy         Binding
+	Inverse      Binding
+	PrevExample  Binding
+	NextExample  Binding
 }
 
 func (km Quiz) Unrevealed() string {
@@ -162,6 +164,8 @@ func (r Registry) Bindings() []NamedBinding {
 		{"Quiz", "Good", r.Quiz.Good},
 		{"Quiz", "Easy", r.Quiz.Easy},
 		{"Quiz", "Inverse", r.Quiz.Inverse},
+		{"Quiz", "PrevExample", r.Quiz.PrevExample},
+		{"Quiz", "NextExample", r.Quiz.NextExample},
 		{"TypingQuiz", "Submit", r.TypingQuiz.Submit},
 		{"TypingQuiz", "Reveal", r.TypingQuiz.Reveal},
 		{"TypingQuiz", "Inverse", r.TypingQuiz.Inverse},
@@ -199,12 +203,14 @@ var DefaultList = List{
 }
 
 var DefaultQuiz = Quiz{
-	Reveal:  Binding{Keys: []string{"enter"}, Help: "enter reveal"},
-	Again:   Binding{Keys: []string{"1"}, Help: "1 again"},
-	Hard:    Binding{Keys: []string{"2"}, Help: "2 hard"},
-	Good:    Binding{Keys: []string{"3"}, Help: "3 good"},
-	Easy:    Binding{Keys: []string{"4"}, Help: "4 easy"},
-	Inverse: Binding{Keys: []string{"tab"}, Help: "tab inverse"},
+	Reveal:       Binding{Keys: []string{"enter"},          Help: "enter reveal"},
+	Again:        Binding{Keys: []string{"a", "1"},         Help: "a again"},
+	Hard:         Binding{Keys: []string{"h", "2"},         Help: "h hard"},
+	Good:         Binding{Keys: []string{"o", "3"},         Help: "o okay"},
+	Easy:         Binding{Keys: []string{"e", "4"},         Help: "e easy"},
+	Inverse:      Binding{Keys: []string{"tab"},            Help: "tab inverse"},
+	PrevExample:  Binding{Keys: []string{"left", "["},     Help: "[ previous"},
+	NextExample:  Binding{Keys: []string{"right", "]"},    Help: "] next"},
 }
 
 var DefaultTypingQuiz = TypingQuiz{
@@ -284,12 +290,14 @@ type KeymapConfig struct {
 		Palette       *BindingOverride `yaml:"palette,omitempty"`
 	} `yaml:"home,omitempty"`
 	Quiz *struct {
-		Reveal  *BindingOverride `yaml:"reveal,omitempty"`
-		Again   *BindingOverride `yaml:"again,omitempty"`
-		Hard    *BindingOverride `yaml:"hard,omitempty"`
-		Good    *BindingOverride `yaml:"good,omitempty"`
-		Easy    *BindingOverride `yaml:"easy,omitempty"`
-		Inverse *BindingOverride `yaml:"inverse,omitempty"`
+		Reveal       *BindingOverride `yaml:"reveal,omitempty"`
+		Again        *BindingOverride `yaml:"again,omitempty"`
+		Hard         *BindingOverride `yaml:"hard,omitempty"`
+		Good         *BindingOverride `yaml:"good,omitempty"`
+		Easy         *BindingOverride `yaml:"easy,omitempty"`
+		Inverse      *BindingOverride `yaml:"inverse,omitempty"`
+		PrevExample  *BindingOverride `yaml:"prev_example,omitempty"`
+		NextExample  *BindingOverride `yaml:"next_example,omitempty"`
 	} `yaml:"quiz,omitempty"`
 	TypingQuiz *struct {
 		Submit       *BindingOverride `yaml:"submit,omitempty"`
@@ -391,6 +399,12 @@ func ApplyDefaultOverrides(cfg KeymapConfig) {
 		}
 		if cfg.Quiz.Inverse != nil {
 			DefaultQuiz.Inverse = applyOverride(DefaultQuiz.Inverse, *cfg.Quiz.Inverse)
+		}
+		if cfg.Quiz.PrevExample != nil {
+			DefaultQuiz.PrevExample = applyOverride(DefaultQuiz.PrevExample, *cfg.Quiz.PrevExample)
+		}
+		if cfg.Quiz.NextExample != nil {
+			DefaultQuiz.NextExample = applyOverride(DefaultQuiz.NextExample, *cfg.Quiz.NextExample)
 		}
 	}
 	if cfg.TypingQuiz != nil {

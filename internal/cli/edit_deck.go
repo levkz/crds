@@ -39,7 +39,11 @@ func (c *EditDeckCmd) Run(a *app.App) error {
 
 	var editedRaw []byte
 	for {
-		editedRaw, err = c.edit(origRaw)
+		input := origRaw
+		if editedRaw != nil {
+			input = editedRaw
+		}
+		editedRaw, err = c.edit(input)
 		if err != nil {
 			return err
 		}

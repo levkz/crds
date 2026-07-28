@@ -161,15 +161,17 @@ func (m *SearchModel) maxVisible() int {
 }
 
 func (m *SearchModel) adjustScroll() {
-	max := m.maxVisible()
-	if max <= 0 {
+	avail := m.maxVisible()
+	if avail <= 2 {
+		m.scrollOffset = m.cursor
 		return
 	}
+	visible := avail - 2 // worst-case: both indicator lines shown
 	if m.cursor < m.scrollOffset {
 		m.scrollOffset = m.cursor
 	}
-	if m.cursor >= m.scrollOffset+max {
-		m.scrollOffset = m.cursor - max + 1
+	if m.cursor >= m.scrollOffset+visible {
+		m.scrollOffset = m.cursor - visible + 1
 	}
 }
 

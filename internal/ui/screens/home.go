@@ -140,6 +140,13 @@ func renderMenu(items []menuItem, cursor int, width int) string {
 
 func renderMenuItem(item menuItem, _ int, selected bool) string {
 	primary := item.key.Keys[0]
+	var highlight lipgloss.Style
+	if selected {
+		highlight = ui.Theme.Secondary
+	} else {
+		highlight = ui.Theme.Primary
+	}
+
 	nameStyle := ui.Theme.Muted
 	if selected {
 		nameStyle = ui.Theme.Primary
@@ -155,13 +162,13 @@ func renderMenuItem(item menuItem, _ int, selected bool) string {
 			}
 			after := item.name[idx+len(lowerPrimary):]
 			return nameStyle.Render(before) +
-				ui.Theme.Accent.Render("["+letter+"]") +
+				highlight.Render("["+letter+"]") +
 				nameStyle.Render(after)
 		}
 	}
 
 	display := shortcutDisplay(primary)
-	return nameStyle.Render(item.name) + " " + ui.Theme.Accent.Render("["+display+"]")
+	return nameStyle.Render(item.name) + " " + highlight.Render("["+display+"]")
 }
 
 func isSingleLetter(key string) bool {

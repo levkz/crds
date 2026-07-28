@@ -9,6 +9,7 @@ import (
 	components "crds/internal/ui/components/display"
 	"crds/internal/ui/keymap"
 	"crds/internal/ui/layout"
+	"crds/internal/ui/renderer"
 	"crds/internal/ui/styles"
 )
 
@@ -216,34 +217,174 @@ func isPrintable(s string) bool {
 	return unicode.IsPrint(r) && !unicode.IsControl(r)
 }
 
-func (m SearchModel) View() string {
-	var input string
-	if m.mode == searchInput {
-		input = styles.FocusedInput().Render(m.query + "█")
-	} else {
-		input = styles.FocusedInput().Render(m.query)
-	}
+type highlightSegment struct {
+	text        string
+	highlighted bool
+}
 
-	var results string
+func splitHighlight(text, query string) []highlightSegment {
+	if query == "" {
+		return []highlightSegment{{text: text}}
+	}
+	lower := strings.ToLower(text)
+	q := strings.ToLower(query)
+	var segments []highlightSegment
+	pos := 0
+	for {
+		idx := strings.Index(lower[pos:], q)
+		if idx == -1 {
+			segments = append(segments, highlightSegment{text: text[pos:]})
+			break
+		}
+		if idx > 0 {
+			segments = append(segments, highlightSegment{text: text[pos : pos+idx]})
+		}
+		end := pos + idx + len(q)
+		segments = append(segments, highlightSegment{text: text[pos+idx : end], highlighted: true})
+		pos = end
+	}
+	return segments
+}
+
+func (m *SearchModel) renderInput() string {
+	if m.mode == searchInput {
+		return ui.Theme.Background.Render(m.query + "█")
+	}
+	return ui.Theme.Background.Render(m.query)
+}
+
+func (m *SearchModel) renderCenteredResults() string {
 	switch {
 	case len(m.results) > 0:
+		maxItemWidth := m.width - 3
+		if maxItemWidth < 1 {
+			maxItemWidth = 1
+		}
+		maxVisible := m.maxVisible()
+
 		items := make([]string, len(m.results))
 		for i, r := range m.results {
 			items[i] = r.front + " → " + strings.Join(r.back, ", ")
 		}
+
 		sel := -1
 		offset := 0
 		if m.mode == searchResults {
 			sel = m.cursor
 			offset = m.scrollOffset
 		}
-		results = components.RenderListClipped(items, sel, offset, m.maxVisible(), m.width)
-	case m.query != "":
-		results = styles.MutedText().Render("No results found")
-	default:
-		results = styles.MutedText().Render("Type to search vocabulary")
-	}
 
+		visible := items
+		relSel := sel
+		showAbove := false
+		showBelow := false
+
+		if maxVisible > 0 && len(items) > maxVisible {
+			showAbove = offset > 0
+			itemLimit := maxVisible
+			if showAbove {
+				itemLimit--
+				if itemLimit < 1 {
+					itemLimit = 1
+					showAbove = false
+				}
+			}
+			end := offset + itemLimit
+			if end > len(items) {
+				end = len(items)
+			}
+			showBelow = end < len(items)
+			if showBelow {
+				itemLimit--
+				if itemLimit < 1 {
+					itemLimit = 1
+					showBelow = false
+				}
+				end = offset + itemLimit
+				if end > len(items) {
+					end = len(items)
+				}
+				showBelow = end < len(items)
+			}
+			visible = items[offset:end]
+			relSel = sel - offset
+		}
+
+		bg := ui.Theme.Palette.Selection
+		selNormal := ui.Theme.Primary.Background(bg)
+		selHighlight := ui.Theme.Secondary.Background(bg)
+
+		var b strings.Builder
+		first := true
+
+		if showAbove {
+			if !first {
+				b.WriteString("\n")
+			}
+			first = false
+			b.WriteString(layout.Center(styles.MutedText().Render("  ↑ more above"), m.width))
+		}
+
+		for i, item := range visible {
+			if !first {
+				b.WriteString("\n")
+			}
+			first = false
+
+			truncated := renderer.Truncate(item, maxItemWidth)
+			selected := i == relSel
+
+			var line strings.Builder
+			if selected {
+				line.WriteString(selNormal.Render(ui.Theme.Icons.Navigate + " "))
+			} else {
+				line.WriteString(styles.MutedText().Render("  "))
+			}
+
+			if m.query != "" {
+				for _, seg := range splitHighlight(truncated, m.query) {
+					if seg.highlighted {
+						if selected {
+							line.WriteString(selHighlight.Render(seg.text))
+						} else {
+							line.WriteString(ui.Theme.Secondary.Render(seg.text))
+						}
+					} else {
+						if selected {
+							line.WriteString(selNormal.Render(seg.text))
+						} else {
+							line.WriteString(styles.MutedText().Render(seg.text))
+						}
+					}
+				}
+			} else {
+				if selected {
+					line.WriteString(selNormal.Render(truncated))
+				} else {
+					line.WriteString(styles.MutedText().Render(truncated))
+				}
+			}
+
+			b.WriteString(layout.Center(line.String(), m.width))
+		}
+
+		if showBelow {
+			if !first {
+				b.WriteString("\n")
+			}
+			b.WriteString(layout.Center(styles.MutedText().Render("  ↓ more below"), m.width))
+		}
+
+		return b.String()
+
+	case m.query != "":
+		return layout.Center(styles.MutedText().Render("No results found"), m.width)
+	default:
+		return layout.Center(styles.MutedText().Render("Type to search vocabulary"), m.width)
+	}
+}
+
+func (m SearchModel) View() string {
 	var footer string
 	if m.mode == searchInput {
 		footer = "enter search · " + keymap.DefaultGlobal.Back.Help
@@ -253,7 +394,7 @@ func (m SearchModel) View() string {
 
 	return layout.Page(
 		components.Header("Search", m.width),
-		layout.Column(input, results),
+		layout.Column(layout.Center(m.renderInput(), m.width), m.renderCenteredResults()),
 		components.Footer(footer, m.width),
 		m.height,
 	)

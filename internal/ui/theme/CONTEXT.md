@@ -24,7 +24,8 @@ All TODO items are implemented and tested (68+ tests).
 - **Palette** `palette.go` — `Palette` with 15 named colors
   (`Blue`, `Green`, `Orange`, `Red`, `Gray`, `White`,
   `Background`, `Selection`, `Border`, `Link`, `Surface`,
-  `Magenta`, `Purple`, `Cyan`, `Yellow`).
+  `Magenta`, `Purple`, `Cyan`, `Yellow`) plus 3 semantic
+  override slots (`Primary`, `Secondary`, `Accent`).
   `DefaultPalette` uses ANSI 256‑color values (`"39"`, `"42"`, etc.).
 
 - **Typography** `typography.go` — 6 text role styles built from the
@@ -153,7 +154,7 @@ theme/
 ├── theme.go          Theme struct, NewTheme, NewTerminalTheme,
 │                     WithIconSource, WithFallbackIcons, Default,
 │                     BorderFor method
-├── palette.go        Palette struct + DefaultPalette (15 colors)
+├── palette.go        Palette struct + DefaultPalette (15 colors + 3 semantic overrides)
 ├── typography.go     Typography struct (Title, Subtitle, Body,
 │                     Caption, Emphasis, Key) + NewTypography
 ├── borders.go        Borders struct (Normal, Rounded, Double,
@@ -207,7 +208,7 @@ Run:
 go test ./internal/ui/theme/ -v -count=1
 ```
 
-Coverage areas: palette values (15 colors), style rendering (14 styles),
+Coverage areas: palette values (18 fields: 15 colors + 3 semantic overrides), style rendering (14 styles),
 custom palette construction, typography styles, border edge characters,
 border rendering, spacing defaults, border role defaults and Theme.BorderFor(),
 Unicode env detection (LC_ALL / LC_CTYPE / LANG), emoji env detection

@@ -1,6 +1,6 @@
 # Theme
 
-- [x] Color palette (`palette.go` — `Palette` struct with 15 named colors, `DefaultPalette`)
+- [x] Color palette (`palette.go` — `Palette` struct with 15 named colors + 3 semantic overrides (Primary/Secondary/Accent), `DefaultPalette`)
 - [x] Semantic styles (`theme.go` — `Theme` struct with Primary/Secondary/Accent/Success/Warning/Danger/Muted/Header/Background/Surface styles + PrimaryBg/SuccessBg/ErrorBg/WarningBg background variants, `NewTheme(palette)` constructor)
 - [x] Icons (`icons.go` — `Icons` struct with Check, Cross, Arrows, Bullet, Selected, Navigate, Highlight, Close; `Fallback()` for ASCII fallback; `NerdFontIcons`, `EmojiIcons`, `UnicodeIcons`, `FallbackIcons`; `IconsFromSource()`, `IconSource` enum)
 - [x] Default instance (`Default` theme exported from `ui.Theme` for backward compat)

@@ -298,7 +298,7 @@ ui/
 │   └── styles_test.go  60+ tests
 
 ├── theme/              Design system (colors, typography, icons, borders)
-│   ├── palette.go      15-color Palette + DefaultPalette
+│   ├── palette.go      18-field Palette (15 colors + Primary/Secondary/Accent) + DefaultPalette
 │   ├── theme.go        Theme struct + NewTheme() + BorderFor()
 │   ├── typography.go   6 text role styles
 │   ├── borders.go      5 border styles
@@ -405,7 +405,7 @@ Navigation should be testable through emitted events.
 
 ## Complete
 
-- **Theme** (`theme/`): Full implementation with 54+ tests, including 15-color palette, 14 semantic styles (10 foreground + 4 background variants: PrimaryBg, SuccessBg, ErrorBg, WarningBg), typography, borders, 10-slot icons (4 icon sources), spacing scale, border roles, YAML loading with style overrides, and theme switching (built-in: default, dark, light, tokyonight)
+- **Theme** (`theme/`): Full implementation with 55+ tests, including 18-field palette (15 colors + 3 semantic overrides), 14 semantic styles (10 foreground + 4 background variants: PrimaryBg, SuccessBg, ErrorBg, WarningBg), typography, borders, 10-slot icons (4 icon sources), spacing scale, border roles, YAML loading with style overrides, and theme switching (built-in: default, dark, light, tokyonight)
 - **Styles** (`styles/`): All 16 style definitions implemented with 60+ tests — Header, Footer, SelectedItem, FocusedInput, Error, Warning, Success, Hint, MutedText, Card, Panel, Modal, PrimaryBg, SuccessBg, ErrorBg, WarningBg
 - **Components** (`components/`): All 29 components implemented — 20 in `display/` (Header, Footer, Card, Progress, List, Table, Modal, Notification, Text, Label, Badge, Paragraph, Divider, Panel, Section, Group, Window, StatusBar, ConfirmDialog, ErrorDialog) and 9 in `interactive/` (TextInput, SearchInput, Checkbox, RadioGroup, Select, MultiSelect, SelectableList, Tree, Spinner)
 - **Screens** (`screens/`): All 9 screens implemented — Home (activity menu), Quiz (flashcard), TypingQuiz (typing-based with fuzzy matching), Decks (multi-deck selection), Search (text input + results), Statistics (metrics display), Settings (theme switching), Detail (entry view), Palette (theme palette test with live preview)

@@ -237,7 +237,7 @@ Styling is centralized.
 
 The `theme` package provides a complete design system:
 
-- **Palette**: 15 named colors (Blue, Green, Orange, Red, Gray, White, Background, Selection, Border, Link, Surface, Magenta, Purple, Cyan, Yellow)
+- **Palette**: 15 named colors + 3 semantic overrides (Primary, Secondary, Accent)
 - **Semantic styles**: 14 styles (Primary, Secondary, Accent, Success, Warning, Danger, Muted, Header, Background, Surface, PrimaryBg, SuccessBg, ErrorBg, WarningBg)
 - **Typography**: 6 text roles (Title, Subtitle, Body, Caption, Emphasis, Key)
 - **Borders**: 5 styles (Normal, Rounded, Double, Thick, None)
@@ -369,7 +369,7 @@ Animations should remain optional.
 
 - **Navigation** (`navigation/`): Full Manager, stack, Registry with 82 black-box tests
 - **Theme** (`theme/`): Complete design system with 54 tests:
-  - 15-color palette (Blue, Green, Orange, Red, Gray, White, Background, Selection, Border, Link, Surface, Magenta, Purple, Cyan, Yellow)
+  - 18-field palette (15 named colors + 3 semantic overrides: Primary, Secondary, Accent)
   - 14 semantic styles (Primary, Secondary, Accent, Success, Warning, Danger, Muted, Header, Background, Surface, PrimaryBg, SuccessBg, ErrorBg, WarningBg)
   - Typography system (Title, Subtitle, Body, Caption, Emphasis, Key)
   - Border styles (Normal, Rounded, Double, Thick, None)

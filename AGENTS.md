@@ -38,7 +38,7 @@ Docs describe an aspirational layered architecture. Reality is partial:
 - **cli/** — Kong command stubs — see `internal/cli/CONTEXT.md` for the full wiring guide
 - **app/** — empty composition root struct (but `internal/ui/app/` has real UI scaffolding)
 - **editor/** — `$EDITOR`/nano/vim invocation + YAML buffer handling for entry editing
-- **ui/** — Full Bubble Tea UI: navigation/ fully implemented, app/ wired, 8 screens, theme system with 15-color palette and 4 built-in themes (dark, light, tokyonight, default), background fill across entire terminal, inline notifications
+- **ui/** — Full Bubble Tea UI: navigation/ fully implemented, app/ wired, 8 screens, theme system with 18-field palette (15 colors + 3 semantic overrides) and 4 built-in themes (dark, light, tokyonight, default), background fill across entire terminal, inline notifications
 - **storage/** — SQLite fully implemented via `Store` (goose + sqlc). On startup, `SyncDecks()` caches YAML decks in SQLite. `Store` implements `DeckProvider`, `ProgressRecorder`, and `StatsProvider`. Deck+entry CRUD, reserve/backup, revert all implemented. `DeckStore` (legacy filesystem) remains but is not wired.
 
 SQL stack: SQLite (`modernc.org/sqlite`) + goose (migrations) + sqlc (type-safe queries)
@@ -72,7 +72,7 @@ and re-commit.
 
 ## Theme specifics
 
-- `Palette` struct has 15 named colors: Blue, Green, Orange, Red, Gray, White, Background, Selection, Border, Link, Surface, Magenta, Purple, Cyan, Yellow
+- `Palette` struct has 15 named colors + 3 semantic overrides (Primary, Secondary, Accent)
 - 4 built-in themes: default (ANSI 256), dark, light, tokyonight (hex values from folke/tokyonight.nvim)
 - `theme.Store` pre-registers "default", "dark", "light", "tokyonight"
 - Config supports custom themes via YAML with named palette references or direct ANSI/hex values

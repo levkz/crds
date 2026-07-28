@@ -123,7 +123,7 @@ Most implementation work happens inside `internal/`.
 | `internal/model/` | Domain types: Deck, Entry, Progress, Review, Session | — |
 | `internal/parser/` | YAML parsing, validation, normalization, auto-ID generation | 13 test fixtures in `testdata/` |
 | `internal/config/` | User configuration from `~/.config/crds/` | 13 tests |
-| `internal/ui/theme/` | Design system: 15-color palette, typography, icons, borders, spacing, 4 built-in themes | 68+ tests |
+| `internal/ui/theme/` | Design system: 18-field palette (15 colors + 3 semantic overrides), typography, icons, borders, spacing, 4 built-in themes | 68+ tests |
 | `internal/ui/styles/` | 12 semantic style definitions | 60 tests |
 | `internal/ui/components/` | 29 components (display + interactive) | — |
 | `internal/ui/navigation/` | Stack-based navigation with push/pop/replace/forward/modal | 82 tests |

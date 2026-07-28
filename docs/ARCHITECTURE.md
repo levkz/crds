@@ -137,7 +137,7 @@ The UI is the most developed subsystem. It follows Bubble Tea's Elm-style archit
 | `app/` | Root model, event dispatch, lifecycle, commands | — |
 | `navigation/` | Stack-based manager with push/pop/replace/forward/modal | 82 tests |
 | `keymap/` | Centralized keybinding definitions, user overrides | 16 tests |
-| `theme/` | Design system: 15-color palette, typography, icons, borders, spacing, 4 built-in themes | 68+ tests |
+| `theme/` | Design system: 18-field palette (15 colors + 3 semantic overrides), typography, icons, borders, spacing, 4 built-in themes | 68+ tests |
 | `styles/` | 12 semantic style definitions | 60 tests |
 | `components/` | 29 components (display + interactive) | — |
 | `layout/` | Layout primitives: Page, Column, Row, Grid, Stack, Spacer, Center, Align | Tests |

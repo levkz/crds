@@ -255,7 +255,7 @@ func (m *TypingQuizModel) View() string {
 
 	var b strings.Builder
 
-	topPad := m.height / 4
+	topPad := m.height / 5
 	if m.height < 10 {
 		topPad = 0
 	}
@@ -267,12 +267,16 @@ func (m *TypingQuizModel) View() string {
 	}
 	b.WriteString(layout.Center(term, m.width))
 
+	b.WriteString("\n\n")
+
+	answerLabel := "Correct: " + m.currentCorrectAnswer()
+	renderedAnswer := layout.Center(styles.MutedText().Render(answerLabel), m.width)
+	answerLines := strings.Count(renderedAnswer, "\n") + 1
+
 	if m.revealed {
-		b.WriteString("\n\n")
-		b.WriteString(layout.Center(
-			styles.MutedText().Render("Correct: "+m.currentCorrectAnswer()),
-			m.width,
-		))
+		b.WriteString(renderedAnswer)
+	} else {
+		b.WriteString(strings.Repeat("\n", answerLines-1))
 	}
 
 	b.WriteString("\n\n")
@@ -328,7 +332,7 @@ func (m *TypingQuizModel) renderTopBody() string {
 		return ""
 	}
 	var b strings.Builder
-	topPad := m.height / 4
+	topPad := m.height / 5
 	if m.height < 10 {
 		topPad = 0
 	}
@@ -339,12 +343,14 @@ func (m *TypingQuizModel) renderTopBody() string {
 		term = strings.Join(card.Back, ", ")
 	}
 	b.WriteString(layout.Center(term, m.width))
+	b.WriteString("\n\n")
+	answerLabel := "Correct: " + m.currentCorrectAnswer()
+	renderedAnswer := layout.Center(styles.MutedText().Render(answerLabel), m.width)
+	answerLines := strings.Count(renderedAnswer, "\n") + 1
 	if m.revealed {
-		b.WriteString("\n\n")
-		b.WriteString(layout.Center(
-			styles.MutedText().Render("Correct: "+m.currentCorrectAnswer()),
-			m.width,
-		))
+		b.WriteString(renderedAnswer)
+	} else {
+		b.WriteString(strings.Repeat("\n", answerLines-1))
 	}
 	b.WriteString("\n\n")
 	b.WriteString(layout.Center("", m.width))

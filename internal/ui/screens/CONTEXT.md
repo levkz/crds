@@ -159,8 +159,10 @@ PaletteScreen
   correct answer (records `Again`, grade 1). Tab toggles inverse mode —
   shows translations as the prompt and expects the term as the answer;
   term variants use the same `()`/`[]` expansion syntax as translations.
-- **Renders**: Header + term (centered, vertically padded) + centered input with cursor +
-  bottom section after reveal (notes, tags as PrimaryBg pills, paginated examples in single/two-column layout,
+- **Renders**: Header + term (centered, vertically padded, at height/5) + correct-answer
+  slot (always present; empty placeholder when unrevealed, "Correct: ..." text when revealed) +
+  centered input with cursor (fixed position — does not shift on reveal) + bottom section after
+  reveal (notes, tags as PrimaryBg pills, paginated examples in single/two-column layout,
   all sections with 8-char side padding) + progress "card N/M" in footer + footer shortcuts.
   Header shows "(inverse)" suffix in inverse mode.
 

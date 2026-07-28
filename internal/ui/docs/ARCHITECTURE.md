@@ -238,7 +238,7 @@ Styling is centralized.
 The `theme` package provides a complete design system:
 
 - **Palette**: 15 named colors (Blue, Green, Orange, Red, Gray, White, Background, Selection, Border, Link, Surface, Magenta, Purple, Cyan, Yellow)
-- **Semantic styles**: 10 styles (Primary, Secondary, Accent, Success, Warning, Danger, Muted, Header, Background, Surface)
+- **Semantic styles**: 14 styles (Primary, Secondary, Accent, Success, Warning, Danger, Muted, Header, Background, Surface, PrimaryBg, SuccessBg, ErrorBg, WarningBg)
 - **Typography**: 6 text roles (Title, Subtitle, Body, Caption, Emphasis, Key)
 - **Borders**: 5 styles (Normal, Rounded, Double, Thick, None)
 - **Icons**: 4 sources × 10 semantic slots (NerdFont → Emoji → Unicode → ASCII), auto-detected at startup
@@ -369,8 +369,8 @@ Animations should remain optional.
 
 - **Navigation** (`navigation/`): Full Manager, stack, Registry with 82 black-box tests
 - **Theme** (`theme/`): Complete design system with 54 tests:
-  - 11-color palette (Blue, Green, Orange, Red, Gray, White, Background, Selection, Border, Link, Surface)
-  - 10 semantic styles (Primary, Secondary, Accent, Success, Warning, Danger, Muted, Header, Background, Surface)
+  - 15-color palette (Blue, Green, Orange, Red, Gray, White, Background, Selection, Border, Link, Surface, Magenta, Purple, Cyan, Yellow)
+  - 14 semantic styles (Primary, Secondary, Accent, Success, Warning, Danger, Muted, Header, Background, Surface, PrimaryBg, SuccessBg, ErrorBg, WarningBg)
   - Typography system (Title, Subtitle, Body, Caption, Emphasis, Key)
   - Border styles (Normal, Rounded, Double, Thick, None)
   - 10-slot icon set with 4 sources: NerdFont → Emoji → Unicode → ASCII
@@ -378,7 +378,7 @@ Animations should remain optional.
   - Spacing scale (7 tiers), border roles (6 semantic roles)
   - YAML theme loading with 6 test fixtures + style/typography overrides
   - Theme store with runtime switching
-- **Styles** (`styles/`): 12 style definitions with 60 tests (Header, Footer, SelectedItem, FocusedInput, Error, Warning, Success, Hint, MutedText, Card, Panel, Modal)
+- **Styles** (`styles/`): 16 style definitions with 60+ tests (Header, Footer, SelectedItem, FocusedInput, Error, Warning, Success, Hint, MutedText, Card, Panel, Modal, PrimaryBg, SuccessBg, ErrorBg, WarningBg)
 - **Components** (`components/`): 29 components across `display/` (20 stateless) and `interactive/` (9 stateful) — all implemented
 - **Screens** (`screens/`): All 9 screens — Home (activity menu), Quiz (flashcard), TypingQuiz (typing-based with inverse mode), Decks (multi-deck selection), Search (two-phase: input + results), Statistics (metrics), Settings (theme switch), Detail (entry view), Palette (theme palette test with live preview)
 - **Keymap** (`keymap/`): Centralized keybinding definitions with `Binding.Match()`, `BindingList.Help()`, per-screen keymap structs (`Global`, `List`, `Quiz`, `TypingQuiz`, `Decks`, `Search`) with `Footer()` methods, `Registry` with `Bindings()`/`FindBinding()`, `KeymapConfig` for user overrides, and 16 tests. All screens and the root model use `keymap.Default*` instead of hardcoded strings.

@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"go.yaml.in/yaml/v3"
+
 	"crds/internal/model"
 	"crds/internal/parser"
 	"crds/internal/storage/db"
@@ -232,12 +234,22 @@ func (s *Store) buildCard(ctx context.Context, entry db.Entry) ui.CardData {
 		variants = append(variants, model.ExpandText(t)...)
 	}
 
+	tags, _ := s.queries.GetTagsByEntry(ctx, entry.ID)
+
+	exampleRows, _ := s.queries.GetExamplesByEntry(ctx, entry.ID)
+	examples := make([]ui.ExampleData, len(exampleRows))
+	for i, ex := range exampleRows {
+		examples[i] = ui.ExampleData{Text: ex.Text, Translation: ex.Translation}
+	}
+
 	return ui.CardData{
 		ID:       entry.ID,
 		Front:    entry.Term,
 		Back:     texts,
 		Variants: variants,
 		Notes:    entry.Notes,
+		Tags:     tags,
+		Examples: examples,
 	}
 }
 
@@ -336,6 +348,44 @@ func tagsMatch(entryTags, filterTags []string) bool {
 		}
 	}
 	return true
+}
+
+// WriteBackIDs parses each .yaml deck file (auto-generating missing IDs)
+// and writes it back, persisting any auto-generated IDs into the YAML.
+func (s *Store) WriteBackIDs(deckDir string) error {
+	entries, err := os.ReadDir(deckDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return fmt.Errorf("read deck dir: %w", err)
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".yaml") {
+			continue
+		}
+		path := filepath.Join(deckDir, entry.Name())
+		if err := s.writeDeckIDs(path); err != nil {
+			log.Printf("warning: writing IDs to %q: %v", entry.Name(), err)
+		}
+	}
+	return nil
+}
+
+func (s *Store) writeDeckIDs(path string) error {
+	deck, err := parser.ParseFile(path)
+	if err != nil {
+		return fmt.Errorf("parse: %w", err)
+	}
+	data, err := yaml.Marshal(deck)
+	if err != nil {
+		return fmt.Errorf("marshal: %w", err)
+	}
+	if err := os.WriteFile(path, data, 0644); err != nil {
+		return fmt.Errorf("write: %w", err)
+	}
+	return nil
 }
 
 // EnsureStoreHasDecks syncs decks on first use if not yet synced.

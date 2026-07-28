@@ -5,37 +5,35 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"crds/internal/fuzzy"
 	"crds/internal/model"
 	"crds/internal/ui"
-	components "crds/internal/ui/components/display"
-	icomp "crds/internal/ui/components/interactive"
 	"crds/internal/ui/keymap"
 	"crds/internal/ui/layout"
+	"crds/internal/ui/renderer"
 	"crds/internal/ui/styles"
 )
 
 type TypingQuizModel struct {
-	cards     []components.Card
-	cardIndex int
-	progress  int
-	revealed  bool
-	input     icomp.TextInputModel
-	grade     int
-	score     float64
-	deckName  string
-	inverse   bool
-	width     int
-	height    int
-	matcher   *fuzzy.FuzzyMatcher
+	cards        []ui.CardData
+	cardIndex    int
+	revealed     bool
+	input        string
+	cursor       int
+	grade        int
+	score        float64
+	deckName     string
+	inverse      bool
+	width        int
+	height       int
+	matcher      *fuzzy.FuzzyMatcher
+	examplesPage int
 }
 
 func NewTypingQuiz() *TypingQuizModel {
-	input := icomp.NewTextInput()
-	input.Focus()
 	return &TypingQuizModel{
-		input:   input,
 		matcher: fuzzy.NewFuzzyMatcher(0),
 	}
 }
@@ -46,29 +44,16 @@ func (m *TypingQuizModel) SetSize(w, h int) {
 }
 
 func (m *TypingQuizModel) SetDeck(deck ui.DeckData) {
-	cards := make([]components.Card, len(deck.Cards))
-	for i, c := range deck.Cards {
-		cards[i] = components.Card{
-			Front: c.Front,
-			Back:  c.Back,
-			Variants: func() []string {
-				if len(c.Variants) > 0 {
-					return c.Variants
-				}
-				return c.Back
-			}(),
-			Notes: c.Notes,
-		}
-	}
-	m.cards = cards
+	m.cards = deck.Cards
 	m.deckName = deck.Name
 	m.cardIndex = 0
-	m.progress = 0
 	m.revealed = false
 	m.inverse = false
 	m.grade = 0
 	m.score = 0
-	m.input.SetValue("")
+	m.input = ""
+	m.cursor = 0
+	m.examplesPage = 0
 }
 
 func (m *TypingQuizModel) Init() tea.Cmd { return nil }
@@ -77,7 +62,11 @@ func (m *TypingQuizModel) currentVariants() []string {
 	if m.inverse {
 		return model.ExpandText(m.cards[m.cardIndex].Front)
 	}
-	return m.cards[m.cardIndex].Variants
+	c := m.cards[m.cardIndex]
+	if len(c.Variants) > 0 {
+		return c.Variants
+	}
+	return c.Back
 }
 
 func (m *TypingQuizModel) currentCorrectAnswer() string {
@@ -88,7 +77,7 @@ func (m *TypingQuizModel) currentCorrectAnswer() string {
 }
 
 func (m *TypingQuizModel) gradeInput() bool {
-	answer := m.input.Value()
+	answer := m.input
 	if answer == "" {
 		return false
 	}
@@ -114,17 +103,17 @@ func (m *TypingQuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 				if m.gradeInput() {
 					m.revealed = true
 					card := m.cards[m.cardIndex]
-				return m, func() tea.Msg {
-					return ui.SaveAnswerMsg{
-						DeckID:        m.deckName,
-						CardID:        card.Front,
-						Grade:         m.grade,
-						Reverse:       m.inverse,
-						UserInput:     m.input.Value(),
-						CorrectAnswer: m.currentCorrectAnswer(),
-						Similarity:    m.score,
+					return m, func() tea.Msg {
+						return ui.SaveAnswerMsg{
+							DeckID:        m.deckName,
+							CardID:        card.Front,
+							Grade:         m.grade,
+							Reverse:       m.inverse,
+							UserInput:     m.input,
+							CorrectAnswer: m.currentCorrectAnswer(),
+							Similarity:    m.score,
+						}
 					}
-				}
 				}
 				return m, nil
 
@@ -147,19 +136,19 @@ func (m *TypingQuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 				m.revealed = false
 				m.grade = 0
 				m.score = 0
-				m.input.SetValue("")
+				m.input = ""
+				m.cursor = 0
+				m.examplesPage = 0
 
 			default:
-				updated, cmd := m.input.Update(msg)
-				m.input = updated
-				return m, cmd
+				m.handleInput(msg)
+				return m, nil
 			}
 
 		default:
 			switch {
 			case keymap.DefaultTypingQuiz.Submit.Match(msg),
 				keymap.DefaultList.Down.Match(msg):
-				m.progress = (m.cardIndex + 1) * 100 / len(m.cards)
 				m.cardIndex++
 				if m.cardIndex >= len(m.cards) {
 					return m, func() tea.Msg {
@@ -169,102 +158,377 @@ func (m *TypingQuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 				m.revealed = false
 				m.grade = 0
 				m.score = 0
-				m.input.SetValue("")
+				m.input = ""
+				m.cursor = 0
+				m.examplesPage = 0
 				return m, nil
+
+			case keymap.DefaultTypingQuiz.PrevExample.Match(msg):
+				card := m.cards[m.cardIndex]
+				pp := m.examplesPerPage(card.Examples)
+				if pp > 0 && m.examplesPage > 0 {
+					m.examplesPage--
+				}
+
+			case keymap.DefaultTypingQuiz.NextExample.Match(msg):
+				card := m.cards[m.cardIndex]
+				pp := m.examplesPerPage(card.Examples)
+				if pp > 0 {
+					maxPage := (len(card.Examples) + pp - 1) / pp
+					if m.examplesPage < maxPage-1 {
+						m.examplesPage++
+					}
+				}
 			}
 		}
 	}
-
-	updated, cmd := m.input.Update(msg)
-	m.input = updated
-	return m, cmd
+	return m, nil
 }
 
-func (m TypingQuizModel) View() string {
+func (m *TypingQuizModel) handleInput(msg tea.KeyMsg) {
+	switch msg.String() {
+	case "left":
+		if m.cursor > 0 {
+			m.cursor--
+		}
+	case "right":
+		runes := []rune(m.input)
+		if m.cursor < len(runes) {
+			m.cursor++
+		}
+	case "home":
+		m.cursor = 0
+	case "end":
+		m.cursor = len([]rune(m.input))
+	case "backspace":
+		if m.cursor > 0 {
+			runes := []rune(m.input)
+			m.cursor--
+			m.input = string(append(runes[:m.cursor], runes[m.cursor+1:]...))
+		}
+	case "delete":
+		runes := []rune(m.input)
+		if m.cursor < len(runes) {
+			m.input = string(append(runes[:m.cursor], runes[m.cursor+1:]...))
+		}
+	default:
+		s := msg.String()
+		if s != "" && isTextInputRune(s) {
+			runes := []rune(m.input)
+			var b strings.Builder
+			b.WriteString(string(runes[:m.cursor]))
+			b.WriteString(s)
+			b.WriteString(string(runes[m.cursor:]))
+			m.input = b.String()
+			m.cursor++
+		}
+	}
+}
+
+func isTextInputRune(s string) bool {
+	if len(s) != 1 {
+		return false
+	}
+	r := []rune(s)[0]
+	return (r >= ' ' && r <= '~') || r > 127
+}
+
+func (m *TypingQuizModel) View() string {
 	if len(m.cards) == 0 {
 		return layout.Page(
-			components.Header("Typing Quiz", m.width),
-			styles.MutedText().Render("No cards loaded"),
-			components.Footer(keymap.DefaultGlobal.Back.Help, m.width),
+			"",
+			layout.Center(styles.MutedText().Render("No cards loaded"), m.width),
+			componentsFooter(keymap.DefaultGlobal.Back.Help, m.width),
 			m.height,
 		)
 	}
 
 	if m.cardIndex >= len(m.cards) {
 		return layout.Page(
-			components.Header(m.deckName, m.width),
-			styles.MutedText().Render("Quiz complete!"),
-			components.Footer(keymap.DefaultGlobal.Back.Help, m.width),
+			"",
+			layout.Center(styles.MutedText().Render("Quiz complete!"), m.width),
+			componentsFooter(keymap.DefaultGlobal.Back.Help, m.width),
 			m.height,
 		)
 	}
 
-	headerTitle := m.deckName
-	if headerTitle == "" {
-		headerTitle = "Typing Quiz"
-	}
-	if m.inverse {
-		headerTitle += " (inverse)"
-	}
-
 	card := m.cards[m.cardIndex]
-	displayCard := card
+
+	var b strings.Builder
+
+	topPad := m.height / 4
+	if m.height < 10 {
+		topPad = 0
+	}
+	b.WriteString(layout.VSpace(topPad))
+
+	term := card.Front
 	if m.inverse {
-		displayCard = components.Card{
-			Front: strings.Join(card.Back, ", "),
-			Back:  []string{card.Front},
-			Notes: card.Notes,
+		term = strings.Join(card.Back, ", ")
+	}
+	b.WriteString(layout.Center(term, m.width))
+
+	if m.revealed {
+		b.WriteString("\n\n")
+		b.WriteString(layout.Center(
+			styles.MutedText().Render("Correct: "+m.currentCorrectAnswer()),
+			m.width,
+		))
+	}
+
+	b.WriteString("\n\n")
+	b.WriteString(layout.Center(m.renderInput(), m.width))
+
+	if m.revealed {
+		bottomContent := m.renderBottomSection(card)
+		if bottomContent != "" {
+			b.WriteString("\n\n")
+			b.WriteString(bottomContent)
 		}
 	}
 
-	var items []string
-	items = append(items, components.RenderCard(displayCard, m.revealed, m.width))
-	items = append(items, components.ProgressBar(m.progress))
-	items = append(items, m.input.View(m.width))
+	bodyStr := b.String()
+	footerStr := m.renderFooter(card)
+	bodyLines := strings.Count(bodyStr, "\n") + 1
+	footerLines := strings.Count(footerStr, "\n") + 1
+	totalContent := bodyLines + 1 + footerLines
+	if remaining := m.height - totalContent; remaining > 0 {
+		b.WriteString(strings.Repeat("\n", remaining))
+	}
+	b.WriteString("\n\n")
+	b.WriteString(footerStr)
+
+	return b.String()
+}
+
+func (m *TypingQuizModel) renderInput() string {
+	runes := []rune(m.input)
+	pos := m.cursor
+	if pos > len(runes) {
+		pos = len(runes)
+	}
+	display := string(runes[:pos]) + "█" + string(runes[pos:])
 
 	if m.revealed {
-		correctAnswer := m.currentCorrectAnswer()
-
-		var gradeIndicator string
 		switch m.grade {
 		case fuzzy.Good:
-			gradeIndicator = styles.Success().Render("✓ Correct!")
+			return ui.Theme.SuccessBg.Render(display)
 		case fuzzy.Hard:
-			gradeIndicator = styles.Warning().Render("~ Close!")
+			return ui.Theme.WarningBg.Render(display)
 		case fuzzy.Again:
-			gradeIndicator = styles.Error().Render("✗ Not quite.")
+			return ui.Theme.ErrorBg.Render(display)
 		}
-
-		var answerLine string
-		switch m.grade {
-		case fuzzy.Good:
-			answerLine = styles.Success().Render("✓ " + m.input.Value())
-		case fuzzy.Hard:
-			pct := int(m.score * 100)
-			answerLine = styles.Warning().Render(fmt.Sprintf("~ %s (%d%%)", m.input.Value(), pct))
-		case fuzzy.Again:
-			answerLine = styles.Error().Render("✗ " + m.input.Value())
-		}
-
-		correctLine := styles.MutedText().Render("Correct: " + correctAnswer)
-
-		items = append(items, layout.Column(gradeIndicator, correctLine, answerLine))
 	}
 
-	var footer string
+	return ui.Theme.Background.Render(display)
+}
+
+func (m *TypingQuizModel) renderBottomSection(card ui.CardData) string {
+	sidePad := lipgloss.NewStyle().PaddingLeft(8).PaddingRight(8)
+	var parts []string
+
+	if card.Notes != "" {
+		parts = append(parts, sidePad.Render(styles.MutedText().Render("note: "+card.Notes)))
+	}
+
+	if len(card.Tags) > 0 {
+		parts = append(parts, sidePad.Render(m.renderTags(card.Tags)))
+	}
+
+	if len(card.Examples) > 0 {
+		parts = append(parts, sidePad.Render(m.renderExamplesBlock(card.Examples)))
+	}
+
+	return strings.Join(parts, "\n\n")
+}
+
+func (m *TypingQuizModel) renderTags(tags []string) string {
+	var styled []string
+	tagStyle := styles.PrimaryBg().Padding(0, 1)
+	for _, t := range tags {
+		styled = append(styled, tagStyle.Render(t))
+	}
+	return strings.Join(styled, " ")
+}
+
+func (m *TypingQuizModel) renderExamplesBlock(examples []ui.ExampleData) string {
+	pp := m.examplesPerPage(examples)
+	if pp <= 0 {
+		pp = 1
+	}
+	start := m.examplesPage * pp
+	if start >= len(examples) {
+		return ""
+	}
+	end := start + pp
+	if end > len(examples) {
+		end = len(examples)
+	}
+	page := examples[start:end]
+
+	if m.width > 80 {
+		return m.renderExamplesTwoCol(page)
+	}
+	return m.renderExamplesSingleCol(page)
+}
+
+func (m *TypingQuizModel) renderExamplesSingleCol(examples []ui.ExampleData) string {
+	colWidth := m.width - 2
+	if colWidth < 10 {
+		colWidth = 10
+	}
+	var blocks []string
+	for _, ex := range examples {
+		var blockLines []string
+		blockLines = append(blockLines, renderer.Wrap("- "+ex.Text, colWidth)...)
+		if ex.Translation != "" {
+			blockLines = append(blockLines, renderer.Wrap("  "+ex.Translation, colWidth)...)
+		}
+		blocks = append(blocks, strings.Join(blockLines, "\n"))
+	}
+	return strings.Join(blocks, "\n\n")
+}
+
+func (m *TypingQuizModel) renderExamplesTwoCol(examples []ui.ExampleData) string {
+	colWidth := (m.width - 3) / 2
+	if colWidth < 10 {
+		colWidth = 10
+	}
+
+	var rows []string
+	for i := 0; i < len(examples); i += 2 {
+		left := m.renderExampleCell(examples[i], colWidth)
+		var right []string
+		if i+1 < len(examples) {
+			right = m.renderExampleCell(examples[i+1], colWidth)
+		}
+		maxH := len(left)
+		if len(right) > maxH {
+			maxH = len(right)
+		}
+		for len(left) < maxH {
+			left = append(left, strings.Repeat(" ", colWidth))
+		}
+		for len(right) < maxH {
+			right = append(right, strings.Repeat(" ", colWidth))
+		}
+		for j := 0; j < maxH; j++ {
+			rows = append(rows, left[j]+" "+right[j])
+		}
+		rows = append(rows, "")
+	}
+
+	return strings.Join(rows, "\n")
+}
+
+func (m *TypingQuizModel) renderExampleCell(ex ui.ExampleData, width int) []string {
+	var lines []string
+	lines = append(lines, renderer.Wrap("- "+ex.Text, width)...)
+	if ex.Translation != "" {
+		lines = append(lines, renderer.Wrap("  "+ex.Translation, width)...)
+	}
+	for i, l := range lines {
+		if w := renderer.VisibleWidth(l); w < width {
+			lines[i] = l + strings.Repeat(" ", width-w)
+		}
+	}
+	return lines
+}
+
+func (m *TypingQuizModel) examplesPerPage(examples []ui.ExampleData) int {
+	if len(examples) == 0 {
+		return 0
+	}
+	bodyStr := m.renderTopBody()
+	topLines := strings.Count(bodyStr, "\n") + 1
+	availLines := m.height - topLines - 3
+
+	if availLines < 3 {
+		return 1
+	}
+
+	if m.width > 80 {
+		perRow := 2
+		linesPerItem := 2
+		itemsPerPage := (availLines / (linesPerItem + 1)) * perRow
+		if itemsPerPage < perRow {
+			itemsPerPage = perRow
+		}
+		return itemsPerPage
+	}
+	linesPerItem := 3
+	itemsPerPage := availLines / (linesPerItem + 1)
+	if itemsPerPage < 1 {
+		itemsPerPage = 1
+	}
+	return itemsPerPage
+}
+
+func (m *TypingQuizModel) renderTopBody() string {
+	var b strings.Builder
+	topPad := m.height / 4
+	if m.height < 10 {
+		topPad = 0
+	}
+	b.WriteString(layout.VSpace(topPad))
+	card := m.cards[m.cardIndex]
+	term := card.Front
+	if m.inverse {
+		term = strings.Join(card.Back, ", ")
+	}
+	b.WriteString(layout.Center(term, m.width))
 	if m.revealed {
-		footer = components.Footer("enter/down next · esc back", m.width)
-	} else {
-		footer = components.Footer(
-			keymap.DefaultTypingQuiz.Footer()+" · "+keymap.DefaultGlobal.Back.Help,
+		b.WriteString("\n\n")
+		b.WriteString(layout.Center(
+			styles.MutedText().Render("Correct: "+m.currentCorrectAnswer()),
+			m.width,
+		))
+	}
+	b.WriteString("\n\n")
+	b.WriteString(layout.Center("", m.width))
+	return b.String()
+}
+
+func (m *TypingQuizModel) renderFooter(card ui.CardData) string {
+	progress := fmt.Sprintf("card %d/%d", m.cardIndex+1, len(m.cards))
+
+	if m.revealed {
+		var shortcuts []string
+		shortcuts = append(shortcuts, "enter next")
+		shortcuts = append(shortcuts, keymap.DefaultGlobal.Back.Help)
+
+		totalExamples := len(card.Examples)
+		if totalExamples > 0 {
+			pp := m.examplesPerPage(card.Examples)
+			maxPage := (totalExamples + pp - 1) / pp
+			if maxPage > 1 {
+				startEx := m.examplesPage*pp + 1
+				endEx := (m.examplesPage+1)*pp
+				if endEx > totalExamples {
+					endEx = totalExamples
+				}
+				shortcuts = append(shortcuts, fmt.Sprintf("ex %d-%d/%d", startEx, endEx, totalExamples))
+				if m.examplesPage > 0 {
+					shortcuts = append(shortcuts, keymap.DefaultTypingQuiz.PrevExample.Help)
+				}
+				if m.examplesPage < maxPage-1 {
+					shortcuts = append(shortcuts, keymap.DefaultTypingQuiz.NextExample.Help)
+				}
+			}
+		}
+
+		return componentsFooter(
+			progress+" · "+strings.Join(shortcuts, " · "),
 			m.width,
 		)
 	}
 
-	return layout.Page(
-		components.Header(headerTitle, m.width),
-		layout.Column(items...),
-		footer,
-		m.height,
+	return componentsFooter(
+		progress+" · "+keymap.DefaultTypingQuiz.Footer()+" · "+keymap.DefaultGlobal.Back.Help,
+		m.width,
 	)
+}
+
+func componentsFooter(keys string, width int) string {
+	return styles.Footer(width).Render(keys)
 }

@@ -15,9 +15,10 @@ All TODO items are implemented and tested (68+ tests).
 
 ### What's in place
 
-- **Theme** `theme.go` — Root struct with 10 semantic styles
+- **Theme** `theme.go` — Root struct with 14 semantic styles
   (`Primary`, `Secondary`, `Accent`, `Success`, `Warning`, `Danger`,
-  `Muted`, `Header`, `Background`, `Surface`), a palette, typography,
+  `Muted`, `Header`, `Background`, `Surface`,
+  `PrimaryBg`, `SuccessBg`, `ErrorBg`, `WarningBg`), a palette, typography,
   borders, icons, spacing, and border roles.
 
 - **Palette** `palette.go` — `Palette` with 15 named colors
@@ -152,7 +153,7 @@ theme/
 ├── theme.go          Theme struct, NewTheme, NewTerminalTheme,
 │                     WithIconSource, WithFallbackIcons, Default,
 │                     BorderFor method
-├── palette.go        Palette struct + DefaultPalette (11 colors)
+├── palette.go        Palette struct + DefaultPalette (15 colors)
 ├── typography.go     Typography struct (Title, Subtitle, Body,
 │                     Caption, Emphasis, Key) + NewTypography
 ├── borders.go        Borders struct (Normal, Rounded, Double,
@@ -164,7 +165,7 @@ theme/
 ├── detect.go         UnicodeSupported, EmojiSupported,
 │                     DetectIconSource, DetectedIcons
 ├── nerdfont.go       NerdFontSupported (env + TERM detection)
-├── config.go         Config + ConfigPalette (11 colors + 3 style
+├── config.go         Config + ConfigPalette (15 colors + 3 style
 │                     overrides) + ConfigTypography + ConfigTextRole
 │                     YAML structs, LoadTheme, ParseTheme,
 │                     Config.Build, paletteColor, resolveDirectColor,
@@ -174,7 +175,7 @@ theme/
 │                     etc.), DefaultStore, package-level convs
 ├── theme_test.go     54 tests
 └── testdata/
-    ├── full.yaml         11 palette colors + 3 style overrides +
+    ├── full.yaml         15 palette colors + 3 style overrides +
     │                     nerdfont icons + typography
     ├── partial.yaml      2 palette fields, no icons
     ├── icons_only.yaml   Only icons: emoji
@@ -206,7 +207,7 @@ Run:
 go test ./internal/ui/theme/ -v -count=1
 ```
 
-Coverage areas: palette values (11 colors), style rendering (10 styles),
+Coverage areas: palette values (15 colors), style rendering (14 styles),
 custom palette construction, typography styles, border edge characters,
 border rendering, spacing defaults, border role defaults and Theme.BorderFor(),
 Unicode env detection (LC_ALL / LC_CTYPE / LANG), emoji env detection

@@ -62,6 +62,10 @@ Built from the palette in `NewTheme()`:
 | Header     | —           | Bold             | Section headers (inherits fg)        |
 | Background | White       | Foreground       | Content on Background surface        |
 | Surface    | Blue / Gray | Bg=Surface+Fg    | Cards, panels, elevated containers   |
+| PrimaryBg  | White/Blue  | Bg=Blue+Fg=Back  | Primary background (tags, badges)     |
+| SuccessBg  | White/Green | Bg=Green+Fg=Back | Success state background             |
+| ErrorBg    | White/Red   | Bg=Red+Fg=Back   | Error state background               |
+| WarningBg  | White/Orange| Bg=Orange+Fg=Back| Warning state background             |
 
 Dark and light themes differ only in palette values. The style logic is identical — `NewTheme()` is the single source of truth.
 

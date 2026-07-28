@@ -12,3 +12,7 @@ Shared Lip Gloss styles.
 - [x] Card
 - [x] Panel
 - [x] Modal
+- [x] PrimaryBg
+- [x] SuccessBg
+- [x] ErrorBg
+- [x] WarningBg

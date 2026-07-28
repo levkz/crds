@@ -37,7 +37,7 @@ ui.Theme.Success  // Instead of lipgloss.Color("#00ff00")
 
 # Current Status
 
-**All 12 style definitions are implemented** (60 tests):
+**All 16 style definitions are implemented** (60+ tests):
 
 | Style | Function | Source |
 |---|---|---|
@@ -53,6 +53,10 @@ ui.Theme.Success  // Instead of lipgloss.Color("#00ff00")
 | Card | `Card(width int)` | `card.go` |
 | Panel | `Panel(width int)` | `panel.go` |
 | Modal | `Modal(width, height int)` | `modal.go` |
+| PrimaryBg | `PrimaryBg()` | `primary_bg.go` |
+| SuccessBg | `SuccessBg()` | `success_bg.go` |
+| ErrorBg | `ErrorBg()` | `error_bg.go` |
+| WarningBg | `WarningBg()` | `warning_bg.go` |
 
 **Dependencies:**
 
@@ -151,17 +155,21 @@ styles/
 ├── card.go            Card(width int)
 ├── panel.go           Panel(width int)
 ├── modal.go           Modal(width, height int)
-└── styles_test.go     60 tests
+├── primary_bg.go      PrimaryBg()
+├── success_bg.go      SuccessBg()
+├── error_bg.go        ErrorBg()
+├── warning_bg.go      WarningBg()
+└── styles_test.go     60+ tests
 ```
 
 ---
 
 # Testing
 
-All tests are in-package (`package styles`). 60 tests total:
+All tests are in-package (`package styles`). 60+ tests total:
 
 - Each style has 3–5 sub-tests: render, parameter verification, color/border checks, chaining
-- `TestAllStylesRender` — smoke test that all 12 styles render without panic
+- `TestAllStylesRender` — smoke test that all 16 styles render without panic
 - `TestThemeSwitchUpdatesStyles` — verifies live theme switching propagates
 
 Run:
@@ -198,7 +206,7 @@ automatically update because they call `ui.Theme` on every render.
 Currently wired consumers:
 
 | Consumer | Style Used |
-|---|---|
+|---|---|---|
 | `components.Header()` | `styles.Header(60)` |
 | `components.Footer()` | `styles.Footer(60)` |
 | `components.RenderCard()` | `styles.Card(60)` |
@@ -207,6 +215,7 @@ Currently wired consumers:
 | `components.RenderModal()` | `styles.Modal(40, 10)` |
 | `components.RenderNotification()` | `styles.Hint()` |
 | `components.Text()` | `styles.MutedText()` |
+| `screens/typing_quiz.go` | `styles.PrimaryBg()` — tag pills |
 
 ---
 

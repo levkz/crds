@@ -1,7 +1,7 @@
 # Theme
 
-- [x] Color palette (`palette.go` — `Palette` struct with 11 named colors, `DefaultPalette`)
-- [x] Semantic styles (`theme.go` — `Theme` struct with Primary/Secondary/Accent/Success/Warning/Danger/Muted/Header/Background/Surface styles, `NewTheme(palette)` constructor)
+- [x] Color palette (`palette.go` — `Palette` struct with 15 named colors, `DefaultPalette`)
+- [x] Semantic styles (`theme.go` — `Theme` struct with Primary/Secondary/Accent/Success/Warning/Danger/Muted/Header/Background/Surface styles + PrimaryBg/SuccessBg/ErrorBg/WarningBg background variants, `NewTheme(palette)` constructor)
 - [x] Icons (`icons.go` — `Icons` struct with Check, Cross, Arrows, Bullet, Selected, Navigate, Highlight, Close; `Fallback()` for ASCII fallback; `NerdFontIcons`, `EmojiIcons`, `UnicodeIcons`, `FallbackIcons`; `IconsFromSource()`, `IconSource` enum)
 - [x] Default instance (`Default` theme exported from `ui.Theme` for backward compat)
 - [x] Typography (`typography.go` — Title, Subtitle, Body, Caption, Emphasis, Key text role styles)
@@ -15,6 +15,6 @@
 - [x] Spacing (`spacing.go` — `Spacing` struct with Xxs/Xs/Sm/Md/Lg/Xl/Xxl scale, `DefaultSpacing`)
 - [x] Border roles (`border_role.go` — `BorderRole` type with Container/Card/Modal/Emphasis/Section/None, `Theme.BorderFor()` method)
 - [x] Semantic icon fields (Selected, Navigate, Highlight, Close — all 4 icon sources)
-- [x] Surface palette color (11th palette slot for elevated container backgrounds)
+- [x] Surface palette color (15th palette slot for elevated container backgrounds)
 - [x] Style color overrides (ConfigPalette.Primary/Secondary/Accent — palette key or direct value)
 - [x] DESIGN.md (semantic color system, icon system, spacing scale, border roles, YAML config docs)

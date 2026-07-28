@@ -25,11 +25,24 @@ func entryToCardData(entry model.Entry) ui.CardData {
 		variants = back
 	}
 
+	tags := make([]string, len(entry.Tags))
+	copy(tags, entry.Tags)
+
+	examples := make([]ui.ExampleData, len(entry.Examples))
+	for i, ex := range entry.Examples {
+		examples[i] = ui.ExampleData{
+			Text:        ex.Text,
+			Translation: ex.Translation,
+		}
+	}
+
 	return ui.CardData{
 		ID:       entry.ID,
 		Front:    entry.Term,
 		Back:     back,
 		Variants: variants,
 		Notes:    entry.Notes,
+		Tags:     tags,
+		Examples: examples,
 	}
 }

@@ -157,7 +157,9 @@ PaletteScreen
   correct answer (records `Again`, grade 1). Tab toggles inverse mode —
   shows translations as the prompt and expects the term as the answer;
   term variants use the same `()`/`[]` expansion syntax as translations.
-- **Renders**: Header + term + text input + feedback line + progress bar + footer.
+- **Renders**: Header + term (centered, vertically padded) + centered input with cursor +
+  bottom section after reveal (notes, tags as PrimaryBg pills, paginated examples in single/two-column layout,
+  all sections with 8-char side padding) + progress "card N/M" in footer + footer shortcuts.
   Header shows "(inverse)" suffix in inverse mode.
 
 ### PaletteModel (`palette.go`)

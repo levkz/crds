@@ -15,6 +15,10 @@ type Theme struct {
 	Header    lipgloss.Style
 	Background lipgloss.Style
 	Surface   lipgloss.Style
+	PrimaryBg lipgloss.Style
+	SuccessBg lipgloss.Style
+	ErrorBg   lipgloss.Style
+	WarningBg lipgloss.Style
 
 	Typography Typography
 	Borders    Borders
@@ -35,6 +39,10 @@ func NewTheme(p Palette) Theme {
 		Header:    lipgloss.NewStyle().Bold(true).Background(p.Surface),
 		Background: lipgloss.NewStyle().Background(p.Background).Foreground(p.White),
 		Surface:   lipgloss.NewStyle().Background(p.Surface).Foreground(p.Blue),
+		PrimaryBg: lipgloss.NewStyle().Background(p.Blue).Foreground(p.Background),
+		SuccessBg: lipgloss.NewStyle().Background(p.Green).Foreground(p.Background),
+		ErrorBg:   lipgloss.NewStyle().Background(p.Red).Foreground(p.Background),
+		WarningBg: lipgloss.NewStyle().Background(p.Orange).Foreground(p.Background),
 
 		Typography: NewTypography(p),
 		Borders:    DefaultBorders,

@@ -3,21 +3,10 @@ package theme
 import "github.com/charmbracelet/lipgloss"
 
 type Palette struct {
-	Blue       lipgloss.Color
-	Green      lipgloss.Color
-	Orange     lipgloss.Color
-	Red        lipgloss.Color
-	Gray       lipgloss.Color
-	White      lipgloss.Color
-	Background lipgloss.Color
-	Selection  lipgloss.Color
-	Border     lipgloss.Color
-	Link       lipgloss.Color
-	Surface    lipgloss.Color
-	Magenta    lipgloss.Color
-	Purple     lipgloss.Color
-	Cyan       lipgloss.Color
-	Yellow     lipgloss.Color
+	Blue, Green, Orange, Red, Gray, White       lipgloss.Color
+	Background, Selection, Border, Link, Surface lipgloss.Color
+	Magenta, Purple, Cyan, Yellow               lipgloss.Color
+	Primary, Secondary, Accent                   lipgloss.Color
 }
 
 var DefaultPalette = Palette{

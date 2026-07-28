@@ -18,6 +18,7 @@ var DarkPalette = Palette{
 	Purple:     lipgloss.Color("140"),
 	Cyan:       lipgloss.Color("117"),
 	Yellow:     lipgloss.Color("220"),
+	Primary:    lipgloss.Color("75"),
 }
 
 var LightPalette = Palette{
@@ -36,6 +37,7 @@ var LightPalette = Palette{
 	Purple:     lipgloss.Color("98"),
 	Cyan:       lipgloss.Color("45"),
 	Yellow:     lipgloss.Color("208"),
+	Primary:    lipgloss.Color("27"),
 }
 
 func DarkTheme() Theme {
@@ -62,10 +64,11 @@ var TokyonightPalette = Palette{
 	Purple:     lipgloss.Color("#9d7cd8"),
 	Cyan:       lipgloss.Color("#7dcfff"),
 	Yellow:     lipgloss.Color("#e0af68"),
+	Primary:    lipgloss.Color("#7aa2f7"),
 }
 
 var MochaPalette = Palette{
-	Blue:       lipgloss.Color("#fab283"),
+	Blue:       lipgloss.Color("#89b4fa"),
 	Green:      lipgloss.Color("#7fd88f"),
 	Orange:     lipgloss.Color("#f5a742"),
 	Red:        lipgloss.Color("#e06c75"),
@@ -80,6 +83,7 @@ var MochaPalette = Palette{
 	Purple:     lipgloss.Color("#b48ead"),
 	Cyan:       lipgloss.Color("#56b6c2"),
 	Yellow:     lipgloss.Color("#e5c07b"),
+	Primary:    lipgloss.Color("#fab283"),
 }
 
 func MochaTheme() Theme {

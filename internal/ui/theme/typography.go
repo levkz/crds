@@ -12,8 +12,9 @@ type Typography struct {
 }
 
 func NewTypography(p Palette) Typography {
+	primary := primaryOf(p)
 	return Typography{
-		Title:    lipgloss.NewStyle().Bold(true).Foreground(p.Blue),
+		Title:    lipgloss.NewStyle().Bold(true).Foreground(primary),
 		Subtitle: lipgloss.NewStyle().Foreground(p.Gray),
 		Body:     lipgloss.NewStyle().Foreground(p.White),
 		Caption:  lipgloss.NewStyle().Italic(true).Foreground(p.Gray),

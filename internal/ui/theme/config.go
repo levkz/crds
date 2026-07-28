@@ -226,6 +226,12 @@ func paletteColor(p Palette, name string) (lipgloss.Color, error) {
 		return p.Cyan, nil
 	case "yellow":
 		return p.Yellow, nil
+	case "primary":
+		return primaryOf(p), nil
+	case "secondary":
+		return secondaryOf(p), nil
+	case "accent":
+		return accentOf(p), nil
 	default:
 		return resolveDirectColor(name)
 	}

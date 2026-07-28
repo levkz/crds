@@ -26,23 +26,52 @@ type Theme struct {
 	Spacing    Spacing
 }
 
+func primaryOf(p Palette) lipgloss.Color {
+	if p.Primary != "" {
+		return p.Primary
+	}
+	return p.Blue
+}
+
+func secondaryOf(p Palette) lipgloss.Color {
+	if p.Secondary != "" {
+		return p.Secondary
+	}
+	return p.Cyan
+}
+
+func accentOf(p Palette) lipgloss.Color {
+	if p.Accent != "" {
+		return p.Accent
+	}
+	return p.Orange
+}
+
+func (p Palette) bgStyle(fg, bg lipgloss.Color) lipgloss.Style {
+	return lipgloss.NewStyle().Background(bg).Foreground(fg)
+}
+
 func NewTheme(p Palette) Theme {
+	primary := primaryOf(p)
+	secondary := secondaryOf(p)
+	accent := accentOf(p)
+
 	return Theme{
-		Palette: p,
-		Primary:   lipgloss.NewStyle().Foreground(p.Blue),
-		Secondary: lipgloss.NewStyle().Foreground(p.Cyan),
-		Accent:    lipgloss.NewStyle().Foreground(p.Orange),
+		Palette:   p,
+		Primary:   lipgloss.NewStyle().Foreground(primary),
+		Secondary: lipgloss.NewStyle().Foreground(secondary),
+		Accent:    lipgloss.NewStyle().Foreground(accent),
 		Success:   lipgloss.NewStyle().Foreground(p.Green),
 		Warning:   lipgloss.NewStyle().Foreground(p.Orange),
 		Danger:    lipgloss.NewStyle().Foreground(p.Red),
 		Muted:     lipgloss.NewStyle().Foreground(p.Gray),
 		Header:    lipgloss.NewStyle().Bold(true).Background(p.Surface).Foreground(p.White),
 		Background: lipgloss.NewStyle().Background(p.Background).Foreground(p.White),
-		Surface:   lipgloss.NewStyle().Background(p.Surface).Foreground(p.Blue),
-		PrimaryBg: lipgloss.NewStyle().Background(p.Blue).Foreground(p.Background),
-		SuccessBg: lipgloss.NewStyle().Background(p.Green).Foreground(p.Background),
-		ErrorBg:   lipgloss.NewStyle().Background(p.Red).Foreground(p.Background),
-		WarningBg: lipgloss.NewStyle().Background(p.Orange).Foreground(p.Background),
+		Surface:   lipgloss.NewStyle().Background(p.Surface).Foreground(primary),
+		PrimaryBg: p.bgStyle(p.Background, primary),
+		SuccessBg: p.bgStyle(p.Background, p.Green),
+		ErrorBg:   p.bgStyle(p.Background, p.Red),
+		WarningBg: p.bgStyle(p.Background, p.Orange),
 
 		Typography: NewTypography(p),
 		Borders:    DefaultBorders,

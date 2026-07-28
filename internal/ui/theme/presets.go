@@ -26,7 +26,7 @@ var LightPalette = Palette{
 	Orange:     lipgloss.Color("208"),
 	Red:        lipgloss.Color("160"),
 	Gray:       lipgloss.Color("238"),
-	White:      lipgloss.Color("231"),
+	White:      lipgloss.Color("235"),
 	Background: lipgloss.Color("255"),
 	Selection:  lipgloss.Color("39"),
 	Border:     lipgloss.Color("245"),

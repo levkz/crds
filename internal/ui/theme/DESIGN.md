@@ -24,7 +24,7 @@ All four icon sources (NerdFont, Emoji, Unicode, Fallback) cover the same semant
 
 - Color should reinforce meaning, never replace it. A `Danger` style is distinct from `Success` by more than just hue.
 - Foreground/background contrast for `Surface`, `Background`, and `Primary` must remain readable in both dark and light palettes.
-- The `Faint(true)` on `Secondary` is used for supplementary information (metadata, timestamps), never for primary actions.
+- Semantic style colours follow a triadic scheme (e.g. blue Primary, cyan Secondary, orange Accent). Colours should reinforce meaning, never replace it.
 
 ---
 
@@ -39,7 +39,7 @@ All four icon sources (NerdFont, Emoji, Unicode, Fallback) cover the same semant
 | Orange        | 215     | 208     | Warning states                     |
 | Red           | 203     | 160     | Danger / destructive               |
 | Gray          | 242     | 238     | Secondary / muted text             |
-| White         | 255     | 231     | Primary foreground                 |
+| White         | 255     | 235     | Primary foreground                 |
 | Background    | 233     | 255     | Canvas / page background           |
 | Selection     | 27      | 39      | Selected / focused items           |
 | Border        | 236     | 245     | Structural dividers                |
@@ -53,13 +53,13 @@ Built from the palette in `NewTheme()`:
 | Style      | Color       | Attributes       | Use                                  |
 |------------|-------------|------------------|--------------------------------------|
 | Primary    | Blue        | Foreground       | Links, active nav items              |
-| Secondary  | Gray+Faint  | Foreground+Faint | Metadata, timestamps, help text      |
-| Accent     | Link        | Foreground       | Emphasis, highlighted terms          |
+| Secondary  | Cyan        | Foreground       | Metadata, timestamps, help text      |
+| Accent     | Orange      | Foreground       | Emphasis, highlighted terms          |
 | Success    | Green       | Foreground       | Correct answers, confirmations       |
 | Warning    | Orange      | Foreground       | Near-limit states, soft errors       |
 | Danger     | Red         | Foreground       | Errors, destructive actions          |
 | Muted      | Gray        | Foreground       | Disabled items, secondary info       |
-| Header     | —           | Bold             | Section headers (inherits fg)        |
+| Header     | White       | Bold+Bg=Surface  | Section headers                      |
 | Background | White       | Foreground       | Content on Background surface        |
 | Surface    | Blue / Gray | Bg=Surface+Fg    | Cards, panels, elevated containers   |
 | PrimaryBg  | White/Blue  | Bg=Blue+Fg=Back  | Primary background (tags, badges)     |
@@ -238,8 +238,8 @@ theme:
 theme:
   palette:
     primary: "green"      # Primary uses palette green instead of blue
-    secondary: "gray"     # Secondary uses palette gray (default)
-    accent: "link"        # Accent uses palette link (default)
+    secondary: "gray"     # Secondary uses palette gray instead of cyan
+    accent: "link"        # Accent uses palette link instead of orange
 ```
 
 This lets you remap styles without changing the underlying palette:

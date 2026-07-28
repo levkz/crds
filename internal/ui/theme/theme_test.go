@@ -825,6 +825,9 @@ func TestLightTheme(t *testing.T) {
 	if string(th.Palette.Blue) != "27" {
 		t.Errorf("Light Blue = %q, want 27", th.Palette.Blue)
 	}
+	if string(th.Palette.White) != "235" {
+		t.Errorf("Light White = %q, want 235", th.Palette.White)
+	}
 	if string(th.Palette.Background) != "255" {
 		t.Errorf("Light Background = %q, want 255", th.Palette.Background)
 	}

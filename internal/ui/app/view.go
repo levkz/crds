@@ -52,7 +52,7 @@ func fillBackground(s string, width int) string {
 		return s
 	}
 	lines := strings.Split(s, "\n")
-	bgStyle := lipgloss.NewStyle().Background(ui.Theme.Palette.Background)
+	bgStyle := lipgloss.NewStyle().Background(ui.Theme.Palette.Background).Foreground(ui.Theme.Palette.White)
 	for i, line := range lines {
 		// Each inner styled segment ends with \033[0m (full ANSI reset),
 		// which clears the background that bgStyle sets. Split at each

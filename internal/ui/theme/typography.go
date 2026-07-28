@@ -15,9 +15,9 @@ func NewTypography(p Palette) Typography {
 	return Typography{
 		Title:    lipgloss.NewStyle().Bold(true).Foreground(p.Blue),
 		Subtitle: lipgloss.NewStyle().Foreground(p.Gray),
-		Body:     lipgloss.NewStyle(),
+		Body:     lipgloss.NewStyle().Foreground(p.White),
 		Caption:  lipgloss.NewStyle().Italic(true).Foreground(p.Gray),
-		Emphasis: lipgloss.NewStyle().Bold(true).Italic(true),
+		Emphasis: lipgloss.NewStyle().Bold(true).Italic(true).Foreground(p.White),
 		Key:      lipgloss.NewStyle().Foreground(p.Gray),
 	}
 }

@@ -92,3 +92,15 @@ CREATE TABLE sync_state (
 CREATE INDEX idx_entries_deck ON entries(deck_id);
 CREATE INDEX idx_translations_entry ON translations(entry_id);
 CREATE INDEX idx_examples_entry ON examples(entry_id);
+
+CREATE TABLE tags (
+    tag TEXT PRIMARY KEY
+);
+
+CREATE TABLE deck_tags (
+    deck_id TEXT NOT NULL REFERENCES decks(id) ON DELETE CASCADE,
+    tag TEXT NOT NULL REFERENCES tags(tag) ON DELETE CASCADE,
+    PRIMARY KEY (deck_id, tag)
+);
+
+CREATE INDEX idx_deck_tags_tag ON deck_tags(tag);

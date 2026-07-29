@@ -17,6 +17,11 @@ type Deck struct {
 	UpdatedAt           time.Time `db:"updated_at"`
 }
 
+type DeckTag struct {
+	DeckID string `db:"deck_id"`
+	Tag    string `db:"tag"`
+}
+
 type Entry struct {
 	ID        string    `db:"id"`
 	DeckID    string    `db:"deck_id"`
@@ -75,6 +80,10 @@ type SyncState struct {
 	Path         string    `db:"path"`
 	LastModified time.Time `db:"last_modified"`
 	SyncedAt     time.Time `db:"synced_at"`
+}
+
+type Tag struct {
+	Tag string `db:"tag"`
 }
 
 type Translation struct {

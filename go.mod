@@ -7,6 +7,7 @@ require (
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/jotaen/kong-completion v0.0.14
+	github.com/mattn/go-isatty v0.0.21
 	github.com/mattn/go-runewidth v0.0.16
 	github.com/posener/complete v1.2.3
 	github.com/pressly/goose/v3 v3.27.2
@@ -26,7 +27,6 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
-	github.com/mattn/go-isatty v0.0.21 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mfridman/interpolate v0.0.2 // indirect
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect

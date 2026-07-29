@@ -141,6 +141,34 @@ func (s *Store) syncDeck(path string) error {
 		}
 	}
 
+	// Collect all unique tags for this deck
+	tagSet := make(map[string]bool)
+	for _, entry := range deck.Entries {
+		for _, tag := range entry.Tags {
+			tagSet[tag] = true
+		}
+	}
+
+	// 1. Ensure every tag exists in the tags dictionary
+	for tag := range tagSet {
+		if err := s.queries.InsertTag(ctx, tag); err != nil {
+			return fmt.Errorf("insert tag %q: %w", tag, err)
+		}
+	}
+
+	// 2. Bulk-replace deck_tags for this deck
+	if err := s.queries.DeleteDeckTags(ctx, deck.ID); err != nil {
+		return fmt.Errorf("delete deck tags: %w", err)
+	}
+	for tag := range tagSet {
+		if err := s.queries.InsertDeckTag(ctx, db.InsertDeckTagParams{
+			DeckID: deck.ID,
+			Tag:    tag,
+		}); err != nil {
+			return fmt.Errorf("insert deck tag: %w", err)
+		}
+	}
+
 	if err := s.queries.UpsertSyncState(ctx, db.UpsertSyncStateParams{
 		Path:         path,
 		LastModified: info.ModTime(),

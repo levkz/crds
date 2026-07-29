@@ -259,6 +259,278 @@ func TestStoreGetReviewsByEntry(t *testing.T) {
 	}
 }
 
+func TestStoreListAllTags(t *testing.T) {
+	store := newTestStore(t)
+	defer store.Close()
+
+	ctx := context.Background()
+
+	// Insert tags directly
+	for _, tag := range []string{"greeting", "verb", "noun", "A1"} {
+		if err := store.queries.InsertTag(ctx, tag); err != nil {
+			t.Fatalf("InsertTag: %v", err)
+		}
+	}
+
+	tags, err := store.ListAllTags()
+	if err != nil {
+		t.Fatalf("ListAllTags: %v", err)
+	}
+
+	expected := []string{"A1", "greeting", "noun", "verb"}
+	if len(tags) != len(expected) {
+		t.Fatalf("expected %d tags, got %d: %v", len(expected), len(tags), tags)
+	}
+	for i, tag := range tags {
+		if tag != expected[i] {
+			t.Errorf("tags[%d] = %q, want %q", i, tag, expected[i])
+		}
+	}
+}
+
+func TestStoreListDeckTags(t *testing.T) {
+	store := newTestStore(t)
+	defer store.Close()
+
+	ctx := context.Background()
+
+	// Insert decks
+	for _, id := range []string{"french_a1", "spanish_b1"} {
+		if err := store.queries.UpsertDeck(ctx, db.UpsertDeckParams{
+			ID:                  id,
+			Name:                id,
+			Language:            "fr",
+			TranslationLanguage: "en",
+		}); err != nil {
+			t.Fatalf("UpsertDeck: %v", err)
+		}
+	}
+
+	// Insert tags
+	for _, tag := range []string{"greeting", "verb", "noun", "A1", "B1"} {
+		if err := store.queries.InsertTag(ctx, tag); err != nil {
+			t.Fatalf("InsertTag: %v", err)
+		}
+	}
+
+	// Insert deck_tags
+	for _, dt := range []struct{ deck, tag string }{
+		{"french_a1", "greeting"},
+		{"french_a1", "noun"},
+		{"french_a1", "A1"},
+		{"spanish_b1", "greeting"},
+		{"spanish_b1", "verb"},
+		{"spanish_b1", "B1"},
+	} {
+		if err := store.queries.InsertDeckTag(ctx, db.InsertDeckTagParams{
+			DeckID: dt.deck,
+			Tag:    dt.tag,
+		}); err != nil {
+			t.Fatalf("InsertDeckTag: %v", err)
+		}
+	}
+
+	// Test french_a1 tags
+	tags, err := store.ListDeckTags("french_a1")
+	if err != nil {
+		t.Fatalf("ListDeckTags: %v", err)
+	}
+	expected := []string{"A1", "greeting", "noun"}
+	if len(tags) != len(expected) {
+		t.Fatalf("expected %d tags for french_a1, got %d: %v", len(expected), len(tags), tags)
+	}
+	for i, tag := range tags {
+		if tag != expected[i] {
+			t.Errorf("tags[%d] = %q, want %q", i, tag, expected[i])
+		}
+	}
+
+	// Test spanish_b1 tags
+	tags, err = store.ListDeckTags("spanish_b1")
+	if err != nil {
+		t.Fatalf("ListDeckTags: %v", err)
+	}
+	expected = []string{"B1", "greeting", "verb"}
+	if len(tags) != len(expected) {
+		t.Fatalf("expected %d tags for spanish_b1, got %d: %v", len(expected), len(tags), tags)
+	}
+}
+
+func TestStoreListDecksByTag(t *testing.T) {
+	store := newTestStore(t)
+	defer store.Close()
+
+	ctx := context.Background()
+
+	for _, id := range []string{"french_a1", "spanish_b1", "japanese_n5"} {
+		if err := store.queries.UpsertDeck(ctx, db.UpsertDeckParams{
+			ID:                  id,
+			Name:                id,
+			Language:            "xx",
+			TranslationLanguage: "en",
+		}); err != nil {
+			t.Fatalf("UpsertDeck: %v", err)
+		}
+	}
+
+	for _, tag := range []string{"greeting", "verb"} {
+		if err := store.queries.InsertTag(ctx, tag); err != nil {
+			t.Fatalf("InsertTag: %v", err)
+		}
+	}
+
+	for _, dt := range []struct{ deck, tag string }{
+		{"french_a1", "greeting"},
+		{"spanish_b1", "greeting"},
+		{"spanish_b1", "verb"},
+		{"japanese_n5", "verb"},
+	} {
+		if err := store.queries.InsertDeckTag(ctx, db.InsertDeckTagParams{
+			DeckID: dt.deck,
+			Tag:    dt.tag,
+		}); err != nil {
+			t.Fatalf("InsertDeckTag: %v", err)
+		}
+	}
+
+	// Decks with "greeting"
+	decks, err := store.ListDecksByTag("greeting")
+	if err != nil {
+		t.Fatalf("ListDecksByTag: %v", err)
+	}
+	if len(decks) != 2 {
+		t.Fatalf("expected 2 decks with 'greeting', got %d: %v", len(decks), decks)
+	}
+	if decks[0] != "french_a1" || decks[1] != "spanish_b1" {
+		t.Errorf("expected [french_a1, spanish_b1], got %v", decks)
+	}
+}
+
+func TestStoreFilterDecksByTags(t *testing.T) {
+	store := newTestStore(t)
+	defer store.Close()
+
+	ctx := context.Background()
+
+	for _, id := range []string{"french_a1", "spanish_b1", "japanese_n5"} {
+		if err := store.queries.UpsertDeck(ctx, db.UpsertDeckParams{
+			ID:                  id,
+			Name:                id,
+			Language:            "xx",
+			TranslationLanguage: "en",
+		}); err != nil {
+			t.Fatalf("UpsertDeck: %v", err)
+		}
+	}
+
+	for _, tag := range []string{"greeting", "verb", "noun"} {
+		if err := store.queries.InsertTag(ctx, tag); err != nil {
+			t.Fatalf("InsertTag: %v", err)
+		}
+	}
+
+	for _, dt := range []struct{ deck, tag string }{
+		{"french_a1", "greeting"},
+		{"french_a1", "verb"},
+		{"spanish_b1", "greeting"},
+		{"japanese_n5", "verb"},
+		{"japanese_n5", "noun"},
+	} {
+		if err := store.queries.InsertDeckTag(ctx, db.InsertDeckTagParams{
+			DeckID: dt.deck,
+			Tag:    dt.tag,
+		}); err != nil {
+			t.Fatalf("InsertDeckTag: %v", err)
+		}
+	}
+
+	// AND: decks that have BOTH "greeting" AND "verb"
+	decks, err := store.FilterDecksByTags([]string{"greeting", "verb"})
+	if err != nil {
+		t.Fatalf("FilterDecksByTags: %v", err)
+	}
+	if len(decks) != 1 {
+		t.Fatalf("expected 1 deck with greeting+verb, got %d: %v", len(decks), decks)
+	}
+	if decks[0] != "french_a1" {
+		t.Errorf("expected french_a1, got %q", decks[0])
+	}
+
+	// Empty filter returns all decks
+	decks, err = store.FilterDecksByTags([]string{})
+	if err != nil {
+		t.Fatalf("FilterDecksByTags empty: %v", err)
+	}
+	if len(decks) != 3 {
+		t.Errorf("expected 3 decks with empty filter, got %d", len(decks))
+	}
+}
+
+func TestStoreFilterTagsByDecks(t *testing.T) {
+	store := newTestStore(t)
+	defer store.Close()
+
+	ctx := context.Background()
+
+	for _, id := range []string{"french_a1", "spanish_b1", "japanese_n5"} {
+		if err := store.queries.UpsertDeck(ctx, db.UpsertDeckParams{
+			ID:                  id,
+			Name:                id,
+			Language:            "xx",
+			TranslationLanguage: "en",
+		}); err != nil {
+			t.Fatalf("UpsertDeck: %v", err)
+		}
+	}
+
+	for _, tag := range []string{"greeting", "verb", "noun", "A1"} {
+		if err := store.queries.InsertTag(ctx, tag); err != nil {
+			t.Fatalf("InsertTag: %v", err)
+		}
+	}
+
+	for _, dt := range []struct{ deck, tag string }{
+		{"french_a1", "greeting"},
+		{"french_a1", "verb"},
+		{"french_a1", "A1"},
+		{"spanish_b1", "greeting"},
+		{"spanish_b1", "verb"},
+		{"japanese_n5", "verb"},
+		{"japanese_n5", "noun"},
+	} {
+		if err := store.queries.InsertDeckTag(ctx, db.InsertDeckTagParams{
+			DeckID: dt.deck,
+			Tag:    dt.tag,
+		}); err != nil {
+			t.Fatalf("InsertDeckTag: %v", err)
+		}
+	}
+
+	// Intersection: tags common to french_a1 AND spanish_b1
+	tags, err := store.FilterTagsByDecks([]string{"french_a1", "spanish_b1"})
+	if err != nil {
+		t.Fatalf("FilterTagsByDecks: %v", err)
+	}
+	expected := []string{"greeting", "verb"}
+	if len(tags) != len(expected) {
+		t.Fatalf("expected %d tags, got %d: %v", len(expected), len(tags), tags)
+	}
+	for i, tag := range tags {
+		if tag != expected[i] {
+			t.Errorf("tags[%d] = %q, want %q", i, tag, expected[i])
+		}
+	}
+
+	// Empty filter returns all tags
+	tags, err = store.FilterTagsByDecks([]string{})
+	if err != nil {
+		t.Fatalf("FilterTagsByDecks empty: %v", err)
+	}
+	if len(tags) != 4 {
+		t.Errorf("expected 4 tags with empty filter, got %d", len(tags))
+	}
+}
+
 // timeOnly is a helper that parses "2006-01-02 15:04:05" format.
 func timeOnly(s string) time.Time {
 	t, _ := time.Parse("2006-01-02 15:04:05", s)

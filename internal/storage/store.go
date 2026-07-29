@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -818,6 +819,104 @@ func (s *Store) RemoveTagsFromEntry(deckID, entryID string, tags []string, deckD
 // GetTagsByEntry returns the tags for a given entry, read from the SQLite cache.
 func (s *Store) GetTagsByEntry(entryID string) ([]string, error) {
 	return s.queries.GetTagsByEntry(context.Background(), entryID)
+}
+
+// ListAllTags returns every unique tag across all decks.
+func (s *Store) ListAllTags() ([]string, error) {
+	return s.queries.ListAllTags(context.Background())
+}
+
+// ListDeckTags returns all tags belonging to a single deck.
+func (s *Store) ListDeckTags(deckID string) ([]string, error) {
+	return s.queries.ListDeckTags(context.Background(), deckID)
+}
+
+// ListDecksByTag returns deck IDs that have the given tag.
+func (s *Store) ListDecksByTag(tag string) ([]string, error) {
+	return s.queries.ListDecksByTag(context.Background(), tag)
+}
+
+// FilterDecksByTags returns deck IDs that have ALL of the given tags (AND logic).
+func (s *Store) FilterDecksByTags(tags []string) ([]string, error) {
+	if len(tags) == 0 {
+		return s.ListDecks()
+	}
+
+	ctx := context.Background()
+
+	// Build placeholders for IN clause
+	placeholders := make([]string, len(tags))
+	args := make([]any, len(tags)+1)
+	for i, tag := range tags {
+		placeholders[i] = "?"
+		args[i] = tag
+	}
+	args[len(tags)] = len(tags)
+
+	query := fmt.Sprintf(
+		`SELECT deck_id FROM deck_tags WHERE tag IN (%s) GROUP BY deck_id HAVING COUNT(DISTINCT tag) = ?`,
+		strings.Join(placeholders, ","),
+	)
+
+	rows, err := s.conn.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("filter decks by tags: %w", err)
+	}
+	defer rows.Close()
+
+	var deckIDs []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		deckIDs = append(deckIDs, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return deckIDs, nil
+}
+
+// FilterTagsByDecks returns tags that belong to ALL of the given decks (intersection).
+func (s *Store) FilterTagsByDecks(deckIDs []string) ([]string, error) {
+	if len(deckIDs) == 0 {
+		return s.ListAllTags()
+	}
+
+	ctx := context.Background()
+
+	placeholders := make([]string, len(deckIDs))
+	args := make([]any, len(deckIDs)+1)
+	for i, id := range deckIDs {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+	args[len(deckIDs)] = len(deckIDs)
+
+	query := fmt.Sprintf(
+		`SELECT tag FROM deck_tags WHERE deck_id IN (%s) GROUP BY tag HAVING COUNT(DISTINCT deck_id) = ?`,
+		strings.Join(placeholders, ","),
+	)
+
+	rows, err := s.conn.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("filter tags by decks: %w", err)
+	}
+	defer rows.Close()
+
+	var tags []string
+	for rows.Next() {
+		var tag string
+		if err := rows.Scan(&tag); err != nil {
+			return nil, err
+		}
+		tags = append(tags, tag)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return tags, nil
 }
 
 // DB returns the underlying *sql.DB for advanced use (e.g. goose migrations outside of NewStore).

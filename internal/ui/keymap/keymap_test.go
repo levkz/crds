@@ -232,9 +232,10 @@ func TestApplyDefaultOverrides(t *testing.T) {
 	helpStr := "? help"
 	cfg := KeymapConfig{
 		Global: &struct {
-			Quit *BindingOverride `yaml:"quit,omitempty"`
-			Help *BindingOverride `yaml:"help,omitempty"`
-			Back *BindingOverride `yaml:"back,omitempty"`
+			Quit       *BindingOverride `yaml:"quit,omitempty"`
+			Help       *BindingOverride `yaml:"help,omitempty"`
+			Back       *BindingOverride `yaml:"back,omitempty"`
+			DeckSelect *BindingOverride `yaml:"deck_select,omitempty"`
 		}{
 			Quit: &BindingOverride{Keys: []string{"ctrl+q"}},
 			Help: &BindingOverride{Help: &helpStr},

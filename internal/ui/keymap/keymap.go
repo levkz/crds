@@ -35,9 +35,10 @@ func (bl BindingList) Help() string {
 }
 
 type Global struct {
-	Quit Binding
-	Help Binding
-	Back Binding
+	Quit       Binding
+	Help       Binding
+	Back       Binding
+	DeckSelect Binding
 }
 
 func (km Global) Footer() string {
@@ -99,6 +100,19 @@ func (km Decks) Footer() string {
 	return BindingList{km.Up, km.Down, km.Toggle, km.ToggleAll, km.Select}.Help()
 }
 
+type DeckSelect struct {
+	List
+	Toggle       Binding
+	ToggleAll    Binding
+	SearchToggle Binding
+	NextColumn   Binding
+	PrevColumn   Binding
+}
+
+func (km DeckSelect) Footer() string {
+	return BindingList{km.Up, km.Down, km.Toggle, km.ToggleAll, km.SearchToggle, km.NextColumn, km.Select}.Help()
+}
+
 type Search struct {
 	Open       Binding
 	DeleteChar Binding
@@ -137,6 +151,7 @@ type Registry struct {
 	Quiz       Quiz
 	TypingQuiz TypingQuiz
 	Decks      Decks
+	DeckSelect DeckSelect
 	Search     Search
 }
 
@@ -146,6 +161,7 @@ func (r Registry) Bindings() []NamedBinding {
 		{"Global", "Quit", r.Global.Quit},
 		{"Global", "Help", r.Global.Help},
 		{"Global", "Back", r.Global.Back},
+		{"Global", "DeckSelect", r.Global.DeckSelect},
 		{"List", "Up", r.List.Up},
 		{"List", "Down", r.List.Down},
 		{"List", "Select", r.List.Select},
@@ -173,6 +189,11 @@ func (r Registry) Bindings() []NamedBinding {
 		{"TypingQuiz", "NextExample", r.TypingQuiz.NextExample},
 		{"Decks", "Toggle", r.Decks.Toggle},
 		{"Decks", "ToggleAll", r.Decks.ToggleAll},
+		{"DeckSelect", "Toggle", r.DeckSelect.Toggle},
+		{"DeckSelect", "ToggleAll", r.DeckSelect.ToggleAll},
+		{"DeckSelect", "SearchToggle", r.DeckSelect.SearchToggle},
+		{"DeckSelect", "NextColumn", r.DeckSelect.NextColumn},
+		{"DeckSelect", "PrevColumn", r.DeckSelect.PrevColumn},
 		{"Search", "Open", r.Search.Open},
 		{"Search", "DeleteChar", r.Search.DeleteChar},
 	}
@@ -191,9 +212,10 @@ func (r Registry) FindBinding(key string) *NamedBinding {
 }
 
 var DefaultGlobal = Global{
-	Quit: Binding{Keys: []string{"ctrl+c"}, Help: "ctrl+c quit"},
-	Help: Binding{Keys: []string{"?"}, Help: "? help"},
-	Back: Binding{Keys: []string{"esc"}, Help: "esc back"},
+	Quit:       Binding{Keys: []string{"ctrl+c"}, Help: "ctrl+c quit"},
+	Help:       Binding{Keys: []string{"?"}, Help: "? help"},
+	Back:       Binding{Keys: []string{"esc"}, Help: "esc back"},
+	DeckSelect: Binding{Keys: []string{"ctrl+f"}, Help: "ctrl+f decks"},
 }
 
 var DefaultList = List{
@@ -227,6 +249,15 @@ var DefaultDecks = Decks{
 	ToggleAll: Binding{Keys: []string{"a"}, Help: "a toggle all"},
 }
 
+var DefaultDeckSelect = DeckSelect{
+	List:         DefaultList,
+	Toggle:       Binding{Keys: []string{" "}, Help: "space toggle"},
+	ToggleAll:    Binding{Keys: []string{"a"}, Help: "a toggle all"},
+	SearchToggle: Binding{Keys: []string{"s"}, Help: "s search"},
+	NextColumn:   Binding{Keys: []string{"tab"}, Help: "tab next"},
+	PrevColumn:   Binding{Keys: []string{"shift+tab"}, Help: "shift+tab prev"},
+}
+
 var DefaultSearch = Search{
 	Open:       Binding{Keys: []string{"enter"}, Help: "enter open"},
 	DeleteChar: Binding{Keys: []string{"backspace"}, Help: ""},
@@ -254,6 +285,7 @@ var DefaultRegistry = Registry{
 	Quiz:       DefaultQuiz,
 	TypingQuiz: DefaultTypingQuiz,
 	Decks:      DefaultDecks,
+	DeckSelect: DefaultDeckSelect,
 	Search:     DefaultSearch,
 }
 
@@ -268,9 +300,10 @@ type BindingOverride struct {
 // Each field is a pointer — nil means "keep defaults for this group".
 type KeymapConfig struct {
 	Global *struct {
-		Quit *BindingOverride `yaml:"quit,omitempty"`
-		Help *BindingOverride `yaml:"help,omitempty"`
-		Back *BindingOverride `yaml:"back,omitempty"`
+		Quit       *BindingOverride `yaml:"quit,omitempty"`
+		Help       *BindingOverride `yaml:"help,omitempty"`
+		Back       *BindingOverride `yaml:"back,omitempty"`
+		DeckSelect *BindingOverride `yaml:"deck_select,omitempty"`
 	} `yaml:"global,omitempty"`
 	List *struct {
 		Up     *BindingOverride `yaml:"up,omitempty"`
@@ -310,6 +343,13 @@ type KeymapConfig struct {
 		Toggle    *BindingOverride `yaml:"toggle,omitempty"`
 		ToggleAll *BindingOverride `yaml:"toggle_all,omitempty"`
 	} `yaml:"decks,omitempty"`
+	DeckSelect *struct {
+		Toggle       *BindingOverride `yaml:"toggle,omitempty"`
+		ToggleAll    *BindingOverride `yaml:"toggle_all,omitempty"`
+		SearchToggle *BindingOverride `yaml:"search_toggle,omitempty"`
+		NextColumn   *BindingOverride `yaml:"next_column,omitempty"`
+		PrevColumn   *BindingOverride `yaml:"prev_column,omitempty"`
+	} `yaml:"deck_select,omitempty"`
 	Search *struct {
 		Open       *BindingOverride `yaml:"open,omitempty"`
 		DeleteChar *BindingOverride `yaml:"delete_char,omitempty"`
@@ -339,6 +379,9 @@ func ApplyDefaultOverrides(cfg KeymapConfig) {
 		}
 		if cfg.Global.Back != nil {
 			DefaultGlobal.Back = applyOverride(DefaultGlobal.Back, *cfg.Global.Back)
+		}
+		if cfg.Global.DeckSelect != nil {
+			DefaultGlobal.DeckSelect = applyOverride(DefaultGlobal.DeckSelect, *cfg.Global.DeckSelect)
 		}
 	}
 	if cfg.List != nil {
@@ -432,6 +475,23 @@ func ApplyDefaultOverrides(cfg KeymapConfig) {
 			DefaultDecks.ToggleAll = applyOverride(DefaultDecks.ToggleAll, *cfg.Decks.ToggleAll)
 		}
 	}
+	if cfg.DeckSelect != nil {
+		if cfg.DeckSelect.Toggle != nil {
+			DefaultDeckSelect.Toggle = applyOverride(DefaultDeckSelect.Toggle, *cfg.DeckSelect.Toggle)
+		}
+		if cfg.DeckSelect.ToggleAll != nil {
+			DefaultDeckSelect.ToggleAll = applyOverride(DefaultDeckSelect.ToggleAll, *cfg.DeckSelect.ToggleAll)
+		}
+		if cfg.DeckSelect.SearchToggle != nil {
+			DefaultDeckSelect.SearchToggle = applyOverride(DefaultDeckSelect.SearchToggle, *cfg.DeckSelect.SearchToggle)
+		}
+		if cfg.DeckSelect.NextColumn != nil {
+			DefaultDeckSelect.NextColumn = applyOverride(DefaultDeckSelect.NextColumn, *cfg.DeckSelect.NextColumn)
+		}
+		if cfg.DeckSelect.PrevColumn != nil {
+			DefaultDeckSelect.PrevColumn = applyOverride(DefaultDeckSelect.PrevColumn, *cfg.DeckSelect.PrevColumn)
+		}
+	}
 	if cfg.Search != nil {
 		if cfg.Search.Open != nil {
 			DefaultSearch.Open = applyOverride(DefaultSearch.Open, *cfg.Search.Open)
@@ -448,6 +508,7 @@ func ApplyDefaultOverrides(cfg KeymapConfig) {
 		Quiz:       DefaultQuiz,
 		TypingQuiz: DefaultTypingQuiz,
 		Decks:      DefaultDecks,
+		DeckSelect: DefaultDeckSelect,
 		Search:     DefaultSearch,
 	}
 }

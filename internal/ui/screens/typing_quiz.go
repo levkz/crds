@@ -56,6 +56,10 @@ func (m *TypingQuizModel) SetDeck(deck ui.DeckData) {
 
 func (m *TypingQuizModel) Init() tea.Cmd { return nil }
 
+func (m *TypingQuizModel) IsInProgress() bool {
+	return m.cardIndex > 0 && m.cardIndex < len(m.cards)
+}
+
 func (m *TypingQuizModel) currentVariants() []string {
 	if m.inverse {
 		return model.ExpandText(m.cards[m.cardIndex].Front)
@@ -94,6 +98,19 @@ func (m *TypingQuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 			return m, func() tea.Msg {
 				return ui.NavigateToMsg{Screen: ui.HomeScreen}
 			}
+
+		case len(m.cards) > 0 && m.cardIndex >= len(m.cards):
+			if keymap.DefaultTypingQuiz.Submit.Match(msg) {
+				m.cardIndex = 0
+				m.revealed = false
+				m.grade = 0
+				m.score = 0
+				m.input = ""
+				m.cursor = 0
+				m.examplesPage = 0
+				return m, nil
+			}
+			return m, nil
 
 		case !m.revealed:
 			switch {
@@ -148,11 +165,6 @@ func (m *TypingQuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 			case keymap.DefaultTypingQuiz.Submit.Match(msg),
 				keymap.DefaultList.Down.Match(msg):
 				m.cardIndex++
-				if m.cardIndex >= len(m.cards) {
-					return m, func() tea.Msg {
-						return ui.NavigateToMsg{Screen: ui.StatisticsScreen}
-					}
-				}
 				m.revealed = false
 				m.grade = 0
 				m.score = 0
@@ -246,7 +258,7 @@ func (m *TypingQuizModel) View() string {
 		return layout.Page(
 			"",
 			layout.Center(styles.MutedText().Render("Quiz complete!"), m.width),
-			componentsFooter(keymap.DefaultGlobal.Back.Help, m.width),
+			componentsFooter("enter restart · esc back", m.width),
 			m.height,
 		)
 	}

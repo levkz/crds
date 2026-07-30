@@ -80,8 +80,8 @@ func (m Model) renderOverlay(t OverlayType) string {
 		return renderHelpOverlay()
 	case ConfirmOverlay:
 		return components.ConfirmDialog(
-			"Changing Decks",
-			"Changing decks will restart the quiz.\nYour answers so far are saved. Continue?\n\n  [y] Yes  [n] No",
+			"Update Selection",
+			"You have answered cards in this session.\nAlready answered cards will be recorded.\nAre you sure you want to change decks?\n\n  [y] Yes  [n] No",
 			"y",
 			"n",
 			m.Width-8,

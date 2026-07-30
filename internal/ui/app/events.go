@@ -63,6 +63,9 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 		return m.WithLoading(msg.Loading), nil
 
 	case ui.NavigateToMsg:
+		if msg.Screen == ui.DecksScreen {
+			return m.pushTo(msg.Screen)
+		}
 		if m.AnswersRecorded && m.isQuizScreen() {
 			m.PendingTarget = &msg.Screen
 			return m.WithOverlay(ConfirmOverlay), nil
@@ -70,6 +73,12 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 		return m.transitionTo(msg.Screen)
 
 	case ConfirmYesMsg:
+		if m.PendingDeckSelection != nil {
+			m, cmd := m.handleDeckSelectionWithTags(m.PendingDeckSelection, m.PendingTagSelection)
+			m.PendingDeckSelection = nil
+			m.PendingTagSelection = nil
+			return m.WithoutOverlay(), cmd
+		}
 		if m.PendingTarget == nil {
 			return m.WithoutOverlay(), nil
 		}
@@ -79,6 +88,8 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 		return m.WithoutOverlay().transitionTo(target)
 
 	case ConfirmNoMsg:
+		m.PendingDeckSelection = nil
+		m.PendingTagSelection = nil
 		m.PendingTarget = nil
 		return m.WithoutOverlay(), nil
 
@@ -91,7 +102,19 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 		return m.pushTo(msg.Screen)
 
 	case ui.DeckSelectionChangedMsg:
-		return m.handleDeckSelectionWithTags(msg.Selected, msg.SelectedTags)
+		if m.AnswersRecorded && m.isQuizScreen() && m.isQuizInProgress() {
+			m.PendingDeckSelection = msg.Selected
+			m.PendingTagSelection = msg.SelectedTags
+			return m.WithOverlay(ConfirmOverlay), nil
+		}
+		m, cmd := m.handleDeckSelectionWithTags(msg.Selected, msg.SelectedTags)
+		if m.Navigator.CanGoBack() {
+			navM, navCmd := m.popToPrevious()
+			return navM, tea.Batch(cmd, navCmd)
+		}
+		return m, tea.Batch(cmd, func() tea.Msg {
+			return ui.NavigateToMsg{Screen: ui.HomeScreen}
+		})
 
 	case DataLoadedMsg:
 		return m.handleDataLoaded(msg)
@@ -328,7 +351,7 @@ func (m Model) dispatchKeyEvent(msg tea.KeyMsg) (Model, tea.Cmd) {
 	case keymap.DefaultGlobal.Help.Match(msg):
 		return m.WithOverlay(HelpOverlay), nil
 	case keymap.DefaultGlobal.DeckSelect.Match(msg):
-		return m.transitionTo(ui.DecksScreen)
+		return m.pushTo(ui.DecksScreen)
 
 	case keymap.DefaultGlobal.Back.Match(msg):
 		if m.Global.Overlay == ConfirmOverlay {
@@ -381,6 +404,17 @@ func filterAvailable(items, available []string) []string {
 
 func (m Model) isQuizScreen() bool {
 	return m.Navigator.Current == ui.QuizScreen || m.Navigator.Current == ui.TypingQuizScreen
+}
+
+func (m Model) isQuizInProgress() bool {
+	screen, ok := m.Navigator.CurrentScreen()
+	if !ok {
+		return false
+	}
+	if q, ok := screen.(ui.QuizInProgressChecker); ok {
+		return q.IsInProgress()
+	}
+	return false
 }
 
 // forwardToScreen sends a message to the currently active screen model.

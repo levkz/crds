@@ -97,3 +97,9 @@ type DeckSelectionChangedMsg struct {
 type BackHandler interface {
 	HandleBack() bool
 }
+
+// QuizInProgressChecker is implemented by quiz screens to report whether
+// the user is actively answering cards (not yet complete).
+type QuizInProgressChecker interface {
+	IsInProgress() bool
+}

@@ -45,8 +45,10 @@ type Model struct {
 	SelectedTags   []string
 	AllDeckTags    map[string][]string
 
-	AnswersRecorded bool
-	PendingTarget   *ui.ScreenIndex
+	AnswersRecorded       bool
+	PendingTarget         *ui.ScreenIndex
+	PendingDeckSelection  []string
+	PendingTagSelection   []string
 }
 
 func (m Model) Init() tea.Cmd {

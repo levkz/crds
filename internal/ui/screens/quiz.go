@@ -44,6 +44,10 @@ func (m *QuizModel) SetDeck(deck ui.DeckData) {
 
 func (m *QuizModel) Init() tea.Cmd { return nil }
 
+func (m *QuizModel) IsInProgress() bool {
+	return m.cardIndex > 0 && m.cardIndex < len(m.cards)
+}
+
 func (m *QuizModel) currentCorrectAnswer() string {
 	if m.inverse {
 		return m.cards[m.cardIndex].Front
@@ -63,14 +67,6 @@ func (m *QuizModel) grade(g ui.Grade) (*QuizModel, tea.Cmd) {
 	m.revealed = false
 	m.examplesPage = 0
 
-	if m.cardIndex >= len(m.cards) {
-		return m, tea.Sequence(
-			func() tea.Msg {
-				return ui.NavigateToMsg{Screen: ui.StatisticsScreen}
-			},
-		)
-	}
-
 	return m, func() tea.Msg {
 		return ui.SaveAnswerMsg{
 			DeckID:  m.deckName,
@@ -86,9 +82,22 @@ func (m *QuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case keymap.DefaultGlobal.Back.Match(msg):
+			if len(m.cards) > 0 && m.cardIndex >= len(m.cards) {
+				return m, func() tea.Msg {
+					return ui.NavigateToMsg{Screen: ui.HomeScreen}
+				}
+			}
 			return m, func() tea.Msg {
 				return ui.NavigateToMsg{Screen: ui.HomeScreen}
 			}
+
+		case len(m.cards) > 0 && m.cardIndex >= len(m.cards):
+			if keymap.DefaultQuiz.Reveal.Match(msg) {
+				m.cardIndex = 0
+				m.revealed = false
+				return m, nil
+			}
+			return m, nil
 
 		case !m.revealed:
 			switch {
@@ -149,7 +158,7 @@ func (m *QuizModel) View() string {
 		return layout.Page(
 			"",
 			layout.Center(styles.MutedText().Render("Quiz complete!"), m.width),
-			componentsFooter(keymap.DefaultGlobal.Back.Help, m.width),
+			componentsFooter("enter restart · esc back", m.width),
 			m.height,
 		)
 	}

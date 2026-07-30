@@ -28,6 +28,10 @@ type setDecksLister interface {
 	SetDecks(decks []string, selected []string)
 }
 
+type setDeckSelectionDataer interface {
+	SetData(deckItems, selectedDecks, tagItems, selectedTags []string, deckTags map[string][]string)
+}
+
 // dispatchEvent routes a message to its registered handler or the active screen.
 func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -37,9 +41,6 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 		m.Height = msg.Height
 		if screen, ok := m.Navigator.CurrentScreen(); ok {
 			screen.SetSize(msg.Width, msg.Height)
-		}
-		if m.DeckOverlay != nil {
-			m.DeckOverlay.SetSize(msg.Width, msg.Height)
 		}
 		return m, nil
 
@@ -61,18 +62,25 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 	case SetLoadingMsg:
 		return m.WithLoading(msg.Loading), nil
 
-	case ui.ShowDeckSelectionMsg:
-		if m.DeckOverlay != nil {
-			m.DeckOverlay.SetData(m.AllDecks, m.SelectedDecks)
-			m.DeckOverlay.SetSize(m.Width, m.Height)
-		}
-		return m.WithOverlay(DeckSelectionOverlay), nil
-
-	case DeckOverlayConfirmMsg:
-		return m.handleDeckSelection(msg.Selected)
-
 	case ui.NavigateToMsg:
+		if m.AnswersRecorded && m.isQuizScreen() {
+			m.PendingTarget = &msg.Screen
+			return m.WithOverlay(ConfirmOverlay), nil
+		}
 		return m.transitionTo(msg.Screen)
+
+	case ConfirmYesMsg:
+		if m.PendingTarget == nil {
+			return m.WithoutOverlay(), nil
+		}
+		target := *m.PendingTarget
+		m.PendingTarget = nil
+		m.AnswersRecorded = false
+		return m.WithoutOverlay().transitionTo(target)
+
+	case ConfirmNoMsg:
+		m.PendingTarget = nil
+		return m.WithoutOverlay(), nil
 
 	case ui.NavigateToDetailMsg:
 		if detail, ok := m.Navigator.Registry().Get(ui.DetailScreen); ok {
@@ -83,7 +91,7 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 		return m.pushTo(msg.Screen)
 
 	case ui.DeckSelectionChangedMsg:
-		return m.handleDeckSelection(msg.Selected)
+		return m.handleDeckSelectionWithTags(msg.Selected, msg.SelectedTags)
 
 	case DataLoadedMsg:
 		return m.handleDataLoaded(msg)
@@ -92,6 +100,7 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 		return m.WithNotification("Error loading "+msg.Kind.String()+": "+msg.Err.Error()), nil
 
 	case ui.SaveAnswerMsg:
+		m.AnswersRecorded = true
 		return m, RecordAnswerCmd(m.Dispatcher, msg)
 
 	case StatsLoadedMsg:
@@ -170,29 +179,75 @@ func (m Model) handleDataLoaded(msg DataLoadedMsg) (Model, tea.Cmd) {
 			}
 		}
 
-		// Pass deck list + selection to Decks screen
+		// Pass deck list + selection + tags to DeckSelect screen
+		if ds, ok := m.Navigator.Registry().Get(ui.DecksScreen); ok {
+			if setter, ok := ds.(setDeckSelectionDataer); ok {
+				m.SelectedTags = state.SelectedTags
+				setter.SetData(names, validSelected, m.AllTags, m.SelectedTags, m.AllDeckTags)
+			}
+		}
+
+		// Also pass to old Decks screen for compatibility during transition
 		if decksScreen, ok := m.Navigator.Registry().Get(ui.DecksScreen); ok {
 			if setter, ok := decksScreen.(setDecksLister); ok {
 				setter.SetDecks(names, validSelected)
 			}
 		}
 
+		// Load tags and deck-tag mapping in background
+		var cmds []tea.Cmd
+		cmds = append(cmds, ListAllTagsCmd(m.Dispatcher))
+		cmds = append(cmds, LoadAllDeckTagsCmd(m.Dispatcher))
+
 		// Load selected decks or show empty
 		if len(validSelected) > 0 {
-			return m, LoadSelectedDecksCmd(m.Dispatcher, validSelected)
-		}
-
-		// Handle empty selection: pass empty deck to screens so they show "No cards loaded"
-		emptyDeck := ui.DeckData{}
-		m.CurrentDeck = &emptyDeck
-		if quiz, ok := m.Navigator.Registry().Get(ui.QuizScreen); ok {
-			if setter, ok := quiz.(setDecker); ok {
-				setter.SetDeck(emptyDeck)
+			cmds = append(cmds, LoadSelectedDecksCmd(m.Dispatcher, validSelected))
+		} else {
+			// Handle empty selection: pass empty deck to screens so they show "No cards loaded"
+			emptyDeck := ui.DeckData{}
+			m.CurrentDeck = &emptyDeck
+			if quiz, ok := m.Navigator.Registry().Get(ui.QuizScreen); ok {
+				if setter, ok := quiz.(setDecker); ok {
+					setter.SetDeck(emptyDeck)
+				}
+			}
+			if typingQuiz, ok := m.Navigator.Registry().Get(ui.TypingQuizScreen); ok {
+				if setter, ok := typingQuiz.(setDecker); ok {
+					setter.SetDeck(emptyDeck)
+				}
 			}
 		}
-		if typingQuiz, ok := m.Navigator.Registry().Get(ui.TypingQuizScreen); ok {
-			if setter, ok := typingQuiz.(setDecker); ok {
-				setter.SetDeck(emptyDeck)
+		return m, tea.Batch(cmds...)
+
+	case MsgKindTags:
+		tags, ok := msg.Data.([]string)
+		if !ok {
+			return m, nil
+		}
+		m.AllTags = tags
+
+		// Filter saved selected tags to only available ones
+		m.SelectedTags = filterAvailable(m.SelectedTags, tags)
+
+		// Pass tags to DeckSelect screen
+		if ds, ok := m.Navigator.Registry().Get(ui.DecksScreen); ok {
+			if setter, ok := ds.(setDeckSelectionDataer); ok {
+				setter.SetData(m.AllDecks, m.SelectedDecks, tags, m.SelectedTags, m.AllDeckTags)
+			}
+		}
+		return m, nil
+
+	case MsgKindDeckTags:
+		dt, ok := msg.Data.(map[string][]string)
+		if !ok {
+			return m, nil
+		}
+		m.AllDeckTags = dt
+
+		// Pass deck tags to DeckSelect screen
+		if ds, ok := m.Navigator.Registry().Get(ui.DecksScreen); ok {
+			if setter, ok := ds.(setDeckSelectionDataer); ok {
+				setter.SetData(m.AllDecks, m.SelectedDecks, m.AllTags, m.SelectedTags, dt)
 			}
 		}
 		return m, nil
@@ -229,10 +284,29 @@ func (m Model) handleDataLoaded(msg DataLoadedMsg) (Model, tea.Cmd) {
 }
 
 func (m Model) handleDeckSelection(selected []string) (Model, tea.Cmd) {
-	m = m.WithDeckSelection(selected)
+	m.SelectedDecks = selected
 	var cmds []tea.Cmd
 	cmds = append(cmds, func() tea.Msg {
 		return SaveStateCmd(m.Dispatcher, selected)
+	})
+	cmds = append(cmds, ResetSessionCmd(m.Dispatcher))
+	if len(selected) > 0 {
+		cmds = append(cmds, LoadSelectedDecksCmd(m.Dispatcher, selected))
+	} else {
+		m.CurrentDeck = nil
+		cmds = append(cmds, func() tea.Msg {
+			return DataLoadedMsg{Kind: MsgKindDeck, Data: ui.DeckData{}}
+		})
+	}
+	return m, tea.Batch(cmds...)
+}
+
+func (m Model) handleDeckSelectionWithTags(selected []string, selectedTags []string) (Model, tea.Cmd) {
+	m.SelectedDecks = selected
+	m.SelectedTags = selectedTags
+	var cmds []tea.Cmd
+	cmds = append(cmds, func() tea.Msg {
+		return SaveStateCmd(m.Dispatcher, selected, selectedTags...)
 	})
 	cmds = append(cmds, ResetSessionCmd(m.Dispatcher))
 	if len(selected) > 0 {
@@ -253,7 +327,13 @@ func (m Model) dispatchKeyEvent(msg tea.KeyMsg) (Model, tea.Cmd) {
 		return m, tea.Sequence(m.ShutdownCmd(), tea.Quit)
 	case keymap.DefaultGlobal.Help.Match(msg):
 		return m.WithOverlay(HelpOverlay), nil
+	case keymap.DefaultGlobal.DeckSelect.Match(msg):
+		return m.transitionTo(ui.DecksScreen)
+
 	case keymap.DefaultGlobal.Back.Match(msg):
+		if m.Global.Overlay == ConfirmOverlay {
+			return m, func() tea.Msg { return ConfirmNoMsg{} }
+		}
 		if m.Global.Overlay != NoOverlay {
 			return m.WithoutOverlay(), nil
 		}
@@ -269,13 +349,38 @@ func (m Model) dispatchKeyEvent(msg tea.KeyMsg) (Model, tea.Cmd) {
 		return m.transitionTo(ui.HomeScreen)
 	}
 
-	// Route keys to deck selection overlay if active
-	if m.Global.Overlay == DeckSelectionOverlay && m.DeckOverlay != nil {
-		cmd := m.DeckOverlay.Update(msg)
-		return m, cmd
+	// Route keys to confirm overlay if active
+	if m.Global.Overlay == ConfirmOverlay {
+		switch {
+		case keymap.DefaultList.Select.Match(msg):
+			return m, func() tea.Msg { return ConfirmYesMsg{} }
+		case msg.String() == "y" || msg.String() == "Y":
+			return m, func() tea.Msg { return ConfirmYesMsg{} }
+		case msg.String() == "n" || msg.String() == "N":
+			return m, func() tea.Msg { return ConfirmNoMsg{} }
+		}
+		return m, nil
 	}
 
 	return m.forwardToScreen(msg)
+}
+
+func filterAvailable(items, available []string) []string {
+	avail := make(map[string]bool, len(available))
+	for _, a := range available {
+		avail[a] = true
+	}
+	var filtered []string
+	for _, s := range items {
+		if avail[s] {
+			filtered = append(filtered, s)
+		}
+	}
+	return filtered
+}
+
+func (m Model) isQuizScreen() bool {
+	return m.Navigator.Current == ui.QuizScreen || m.Navigator.Current == ui.TypingQuizScreen
 }
 
 // forwardToScreen sends a message to the currently active screen model.

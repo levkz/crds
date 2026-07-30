@@ -51,7 +51,7 @@ func New(deps Dependencies, cfg Config) Model {
 	reg := nav.NewRegistry()
 	reg.Register(ui.HomeScreen, screens.NewHome())
 	reg.Register(ui.QuizScreen, screens.NewQuiz())
-	reg.Register(ui.DecksScreen, screens.NewDecks())
+	reg.Register(ui.DecksScreen, screens.NewDeckSelect())
 	reg.Register(ui.TypingQuizScreen, screens.NewTypingQuiz())
 	reg.Register(ui.SearchScreen, screens.NewSearch())
 	reg.Register(ui.StatisticsScreen, screens.NewStatistics())
@@ -86,11 +86,16 @@ func New(deps Dependencies, cfg Config) Model {
 	if tr, ok := deps.Progress.(TypingRecorder); ok {
 		typing = tr
 	}
+	var tags TagProvider
+	if tp, ok := deps.Decks.(TagProvider); ok {
+		tags = tp
+	} else if deps.Tags != nil {
+		tags = deps.Tags
+	}
 
 	return Model{
 		Config:      cfg,
 		Navigator:   n,
-		DeckOverlay: NewDeckSelectionOverlay(),
 		Dispatcher: &Dispatcher{
 			Decks:    deps.Decks,
 			Progress: deps.Progress,
@@ -98,6 +103,7 @@ func New(deps Dependencies, cfg Config) Model {
 			State:    deps.State,
 			Sessions: sessions,
 			Typing:   typing,
+			Tags:     tags,
 		},
 	}
 }

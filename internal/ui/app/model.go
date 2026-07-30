@@ -12,7 +12,7 @@ type OverlayType int
 const (
 	NoOverlay OverlayType = iota
 	HelpOverlay
-	DeckSelectionOverlay
+	ConfirmOverlay
 )
 
 // Notification represents a transient message shown to the user
@@ -41,8 +41,12 @@ type Model struct {
 	CurrentDeck    *ui.DeckData
 	AllDecks       []string
 	SelectedDecks []string
+	AllTags        []string
+	SelectedTags   []string
+	AllDeckTags    map[string][]string
 
-	DeckOverlay *DeckSelectionOverlayModel
+	AnswersRecorded bool
+	PendingTarget   *ui.ScreenIndex
 }
 
 func (m Model) Init() tea.Cmd {
@@ -59,12 +63,6 @@ func (m Model) WithOverlay(t OverlayType) Model {
 
 func (m Model) WithoutOverlay() Model {
 	m.Global.Overlay = NoOverlay
-	return m
-}
-
-func (m Model) WithDeckSelection(selected []string) Model {
-	m = m.WithoutOverlay()
-	m.SelectedDecks = selected
 	return m
 }
 
@@ -95,7 +93,8 @@ type SetLoadingMsg struct {
 	Loading bool
 }
 
-// DeckOverlayConfirmMsg is emitted when the deck selection overlay confirms or cancels.
-type DeckOverlayConfirmMsg struct {
-	Selected []string
-}
+// ConfirmYesMsg is emitted when the user confirms an action dialog.
+type ConfirmYesMsg struct{}
+
+// ConfirmNoMsg is emitted when the user cancels an action dialog.
+type ConfirmNoMsg struct{}

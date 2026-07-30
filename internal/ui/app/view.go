@@ -78,11 +78,15 @@ func (m Model) renderOverlay(t OverlayType) string {
 	switch t {
 	case HelpOverlay:
 		return renderHelpOverlay()
-	case DeckSelectionOverlay:
-		if m.DeckOverlay != nil {
-			return m.DeckOverlay.View()
-		}
-		return ""
+	case ConfirmOverlay:
+		return components.ConfirmDialog(
+			"Changing Decks",
+			"Changing decks will restart the quiz.\nYour answers so far are saved. Continue?\n\n  [y] Yes  [n] No",
+			"y",
+			"n",
+			m.Width-8,
+			10,
+		)
 	default:
 		return ""
 	}

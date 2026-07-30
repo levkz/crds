@@ -19,6 +19,8 @@ const (
 	MsgKindAnswer
 	MsgKindStats
 	MsgKindState
+	MsgKindTags
+	MsgKindDeckTags
 )
 
 func (k MsgKind) String() string {
@@ -47,6 +49,7 @@ type Dispatcher struct {
 	State    *storage.StateStore
 	Sessions SessionManager
 	Typing   TypingRecorder
+	Tags     TagProvider
 }
 
 // Cmd wraps a side-effect function as a tea.Cmd for Bubble Tea dispatch.
@@ -122,13 +125,18 @@ func mergeDecks(decks []ui.DeckData) ui.DeckData {
 	}
 }
 
-// SaveStateCmd persists the selected decks and active theme.
-func SaveStateCmd(d *Dispatcher, selected []string) tea.Msg {
+// SaveStateCmd persists the selected decks, tags, and active theme.
+func SaveStateCmd(d *Dispatcher, selected []string, selectedTags ...string) tea.Msg {
 	if d.State == nil {
 		return nil
 	}
+	var tags []string
+	if len(selectedTags) > 0 {
+		tags = selectedTags
+	}
 	err := d.State.Save(&storage.State{
 		SelectedDecks: selected,
+		SelectedTags:  tags,
 		Theme:         theme.CurrentName(),
 	})
 	if err != nil {
@@ -162,6 +170,36 @@ func ResetSessionCmd(d *Dispatcher) tea.Cmd {
 			_ = d.Sessions.ResetSession()
 		}
 		return nil
+	})
+}
+
+// ListAllTagsCmd returns a command that fetches all unique tags.
+func ListAllTagsCmd(d *Dispatcher) tea.Cmd {
+	return Dispatch(d, func(d *Dispatcher) tea.Msg {
+		tags, err := d.Tags.ListAllTags()
+		if err != nil {
+			return DataErrorMsg{Kind: MsgKindTags, Err: err}
+		}
+		return DataLoadedMsg{Kind: MsgKindTags, Data: tags}
+	})
+}
+
+// LoadAllDeckTagsCmd returns a command that loads tags for every deck (deck→tags map).
+func LoadAllDeckTagsCmd(d *Dispatcher) tea.Cmd {
+	return Dispatch(d, func(d *Dispatcher) tea.Msg {
+		deckIDs, err := d.Decks.ListDecks()
+		if err != nil {
+			return DataErrorMsg{Kind: MsgKindDeckTags, Err: err}
+		}
+		result := make(map[string][]string, len(deckIDs))
+		for _, id := range deckIDs {
+			tags, err := d.Tags.ListDeckTags(id)
+			if err != nil {
+				continue
+			}
+			result[id] = tags
+		}
+		return DataLoadedMsg{Kind: MsgKindDeckTags, Data: result}
 	})
 }
 

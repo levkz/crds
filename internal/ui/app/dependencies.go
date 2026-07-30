@@ -12,6 +12,14 @@ type DeckProvider interface {
 	LoadDeck(name string) (ui.DeckData, error)
 }
 
+// TagProvider is the interface for tag-related queries used by the deck selection screen.
+type TagProvider interface {
+	ListAllTags() ([]string, error)
+	ListDeckTags(deckID string) ([]string, error)
+	FilterDecksByTags(tags []string) ([]string, error)
+	FilterTagsByDecks(deckIDs []string) ([]string, error)
+}
+
 // ProgressRecorder persists learning progress from quiz sessions.
 type ProgressRecorder interface {
 	RecordAnswer(deckID, cardID string, grade int, reverse bool) error
@@ -39,4 +47,5 @@ type Dependencies struct {
 	Progress ProgressRecorder
 	Stats    StatsProvider
 	State    *storage.StateStore
+	Tags     TagProvider
 }

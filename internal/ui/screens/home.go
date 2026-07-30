@@ -42,7 +42,7 @@ func NewHome() *HomeModel {
 		{"statistics", ui.StatisticsScreen, &keymap.DefaultHome.Statistics},
 		{"search", ui.SearchScreen, &keymap.DefaultHome.Search},
 		{"configuration", ui.SettingsScreen, &keymap.DefaultHome.Configuration},
-		{"deck selection", ui.NoScreen, &keymap.DefaultHome.DeckSelect},
+		{"deck selection", ui.DecksScreen, &keymap.DefaultHome.DeckSelect},
 		{"theme palette", ui.PaletteScreen, &keymap.DefaultHome.Palette},
 	}
 	return &HomeModel{menuItems: items}
@@ -85,9 +85,6 @@ func (m *HomeModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 }
 
 func (m *HomeModel) navigateTo(item menuItem) (ui.Screen, tea.Cmd) {
-	if item.screen == ui.NoScreen {
-		return m, func() tea.Msg { return ui.ShowDeckSelectionMsg{} }
-	}
 	return m, func() tea.Msg { return ui.NavigateToMsg{Screen: item.screen} }
 }
 

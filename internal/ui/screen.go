@@ -16,10 +16,6 @@ const (
 	PaletteScreen
 )
 
-// NoScreen is a sentinel value used by menu items that trigger overlays
-// instead of screen navigation.
-const NoScreen ScreenIndex = -1
-
 type Screen interface {
 	Init() tea.Cmd
 	Update(tea.Msg) (Screen, tea.Cmd)
@@ -62,9 +58,6 @@ type NavigateToDetailMsg struct {
 	Entry  CardData
 }
 
-// ShowDeckSelectionMsg is emitted by the home screen to request showing the deck selection overlay.
-type ShowDeckSelectionMsg struct{}
-
 // SaveAnswerMsg is emitted by a Quiz screen when a card is graded.
 // For flashcard quiz: only CardID, Grade, DeckID are set.
 // For typing quiz: UserInput, CorrectAnswer, Similarity are also set.
@@ -94,7 +87,8 @@ type TypingGradeMsg struct {
 
 // DeckSelectionChangedMsg is emitted by the Decks screen when the user confirms a new deck selection.
 type DeckSelectionChangedMsg struct {
-	Selected []string
+	Selected      []string
+	SelectedTags  []string
 }
 
 // BackHandler is implemented by screens that want to handle Back (Esc)

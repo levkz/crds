@@ -131,7 +131,7 @@ Most implementation work happens inside `internal/`.
 | `internal/ui/layout/` | Layout primitives: Page, Column, Row, Grid, Stack, Spacer, Center, Align | 258 lines of tests |
 | `internal/ui/renderer/` | Terminal rendering utilities: width, ANSI, wrapping | Implemented |
 | `internal/ui/app/` | Root Bubble Tea model, event dispatch, lifecycle, commands | — |
-| `internal/ui/screens/` | 8 screens: Home, Quiz, Typing Quiz, Search, Statistics, Settings, Detail, Decks | — |
+| `internal/ui/screens/` | 9 screens: Home, Quiz, Typing Quiz, DeckSelect, Search, Statistics, Settings, Detail, Palette | — |
 | `internal/fuzzy/` | Levenshtein-based fuzzy string matching for grading typed answers | 8 tests |
 | `internal/editor/` | `$EDITOR`/nano/vim invoker with YAML buffer for entry editing | — |
 

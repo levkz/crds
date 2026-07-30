@@ -149,9 +149,9 @@ type Lifecycle interface {
 ```
 
 Currently implemented by `SearchModel` (OnEnter resets to input mode,
-OnLeave clears query/results/mode) and `DecksModel` (OnLeave saves
-selection). Lifecycle hooks fire on flat transitions (Replace) but not
-on stacked navigation (Push/Pop) where screens are preserved in history.
+OnLeave clears query/results/mode). `DeckSelectModel` uses `BackHandler`
+instead of lifecycle. Lifecycle hooks fire on flat transitions (Replace)
+but not on stacked navigation (Push/Pop) where screens are preserved.
 
 Screens can implement `BackHandler` to intercept Esc before the global
 handler applies default behavior:
@@ -163,7 +163,9 @@ type BackHandler interface {
 ```
 
 Return `true` if the screen consumed the event. Currently implemented by
-`SearchModel` (returns to input mode when in results mode).
+`SearchModel` (returns to input mode when in results mode) and
+`DeckSelectModel` (clears search query if non-empty, deactivates search
+if empty query).
 
 A screen should never modify global application state.
 
@@ -260,7 +262,7 @@ Registry (ScreenIndex → Screen)
   ├── HomeScreen         → HomeModel         (activity menu)
   ├── QuizScreen         → QuizModel         (flashcard quiz)
   ├── TypingQuizScreen   → TypingQuizModel   (typing-based quiz)
-  ├── DecksScreen        → DecksModel        (multi-deck selection)
+  ├── DecksScreen        → DeckSelectModel   (split-column deck + tag selection)
   ├── SearchScreen       → SearchModel       (text search)
   ├── StatisticsScreen   → StatisticsModel   (metrics)
   ├── SettingsScreen     → SettingsModel     (theme switch)
@@ -380,8 +382,8 @@ Animations should remain optional.
   - Theme store with runtime switching
 - **Styles** (`styles/`): 16 style definitions with 60+ tests (Header, Footer, SelectedItem, FocusedInput, Error, Warning, Success, Hint, MutedText, Card, Panel, Modal, PrimaryBg, SuccessBg, ErrorBg, WarningBg)
 - **Components** (`components/`): 29 components across `display/` (20 stateless) and `interactive/` (9 stateful) — all implemented
-- **Screens** (`screens/`): All 9 screens — Home (activity menu), Quiz (flashcard), TypingQuiz (typing-based with inverse mode), Decks (multi-deck selection), Search (two-phase: input + results), Statistics (metrics), Settings (theme switch), Detail (entry view), Palette (theme palette test with live preview)
-- **Keymap** (`keymap/`): Centralized keybinding definitions with `Binding.Match()`, `BindingList.Help()`, per-screen keymap structs (`Global`, `List`, `Quiz`, `TypingQuiz`, `Decks`, `Search`) with `Footer()` methods, `Registry` with `Bindings()`/`FindBinding()`, `KeymapConfig` for user overrides, and 16 tests. All screens and the root model use `keymap.Default*` instead of hardcoded strings.
+- **Screens** (`screens/`): All 9 screens — Home (activity menu), Quiz (flashcard), TypingQuiz (typing-based with inverse mode), DeckSelect (split-column deck + tag selection), Search (two-phase: input + results), Statistics (metrics), Settings (theme switch), Detail (entry view), Palette (theme palette test with live preview)
+- **Keymap** (`keymap/`): Centralized keybinding definitions with `Binding.Match()`, `BindingList.Help()`, per-screen keymap structs (`Global`, `List`, `Quiz`, `TypingQuiz`, `Decks`, `DeckSelect`, `Search`) with `Footer()` methods, `Registry` with `Bindings()`/`FindBinding()`, `KeymapConfig` for user overrides, and 16 tests. All screens and the root model use `keymap.Default*` instead of hardcoded strings.
 - **Config** (`internal/config/`): User configuration from `~/.config/crds/` — directory auto-creation, `config.yaml` loading, `keymaps.yaml` loading with `keymap.ApplyDefaultOverrides()`, theme discovery from `themes/*.yaml`. 13 tests.
 - **Events** (`events/`): 4 centralized event types (`TickMsg`, `ThemeSwitchMsg`, `ShowNotificationMsg`, `HideNotificationMsg`)
 - **Layout** (`layout/`): Layout helpers (Page, Column, Row, Center, Align, Stack, Grid, Spacer)

@@ -219,9 +219,8 @@ DROP TABLE IF EXISTS tags;
 
 ## UI Integration Points
 
-The `DecksScreen` and `SearchScreen` will call the new store methods through
-the `DeckProvider` interface (or a new `TagProvider` interface) to populate
-their tag columns.
+The `DecksScreen` calls the new store methods through the `TagProvider`
+interface to populate its tag column.
 
 Tag data flows:
 - On app init: `ListAllTags()` populates the tag column in deck selection

@@ -142,7 +142,7 @@ The UI is the most developed subsystem. It follows Bubble Tea's Elm-style archit
 | `components/` | 29 components (display + interactive) | — |
 | `layout/` | Layout primitives: Page, Column, Row, Grid, Stack, Spacer, Center, Align | Tests |
 | `renderer/` | Terminal rendering: width calculation, ANSI handling, text wrapping | — |
-| `screens/` | 8 screens: Home, Quiz, TypingQuiz, Decks, Search, Statistics, Settings, Detail | — |
+| `screens/` | 9 screens: Home, Quiz, TypingQuiz, DeckSelect, Search, Statistics, Settings, Detail, Palette | — |
 
 ### UI architecture
 
@@ -181,7 +181,7 @@ Screens emit navigation events instead of changing the active screen directly. T
 | Screen | Status | Notes |
 |---|---|---|---|
 | Home | Functional | 6-item activity menu. |
-| Decks | Functional | Multi-select list. Space toggle, a toggle-all, enter confirms. Saves selection on leave via Lifecycle. Persists via StateStore. |
+| Decks | Functional | Split-column deck+tag selection. Space toggle, a toggle-all, s search, tab/shift+tab column switch, enter confirms both selections. BackHandler for Esc handling. Persists decks and tags via StateStore. |
 | Quiz | Functional | Real keyboard handling. Receives deck data, grades cards, dispatches progress. |
 | TypingQuiz | Functional | Real keyboard handling. Text input for typed answers. Fuzzy-matched auto-grading. |
 | Search | Functional | Real text input. Filters loaded deck data. Navigates to detail with stacked back-navigation. Clears state on leave via Lifecycle. |

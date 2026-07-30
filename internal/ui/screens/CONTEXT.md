@@ -138,15 +138,21 @@ PaletteScreen
   Esc returns to Search.
 - **Renders**: Header + Primary term + section(s) + footer
 
-### DecksModel (`decks.go`)
+### DeckSelectModel (`deck_select.go`)
 
-- **State**: `cursor`, `decks` list, `selected` set
-- **Keys**: `up`/`k`, `down`/`j`, `space` (toggle), `a` (toggle all), `enter` (confirm)
-- **Behavior**: Multi-deck selection with checkmarks. Space toggles current item,
-  'a' toggles all. Enter emits `DeckSelectionChangedMsg` and navigates to Home.
-  Implements `Lifecycle` — `OnLeave` saves the current selection whenever the
-  user leaves the screen (via Enter or Esc).
-- **Renders**: Header + checkmarked list + footer
+- **State**: Two columns (decks + tags), each with `cursor`, `items`, `selected` map,
+  `searchActive`, `searchQuery`, `scrollOffset`. Cross-filtering: OR logic between
+  columns (any selected deck shows all its tags, any selected tag shows all its decks).
+- **Keys**: `up`/`k`, `down`/`j`, `tab` (next column), `shift+tab` (prev column),
+  `space` (toggle), `a` (toggle all), `s` (search toggle), `enter` (confirm),
+  `esc` (clear search / dismiss via BackHandler), `backspace` (search delete char)
+- **Behavior**: Split-column selection with per-column search. Toggle items independently
+  in each column. Search filters items in real time via substring match. BackHandler
+  intercepts Esc: clears search query (non-empty) or dismisses screen (empty query).
+  Enter confirms selection and emits `DeckSelectionChangedMsg` with both `Selected`
+  and `SelectedTags`.
+- **Renders**: Header + two centered columns with secondary-color divider + scrollable
+  lists with selected items highlighted via `Secondary.Render("✓ " + name)` + footer
 
 ### TypingQuizModel (`typing_quiz.go`)
 
@@ -241,7 +247,9 @@ type BackHandler interface {
 ```
 
 Return `true` if the screen consumed the event. Currently implemented by
-`SearchModel` (returns to input mode when in results mode).
+`SearchModel` (returns to input mode when in results mode) and
+`DeckSelectModel` (clears search query if non-empty, deactivates search
+if empty query — returns `true` when query cleared, `false` otherwise).
 
 ---
 
@@ -275,7 +283,7 @@ screens/
 ├── statistics.go    StatisticsModel — study metrics
 ├── settings.go      SettingsModel — theme switching
 ├── detail.go        DetailModel — entry detail
-├── decks.go         DecksModel — deck selection
+├── deck_select.go   DeckSelectModel — split-column deck+tag selection
 ├── typing_quiz.go   TypingQuizModel — typing quiz
 └── palette.go       PaletteModel — theme palette test
 ```
@@ -288,9 +296,10 @@ screens/
    time or load it via commands returned from `Init()`. Currently `Cards` is
    prepopulated and always empty.
 
-2. **Lifecycle hooks** — Search and Decks now implement `app.Lifecycle`.
-   Quiz and TypingQuiz are candidates for `OnEnter` (load deck data) and
-   Statistics for `OnEnter` (refresh metrics).
+2. **Lifecycle hooks** — Search implements `app.Lifecycle`.
+   DeckSelectModel uses `HandleBack()` instead. Quiz and TypingQuiz are
+   candidates for `OnEnter` (load deck data) and Statistics for `OnEnter`
+   (refresh metrics).
 
 3. **Home improvements** — After wiring deck loading, show recent decks or
    quick-start options. Consider `components.Text` for descriptions below

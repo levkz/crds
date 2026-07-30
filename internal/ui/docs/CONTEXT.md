@@ -133,13 +133,17 @@ Choose an activity.
 
 Decks
 
-Multi-deck selection.
+Split-column deck + tag selection.
 
 Toggle with space.
 
 Select-all/deselect-all with a.
 
-Enter confirms selection.
+Search with s.
+
+Switch columns with tab/shift+tab.
+
+Enter confirms both deck and tag selection.
 
 Quiz (Flash Cards)
 
@@ -237,7 +241,7 @@ ui/
 │   ├── home.go         HomeModel — activity menu
 │   ├── quiz.go         QuizModel — flashcard quiz
 │   ├── typing_quiz.go  TypingQuizModel — typing-based quiz with fuzzy matching
-│   ├── decks.go        DecksModel — multi-deck selection with toggle/toggle-all
+│   ├── deck_select.go  DeckSelectModel — split-column deck+tag selection with search
 │   ├── search.go       SearchModel — two-phase: input mode (type + filter) + results mode (navigate + select)
 │   ├── statistics.go   StatisticsModel — study metrics
 │   ├── settings.go     SettingsModel — theme switching
@@ -408,10 +412,10 @@ Navigation should be testable through emitted events.
 - **Theme** (`theme/`): Full implementation with 55+ tests, including 18-field palette (15 colors + 3 semantic overrides), 14 semantic styles (10 foreground + 4 background variants: PrimaryBg, SuccessBg, ErrorBg, WarningBg), typography, borders, 10-slot icons (4 icon sources), spacing scale, border roles, YAML loading with style overrides, and theme switching (built-in: default, dark, light, tokyonight)
 - **Styles** (`styles/`): All 16 style definitions implemented with 60+ tests — Header, Footer, SelectedItem, FocusedInput, Error, Warning, Success, Hint, MutedText, Card, Panel, Modal, PrimaryBg, SuccessBg, ErrorBg, WarningBg
 - **Components** (`components/`): All 29 components implemented — 20 in `display/` (Header, Footer, Card, Progress, List, Table, Modal, Notification, Text, Label, Badge, Paragraph, Divider, Panel, Section, Group, Window, StatusBar, ConfirmDialog, ErrorDialog) and 9 in `interactive/` (TextInput, SearchInput, Checkbox, RadioGroup, Select, MultiSelect, SelectableList, Tree, Spinner)
-- **Screens** (`screens/`): All 9 screens implemented — Home (activity menu), Quiz (flashcard), TypingQuiz (typing-based with fuzzy matching), Decks (multi-deck selection), Search (text input + results), Statistics (metrics display), Settings (theme switching), Detail (entry view), Palette (theme palette test with live preview)
+- **Screens** (`screens/`): All 9 screens implemented — Home (activity menu), Quiz (flashcard), TypingQuiz (typing-based with fuzzy matching), DeckSelect (split-column deck+tag selection), Search (text input + results), Statistics (metrics display), Settings (theme switching), Detail (entry view), Palette (theme palette test with live preview)
 - **Navigation** (`navigation/`): Complete with 82 black-box tests including Manager, stack, and registry
 - **App** (`app/`): Root Bubble Tea model, events, lifecycle, commands, config, theme loading, overlay/notification system. `New()` wires keymap overrides (`keymaps.yaml`), user themes (`themes/`), and app config (`config.yaml`) from `~/.config/crds/`
-- **Keymap** (`keymap/`): Centralized keybinding definitions. `Binding` with `Match()`, `BindingList` with `Help()`, per-screen structs (`Global`, `List`, `Quiz`, `TypingQuiz`, `Decks`, `Search`) with `Footer()` helpers, `Registry` with `Bindings()`/`FindBinding()`, `KeymapConfig` + `ApplyDefaultOverrides()` for user-defined overrides. 16 tests.
+- **Keymap** (`keymap/`): Centralized keybinding definitions. `Binding` with `Match()`, `BindingList` with `Help()`, per-screen structs (`Global`, `List`, `Quiz`, `TypingQuiz`, `Decks`, `DeckSelect`, `Search`) with `Footer()` helpers, `Registry` with `Bindings()`/`FindBinding()`, `KeymapConfig` + `ApplyDefaultOverrides()` for user-defined overrides. 16 tests.
 - **Config** (`internal/config/`): User configuration directory (`~/.config/crds/`). Auto-creates directory tree with default files. Loads `config.yaml` (theme, animation, quiz limit), `keymaps.yaml` (keybinding overrides), and discovers `themes/*.yaml`. 13 tests.
 
 ## Placeholder Directories

@@ -56,6 +56,7 @@ func TestStateStore_SaveAndLoad_RoundTrip(t *testing.T) {
 
 	original := &State{
 		SelectedDecks: []string{"spanish_a1", "german_a2"},
+		QuizMode:      "due",
 	}
 	if err := s.Save(original); err != nil {
 		t.Fatalf("Save: %v", err)
@@ -73,6 +74,9 @@ func TestStateStore_SaveAndLoad_RoundTrip(t *testing.T) {
 	}
 	if loaded.SelectedDecks[0] != "spanish_a1" || loaded.SelectedDecks[1] != "german_a2" {
 		t.Errorf("got %v, want [spanish_a1 german_a2]", loaded.SelectedDecks)
+	}
+	if loaded.QuizMode != "due" {
+		t.Errorf("expected quiz_mode due, got %q", loaded.QuizMode)
 	}
 }
 

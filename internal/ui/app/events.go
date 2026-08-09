@@ -140,7 +140,10 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 
 	case ui.SetQuizModeMsg:
 		m.State.QuizMode = msg.Mode
-		return m, m.stateChangedCmd()
+		cmd := Dispatch(m.Dispatcher, func(d *Dispatcher) tea.Msg {
+			return SaveStateCmd(d, m.State.SelectedDecks, m.State.QuizMode)
+		})
+		return m, tea.Batch(m.stateChangedCmd(), cmd)
 
 	case ui.RefreshStatsMsg:
 		return m, FetchStatsCmd(m.Dispatcher, m.State.SelectedDecks, m.State.SelectedTags)
@@ -155,7 +158,7 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 		}
 		ui.SetTheme(th)
 		cmd := func() tea.Msg {
-			return SaveStateCmd(m.Dispatcher, m.State.SelectedDecks)
+			return SaveStateCmd(m.Dispatcher, m.State.SelectedDecks, m.State.QuizMode)
 		}
 		return m.WithNotification("Switched to " + msg.Name + " theme"), cmd
 
@@ -206,6 +209,11 @@ func (m Model) handleDataLoaded(msg DataLoadedMsg) (Model, tea.Cmd) {
 			if th, err := theme.Switch(state.Theme); err == nil {
 				ui.SetTheme(th)
 			}
+		}
+
+		// Restore quiz mode from saved state
+		if state.QuizMode != "" {
+			m.State.QuizMode = ui.ParseQuizMode(state.QuizMode)
 		}
 
 		// Load tags and deck-tag mapping in background
@@ -269,7 +277,7 @@ func (m Model) handleDeckSelectionWithTags(selected []string, selectedTags []str
 	m.State.SelectedTags = selectedTags
 	var cmds []tea.Cmd
 	cmds = append(cmds, func() tea.Msg {
-		return SaveStateCmd(m.Dispatcher, selected, selectedTags...)
+		return SaveStateCmd(m.Dispatcher, selected, m.State.QuizMode, selectedTags...)
 	})
 	cmds = append(cmds, ResetSessionCmd(m.Dispatcher))
 	if len(selected) > 0 {

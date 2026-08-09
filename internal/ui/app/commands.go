@@ -189,8 +189,8 @@ func LoadDueProgressCmd(d *Dispatcher, deckIDs, tags []string) tea.Cmd {
 	})
 }
 
-// SaveStateCmd persists the selected decks, tags, and active theme.
-func SaveStateCmd(d *Dispatcher, selected []string, selectedTags ...string) tea.Msg {
+// SaveStateCmd persists the selected decks, tags, active theme, and quiz mode.
+func SaveStateCmd(d *Dispatcher, selected []string, mode ui.QuizMode, selectedTags ...string) tea.Msg {
 	if d.State == nil {
 		return nil
 	}
@@ -202,6 +202,7 @@ func SaveStateCmd(d *Dispatcher, selected []string, selectedTags ...string) tea.
 		SelectedDecks: selected,
 		SelectedTags:  tags,
 		Theme:         theme.CurrentName(),
+		QuizMode:      mode.String(),
 	})
 	if err != nil {
 		return DataErrorMsg{Kind: MsgKindState, Err: fmt.Errorf("saving state: %w", err)}

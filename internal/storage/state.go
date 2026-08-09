@@ -13,6 +13,7 @@ type State struct {
 	SelectedDecks []string `yaml:"selected_decks"`
 	SelectedTags  []string `yaml:"selected_tags,omitempty"`
 	Theme         string   `yaml:"theme,omitempty"`
+	QuizMode      string   `yaml:"quiz_mode,omitempty"`
 }
 
 // StateStore manages loading and saving State to a YAML file.

@@ -27,13 +27,13 @@ Ran `go test ./...` from the repo root. Results are stable and current:
 | `internal/ui/styles/` | 14 | Semantic styles |
 | `internal/ui/layout/` | 10 | Layout primitives |
 | `internal/ui/renderer/` | 9 | Rendering utilities |
-| `internal/ui/keymap/` | 17 | Keybindings |
+| `internal/ui/keymap/` | 18 | Keybindings |
 | `internal/ui/navigation/tests/` | 74 | Black-box navigation tests |
-| `internal/ui/app/tests/` | 5 | State-sync protocol |
+| `internal/ui/app/tests/` | 8 | State-sync protocol, quiz-mode persistence |
 | `internal/ui/components/display/` | 5 | Graph bar chart |
 | `internal/ui/screens/` | 11 | Statistics screen logic |
 
-Total: **340 test functions**, all passing.
+Total: **344 test functions**, all passing.
 
 ---
 
@@ -56,7 +56,7 @@ Total: **340 test functions**, all passing.
 | `internal/ui/components/` | 29 components (20 display + 9 interactive) | — |
 | `internal/ui/components/display/` | Graph bar chart, confidence coloring | 5 |
 | `internal/ui/navigation/` | Stack-based navigation: push/pop/replace/forward/modal/overlay | 74 |
-| `internal/ui/keymap/` | Centralized keybinding definitions with user overrides | 17 |
+| `internal/ui/keymap/` | Centralized keybinding definitions with user overrides | 18 |
 | `internal/ui/layout/` | Layout primitives: Page, Column, Row, Grid, Stack, Spacer, Center, Align | 10 |
 | `internal/ui/renderer/` | Terminal rendering: width, ANSI, wrapping | 9 |
 | `internal/ui/app/` | Root Bubble Tea model, event dispatch, lifecycle, commands, `ui.AppState` sync | 5 |

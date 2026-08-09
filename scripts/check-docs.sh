@@ -42,7 +42,7 @@ while IFS= read -r file; do
     "$ROOT/docs/status.md") continue ;;
   esac
   # 'Known Issues' / 'Current Status' sections, and inline test counts
-  # like "(82 tests)" / "60+ tests", must not appear in reference/decision docs.
+  # like "(74 tests)" / "60+ tests", must not appear in reference/decision docs.
   if grep -Eq '^#+ +Known Issues|^#+ +Current Status|^#+ +Future (Work|Extensions)' "$file"; then
     warn "$(basename "$file") has status/future section: $(grep -E '^#+ +(Known Issues|Current Status|Future (Work|Extensions))' "$file" | tr '\n' ' ')"
   fi

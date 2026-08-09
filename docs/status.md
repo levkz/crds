@@ -26,10 +26,10 @@ Ran `go test ./...` from the repo root. Results are stable and current:
 | `internal/ui/layout/` | 10 | Layout primitives |
 | `internal/ui/renderer/` | 9 | Rendering utilities |
 | `internal/ui/keymap/` | 15 | Keybindings |
-| `internal/ui/navigation/tests/` | 82 | Black-box navigation tests |
+| `internal/ui/navigation/tests/` | 74 | Black-box navigation tests |
 | `internal/ui/app/tests/` | 5 | State-sync protocol |
 
-Total: **304 test functions**, all passing.
+Total: **296 test functions**, all passing.
 
 ---
 
@@ -49,7 +49,7 @@ Total: **304 test functions**, all passing.
 | `internal/ui/theme/` | Design system: 18-field palette (15 colors + 3 semantic overrides), typography, icons, borders, spacing, 4 built-in themes, YAML loading, store | 61 |
 | `internal/ui/styles/` | Semantic style definitions | 14 |
 | `internal/ui/components/` | 29 components (20 display + 9 interactive) | — |
-| `internal/ui/navigation/` | Stack-based navigation: push/pop/replace/forward/modal/overlay | 82 |
+| `internal/ui/navigation/` | Stack-based navigation: push/pop/replace/forward/modal/overlay | 74 |
 | `internal/ui/keymap/` | Centralized keybinding definitions with user overrides | 15 |
 | `internal/ui/layout/` | Layout primitives: Page, Column, Row, Grid, Stack, Spacer, Center, Align | 10 |
 | `internal/ui/renderer/` | Terminal rendering: width, ANSI, wrapping | 9 |

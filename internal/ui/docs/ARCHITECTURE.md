@@ -527,7 +527,7 @@ ui/
 │   ├── stack.go        History stack with depth limit
 │   ├── registry.go     Registry (ScreenIndex → Screen)
 │   ├── events.go       9 event types (Push, Pop, Replace, Forward, ...)
-│   └── tests/          82 black-box tests
+│   └── tests/          74 black-box tests
 
 ├── screens/            Screen implementations
 │   ├── home.go         HomeModel — activity menu

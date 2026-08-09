@@ -122,6 +122,23 @@ func TestDefaultQuizKeys(t *testing.T) {
 	}
 }
 
+// ModeCycle uses a control key. ctrl+m must NOT be used: in a terminal it is
+// byte-for-byte identical to Enter (\r), so the parser emits KeyEnter and the
+// binding would never match while Enter's behavior (submit/reveal) wins.
+func TestDefaultQuizModeCycle(t *testing.T) {
+	matchCtrlT := DefaultQuiz.ModeCycle.Match(tea.KeyMsg(tea.Key{Type: tea.KeyCtrlT})) &&
+		DefaultTypingQuiz.ModeCycle.Match(tea.KeyMsg(tea.Key{Type: tea.KeyCtrlT}))
+	if !matchCtrlT {
+		t.Error("ModeCycle should match ctrl+t in both quizzes")
+	}
+	if DefaultQuiz.ModeCycle.Match(tea.KeyMsg(tea.Key{Type: tea.KeyEnter})) {
+		t.Error("ModeCycle must not match Enter (ctrl+m is Enter in the terminal)")
+	}
+	if DefaultQuiz.ModeCycle.Match(tea.KeyMsg(tea.Key{Type: tea.KeyRunes, Runes: []rune{'m'}})) {
+		t.Error("ModeCycle must not match the m character")
+	}
+}
+
 func TestDefaultQuizFooter(t *testing.T) {
 	if DefaultQuiz.Unrevealed() == "" {
 		t.Error("Quiz.Unrevealed() should not be empty")

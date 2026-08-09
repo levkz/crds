@@ -141,7 +141,7 @@ PaletteScreen
 
 - **State**: `cardIndex`, `revealed`, `cards`, `originalCards`, `cardProgress`,
   `dueIDs`, `inProgress`, `mode`, `examplesPage`, `inverse`
-- **Keys**: `enter` (reveal), `tab` (inverse), `ctrl+m` (mode cycle),
+- **Keys**: `enter` (reveal), `tab` (inverse), `ctrl+t` (mode cycle),
   `a`/`h`/`o`/`e` or `1`/`2`/`3`/`4` (grade), `[`/`left` (prev example),
   `]`/`right` (next example)
 - **Behavior**: Displays a flashcard. On enter, reveals the answer and shows
@@ -237,7 +237,7 @@ PaletteScreen
 - **State**: `cardIndex`, `input`, `revealed`, `inProgress`, `cards`,
   `originalCards`, `cardProgress`, `dueIDs`, `mode`, `inverse`
 - **Keys**: `enter` (submit answer), `ctrl+r` (reveal without grading),
-  `tab` (toggle inverse mode), `ctrl+m` (mode cycle)
+  `tab` (toggle inverse mode), `ctrl+t` (mode cycle)
 - **Behavior**: Displays a term, user types the translation. Uses
   `fuzzy.LevenshteinMatcher` to grade the typed answer. `ctrl+r` reveals the
   correct answer (records `Again`, grade 1). Tab toggles inverse mode —

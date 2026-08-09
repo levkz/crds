@@ -147,6 +147,25 @@ func TestDefaultSearchFooter(t *testing.T) {
 	}
 }
 
+func TestDefaultStatisticsKeys(t *testing.T) {
+	if !DefaultStatistics.SwitchTab.Match(tea.KeyMsg(tea.Key{Type: tea.KeyTab})) {
+		t.Error("Statistics.SwitchTab should match tab")
+	}
+	if !DefaultStatistics.Clear.Match(tea.KeyMsg(tea.Key{Type: tea.KeyEsc})) {
+		t.Error("Statistics.Clear should match esc")
+	}
+	if DefaultStatistics.SwitchTab.Match(tea.KeyMsg(tea.Key{Type: tea.KeyEnter})) {
+		t.Error("Statistics.SwitchTab should not match enter")
+	}
+}
+
+func TestDefaultStatisticsFooter(t *testing.T) {
+	footer := DefaultStatistics.Footer()
+	if footer == "" {
+		t.Error("Statistics.Footer() should not be empty")
+	}
+}
+
 func TestDefaultHomeKeys(t *testing.T) {
 	tests := []struct {
 		name string
@@ -217,16 +236,21 @@ func TestDefaultRegistryBindings(t *testing.T) {
 	if groups["Search"] == 0 {
 		t.Error("missing Search bindings")
 	}
+	if groups["Statistics"] == 0 {
+		t.Error("missing Statistics bindings")
+	}
 }
 
 func TestApplyDefaultOverrides(t *testing.T) {
 	// Save originals to restore after test.
 	saveGlobal, saveList, saveQuiz, saveSearch := DefaultGlobal, DefaultList, DefaultQuiz, DefaultSearch
 	saveHome := DefaultHome
+	saveStatistics := DefaultStatistics
 	defer func() {
 		DefaultGlobal, DefaultList, DefaultQuiz, DefaultSearch = saveGlobal, saveList, saveQuiz, saveSearch
 		DefaultHome = saveHome
-		DefaultRegistry = Registry{Global: saveGlobal, List: saveList, Home: saveHome, Quiz: saveQuiz, Search: saveSearch}
+		DefaultStatistics = saveStatistics
+		DefaultRegistry = Registry{Global: saveGlobal, List: saveList, Home: saveHome, Quiz: saveQuiz, Search: saveSearch, Statistics: saveStatistics}
 	}()
 
 	helpStr := "? help"

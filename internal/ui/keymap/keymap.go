@@ -125,6 +125,15 @@ func (km Search) Footer() string {
 	return BindingList{km.List.Up, km.List.Down, km.Open}.Help()
 }
 
+type Statistics struct {
+	SwitchTab Binding
+	Clear     Binding
+}
+
+func (km Statistics) Footer() string {
+	return BindingList{km.SwitchTab, km.Clear}.Help()
+}
+
 type Home struct {
 	Left  Binding
 	Right Binding
@@ -155,6 +164,7 @@ type Registry struct {
 	Decks      Decks
 	DeckSelect DeckSelect
 	Search     Search
+	Statistics Statistics
 }
 
 // Bindings returns every registered binding with its group/action label.
@@ -200,6 +210,8 @@ func (r Registry) Bindings() []NamedBinding {
 		{"DeckSelect", "PrevColumn", r.DeckSelect.PrevColumn},
 		{"Search", "Open", r.Search.Open},
 		{"Search", "DeleteChar", r.Search.DeleteChar},
+		{"Statistics", "SwitchTab", r.Statistics.SwitchTab},
+		{"Statistics", "Clear", r.Statistics.Clear},
 	}
 }
 
@@ -270,6 +282,11 @@ var DefaultSearch = Search{
 	List:       DefaultList,
 }
 
+var DefaultStatistics = Statistics{
+	SwitchTab: Binding{Keys: []string{"tab"}, Help: "tab switch"},
+	Clear:     Binding{Keys: []string{"esc"}, Help: "esc clear"},
+}
+
 var DefaultHome = Home{
 	Left:  Binding{Keys: []string{"h", "left", "k", "up"}, Help: ""},
 	Right: Binding{Keys: []string{"l", "right", "j", "down"}, Help: ""},
@@ -293,6 +310,7 @@ var DefaultRegistry = Registry{
 	Decks:      DefaultDecks,
 	DeckSelect: DefaultDeckSelect,
 	Search:     DefaultSearch,
+	Statistics: DefaultStatistics,
 }
 
 // BindingOverride specifies user-defined keys and/or help text for a Binding.
@@ -362,6 +380,10 @@ type KeymapConfig struct {
 		Open       *BindingOverride `yaml:"open,omitempty"`
 		DeleteChar *BindingOverride `yaml:"delete_char,omitempty"`
 	} `yaml:"search,omitempty"`
+	Statistics *struct {
+		SwitchTab *BindingOverride `yaml:"switch_tab,omitempty"`
+		Clear     *BindingOverride `yaml:"clear,omitempty"`
+	} `yaml:"statistics,omitempty"`
 }
 
 func applyOverride(b Binding, o BindingOverride) Binding {
@@ -514,6 +536,14 @@ func ApplyDefaultOverrides(cfg KeymapConfig) {
 			DefaultSearch.DeleteChar = applyOverride(DefaultSearch.DeleteChar, *cfg.Search.DeleteChar)
 		}
 	}
+	if cfg.Statistics != nil {
+		if cfg.Statistics.SwitchTab != nil {
+			DefaultStatistics.SwitchTab = applyOverride(DefaultStatistics.SwitchTab, *cfg.Statistics.SwitchTab)
+		}
+		if cfg.Statistics.Clear != nil {
+			DefaultStatistics.Clear = applyOverride(DefaultStatistics.Clear, *cfg.Statistics.Clear)
+		}
+	}
 	// Keep DefaultRegistry in sync with the per-group defaults.
 	DefaultRegistry = Registry{
 		Global:     DefaultGlobal,
@@ -524,5 +554,6 @@ func ApplyDefaultOverrides(cfg KeymapConfig) {
 		Decks:      DefaultDecks,
 		DeckSelect: DefaultDeckSelect,
 		Search:     DefaultSearch,
+		Statistics: DefaultStatistics,
 	}
 }

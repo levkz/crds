@@ -194,36 +194,8 @@ func (m *SearchModel) adjustScroll() {
 }
 
 func (m *SearchModel) filterResults() {
-	if m.query == "" || len(m.cards) == 0 {
-		m.results = nil
-		return
-	}
-
-	m.results = nil
+	m.results = filterCards(m.cards, m.query)
 	m.scrollOffset = 0
-	q := strings.ToLower(m.query)
-	for _, card := range m.cards {
-		if strings.Contains(strings.ToLower(card.Front), q) {
-			m.results = append(m.results, searchEntry{
-				ID:    card.ID,
-				front: card.Front,
-				back:  card.Back,
-				notes: card.Notes,
-			})
-			continue
-		}
-		for _, t := range card.Back {
-			if strings.Contains(strings.ToLower(t), q) {
-				m.results = append(m.results, searchEntry{
-					ID:    card.ID,
-					front: card.Front,
-					back:  card.Back,
-					notes: card.Notes,
-				})
-				break
-			}
-		}
-	}
 }
 
 func isPrintable(s string) bool {

@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"crds/internal/stats"
 	"crds/internal/storage"
 	"crds/internal/ui"
 	"crds/internal/ui/theme"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 // MsgKind classifies command result messages for typed dispatch.
@@ -229,14 +229,38 @@ func LoadAllDeckTagsCmd(d *Dispatcher) tea.Cmd {
 	})
 }
 
-// FetchStatsCmd returns a command that fetches learning statistics.
-func FetchStatsCmd(d *Dispatcher) tea.Cmd {
+// FetchStatsCmd returns a command that fetches learning statistics for the
+// current deck/tag selection (an empty selection covers all decks).
+func FetchStatsCmd(d *Dispatcher, deckIDs, tags []string) tea.Cmd {
 	return Dispatch(d, func(d *Dispatcher) tea.Msg {
-		s, err := d.Stats.Summary()
+		g, err := d.Stats.Summary()
 		if err != nil {
 			return DataErrorMsg{Kind: MsgKindStats, Err: err}
 		}
-		return StatsLoadedMsg{Stats: s}
+		sel, err := d.Stats.SelectionSummary(deckIDs, tags)
+		if err != nil {
+			return DataErrorMsg{Kind: MsgKindStats, Err: err}
+		}
+		hist, err := d.Stats.SelectionHistory(deckIDs, tags)
+		if err != nil {
+			return DataErrorMsg{Kind: MsgKindStats, Err: err}
+		}
+		return StatsLoadedMsg{Stats: g, SelectionStats: &sel, SelectionHistory: hist}
+	})
+}
+
+// FetchWordStatsCmd returns a command that fetches per-word statistics.
+func FetchWordStatsCmd(d *Dispatcher, entryID string) tea.Cmd {
+	return Dispatch(d, func(d *Dispatcher) tea.Msg {
+		ws, err := d.Stats.WordStats(entryID)
+		if err != nil {
+			return DataErrorMsg{Kind: MsgKindStats, Err: err}
+		}
+		hist, err := d.Stats.WordHistory(entryID)
+		if err != nil {
+			return DataErrorMsg{Kind: MsgKindStats, Err: err}
+		}
+		return ui.WordStatsLoadedMsg{EntryID: entryID, Stats: ws, History: hist}
 	})
 }
 
@@ -271,5 +295,7 @@ type SaveErrorMsg struct {
 }
 
 type StatsLoadedMsg struct {
-	Stats stats.Summary
+	Stats            stats.Summary
+	SelectionStats   *stats.Summary
+	SelectionHistory []stats.DayPoint
 }

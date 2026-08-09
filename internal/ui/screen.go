@@ -86,8 +86,23 @@ type TypingGradeMsg struct {
 
 // DeckSelectionChangedMsg is emitted by the Decks screen when the user confirms a new deck selection.
 type DeckSelectionChangedMsg struct {
-	Selected      []string
-	SelectedTags  []string
+	Selected     []string
+	SelectedTags []string
+}
+
+// RefreshWordStatsMsg requests per-word statistics for a single entry. Emitted
+// by the Statistics screen when a word is selected; the root fetches the data
+// and forwards the result back to the active screen.
+type RefreshWordStatsMsg struct {
+	EntryID string
+}
+
+// WordStatsLoadedMsg carries the per-word statistics result. Handled by the
+// Statistics screen (screen-local data, not stored in AppState).
+type WordStatsLoadedMsg struct {
+	EntryID string
+	Stats   stats.WordStats
+	History []stats.DayPoint
 }
 
 // BackHandler is implemented by screens that want to handle Back (Esc)

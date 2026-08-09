@@ -10,15 +10,17 @@ import (
 // Screens that need global data implement StateSyncer and receive a copy of
 // this snapshot on entry (when they become visible) and whenever it changes.
 type AppState struct {
-	Deck          *DeckData
-	DeckProgress  map[string]stats.EntryProgress
-	AllDecks      []string
-	SelectedDecks []string
-	AllTags       []string
-	SelectedTags  []string
-	AllDeckTags   map[string][]string
-	QuizMode      QuizMode
-	Stats         *stats.Summary
+	Deck             *DeckData
+	DeckProgress     map[string]stats.EntryProgress
+	AllDecks         []string
+	SelectedDecks    []string
+	AllTags          []string
+	SelectedTags     []string
+	AllDeckTags      map[string][]string
+	QuizMode         QuizMode
+	Stats            *stats.Summary
+	SelectionStats   *stats.Summary
+	SelectionHistory []stats.DayPoint
 }
 
 // StateSyncer is implemented by screens that read from AppState.

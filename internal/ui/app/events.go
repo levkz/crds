@@ -1,12 +1,12 @@
 package app
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
 	"crds/internal/stats"
 	"crds/internal/ui"
 	"crds/internal/ui/events"
 	"crds/internal/ui/keymap"
 	"crds/internal/ui/theme"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 type entrySetter interface {
@@ -101,7 +101,7 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 		return m.handleDataLoaded(msg)
 
 	case DataErrorMsg:
-		return m.WithNotification("Error loading "+msg.Kind.String()+": "+msg.Err.Error()), nil
+		return m.WithNotification("Error loading " + msg.Kind.String() + ": " + msg.Err.Error()), nil
 
 	case ui.SaveAnswerMsg:
 		m.AnswersRecorded = true
@@ -109,13 +109,15 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 
 	case StatsLoadedMsg:
 		m.State.Stats = &msg.Stats
+		m.State.SelectionStats = msg.SelectionStats
+		m.State.SelectionHistory = msg.SelectionHistory
 		return m, m.stateChangedCmd()
 
 	case SavedMsg:
 		return m.WithNotification("Saved " + msg.Kind.String()), nil
 
 	case SaveErrorMsg:
-		return m.WithNotification("Error saving "+msg.Kind.String()+": "+msg.Err.Error()), nil
+		return m.WithNotification("Error saving " + msg.Kind.String() + ": " + msg.Err.Error()), nil
 
 	case ConfigUpdatedMsg:
 		m.Config = msg.Config
@@ -133,7 +135,10 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 		return m, m.stateChangedCmd()
 
 	case ui.RefreshStatsMsg:
-		return m, FetchStatsCmd(m.Dispatcher)
+		return m, FetchStatsCmd(m.Dispatcher, m.State.SelectedDecks, m.State.SelectedTags)
+
+	case ui.RefreshWordStatsMsg:
+		return m, FetchWordStatsCmd(m.Dispatcher, msg.EntryID)
 
 	case events.ThemeSwitchMsg:
 		th, err := theme.Switch(msg.Name)

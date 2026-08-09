@@ -99,11 +99,19 @@ func TestStatsLoadedMsgUpdatesStateAndSyncs(t *testing.T) {
 	fake.reset()
 
 	sum := stats.Summary{TotalCards: 10}
-	m2, cmd := m.Update(app.StatsLoadedMsg{Stats: sum})
+	sel := stats.Summary{TotalCards: 4, Streak: 3}
+	hist := []stats.DayPoint{{Day: "2026-08-01", Correct: 2, Incorrect: 1}}
+	m2, cmd := m.Update(app.StatsLoadedMsg{Stats: sum, SelectionStats: &sel, SelectionHistory: hist})
 	m3 := m2.(app.Model)
 
 	if m3.State.Stats == nil || m3.State.Stats.TotalCards != 10 {
 		t.Fatalf("State.Stats not updated: %+v", m3.State.Stats)
+	}
+	if m3.State.SelectionStats == nil || m3.State.SelectionStats.Streak != 3 {
+		t.Fatalf("State.SelectionStats not updated: %+v", m3.State.SelectionStats)
+	}
+	if len(m3.State.SelectionHistory) != 1 || m3.State.SelectionHistory[0].Correct != 2 {
+		t.Fatalf("State.SelectionHistory not updated: %+v", m3.State.SelectionHistory)
 	}
 	if cmd == nil {
 		t.Fatal("expected a state-changed command from StatsLoadedMsg")

@@ -274,7 +274,30 @@ Screens are stored in a `navigation.Registry` and managed by the
 `navigation.Manager`. The root model references the current screen
 through `m.Navigator.CurrentScreen()` rather than holding concrete fields.
 
-Every screen owns only its own fields.
+Screens own only their own *local* (ephemeral) state — cursor positions,
+queries, reveal state, card index. Shared data lives in the root model's
+`Model.State ui.AppState` snapshot (see `internal/ui/state.go`):
+
+```go
+type AppState struct {
+    Deck          *DeckData
+    DeckProgress  map[string]stats.EntryProgress
+    AllDecks      []string
+    SelectedDecks []string
+    AllTags       []string
+    SelectedTags  []string
+    AllDeckTags   map[string][]string
+    QuizMode      QuizMode
+    Stats         *stats.Summary
+}
+```
+
+Screens that render from `AppState` implement `ui.StateSyncer` and receive the
+snapshot via `SyncState(AppState) tea.Cmd`. The root pushes it to the active
+screen at two occasions: when the screen becomes visible (after `OnEnter` in
+`transitionTo`/`pushTo`/`popToPrevious`) and whenever the snapshot changes
+(`ui.StateChangedMsg` → `syncActiveScreen()`). `SyncState` must be idempotent —
+it recomputes derived state only when the incoming data differs.
 
 Example:
 
@@ -282,12 +305,13 @@ Quiz owns:
 
 - current card
 - reveal state
-- progress
-- selection
+- examples page
 - inverse mode flag
 
 Quiz does NOT own:
 
+- the deck or per-card progress (read from `AppState` via `SyncState`)
+- the global quiz mode (`AppState.QuizMode`, cycled via `ui.SetQuizModeMsg`)
 - scheduler
 - database
 - deck storage
@@ -310,6 +334,9 @@ Root Model → dispatchEvent()
 │              ├─ events.ThemeSwitchMsg → theme.Switch()
 │              ├─ events.ShowNotificationMsg → show notification
 │              ├─ events.HideNotificationMsg → hide notification
+│              ├─ ui.StateChangedMsg → syncActiveScreen() → active screen's SyncState()
+│              ├─ ui.SetQuizModeMsg → AppState.QuizMode + StateChangedMsg
+│              ├─ ui.RefreshStatsMsg → FetchStatsCmd()
 │              ├─ tea.WindowSizeMsg → resize handler
 │              ├─ tea.KeyMsg → dispatchKeyEvent()
 │              │                  ├─ keymap.DefaultGlobal → global action
@@ -339,8 +366,8 @@ Render
 
 Screen events are defined in `internal/ui/screen.go`:
 `NavigateToMsg`, `SaveAnswerMsg`, `TypeAnswerMsg`, `TypingGradeMsg`,
-`DeckSelectionChangedMsg`, `NavigateToDetailMsg`, `DataLoadedMsg`,
-`DataErrorMsg`, `SavedMsg`. Additional centralized event types live
+`DeckSelectionChangedMsg`, `NavigateToDetailMsg`, `StateChangedMsg`,
+`SetQuizModeMsg`, `RefreshStatsMsg`. Additional centralized event types live
 in the `events/` package (4 types: `TickMsg`, `ThemeSwitchMsg`,
 `ShowNotificationMsg`, `HideNotificationMsg`). The UI should
 communicate through events rather than direct mutation.

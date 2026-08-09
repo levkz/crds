@@ -39,6 +39,9 @@ All 14 original TODO items are implemented and tested (82 tests).
   (flat navigation, no history)
 - `pushTo()` calls `m.Navigator.Push(screen)` with lifecycle hooks
   (stacked navigation, enables back via history stack)
+- After entering a screen, `app/lifecycle.go` also calls `syncActiveScreen()`,
+  which pushes the current `ui.AppState` snapshot to screens implementing
+  `ui.StateSyncer` (Global State Sync protocol)
 - `NavigateToMsg.Screen` is `ui.ScreenIndex`
 - `forwardToScreen()` and `View()` read `m.Navigator.Current`
 - App is initialized with `nav.New(HomeScreen)` in `app.New()`

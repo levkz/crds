@@ -188,6 +188,8 @@ The root model owns:
 - notifications
 - global shortcuts
 - terminal resizing
+- the canonical `AppState` snapshot (`Model.State`) and its propagation to
+  screens via the `ui.StateSyncer` protocol
 
 ---
 
@@ -217,18 +219,22 @@ Related packages outside `ui/`:
 ui/
 ├── screen.go           Screen interface + ScreenIndex type
 ├── theme.go            Semantic color theme (re-exports theme.Default)
+├── state.go            AppState snapshot + StateSyncer protocol + StateChangedMsg
+├── quiz_mode.go        QuizMode enum + parse/next
+├── sorter.go           SortCards (mode-aware card ordering)
 
 ├── app/                Root model (Bubble Tea entry point)
 │   ├── app.go          New() + Run() + config/keymap/theme init
-│   ├── model.go        Root Model struct, GlobalState, messages
-│   ├── events.go       dispatchEvent + dispatchKeyEvent + forwardToScreen
+│   ├── model.go        Root Model struct, GlobalState + State (AppState), messages
+│   ├── events.go       dispatchEvent + dispatchKeyEvent + forwardToScreen + syncActiveScreen
 │   ├── view.go         Root View() + help overlay using keymap.Registry
 │   ├── update.go       Root Update()
-│   ├── lifecycle.go    Lifecycle hooks, transitionTo, pushTo, popToPrevious
+│   ├── lifecycle.go    Lifecycle hooks, transitionTo, pushTo, popToPrevious (entry state sync)
 │   ├── commands.go     NavigateToMsg, Dispatcher, config update
 │   ├── config.go       Config + DefaultConfig + ApplyYAML
 │   ├── dependencies.go DeckProvider, ProgressRecorder interfaces
-│   └── tick.go         Tick loop
+│   ├── tick.go         Tick loop
+│   └── tests/          state sync protocol tests
 
 ├── navigation/         Centralized navigation
 │   ├── manager.go      Manager (Push, Pop, Replace, Forward, Reset, ...)
@@ -429,9 +435,9 @@ Navigation should be testable through emitted events.
 
 # Known Issues
 
-- QuizModel.Cards is pre-populated — no data loading wired yet
-- Quiz progress always 0, grading returns no-op
-- Statistics shows zeroes for all metrics (no scheduler wired)
+- Quiz progress in the global snapshot is only refreshed on deck load, not after
+  each answer (scheduler not wired)
+- Statistics Due Today and Current Streak show zeroes (no scheduler wired)
 - `~/.config/crds/` is created on `app.New()` but CLI commands are stubs, so it only triggers when the UI actually launches
 
 ---

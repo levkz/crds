@@ -16,7 +16,7 @@ All core app scaffolding is in place. Remaining work is per-screen implementatio
 - Model cleanup/shutdown hooks (partially implemented in ShutdownCmd)
 - State serialization (if needed for persistence)
 - Integration with domain models (currently uses stubs)
-- Model testing (no tests yet)
+- Model testing (partial: `tests/` covers the state sync protocol)
 
 Recommendation:
 
@@ -41,7 +41,9 @@ The application model appears substantially complete for the current architectur
 
 - [x] **Global state** — `GlobalState` struct with `Overlay`, `Notification`,
       `Loading` fields. `WithOverlay`, `WithNotification`, `WithLoading` helpers
-      return immutable copies (`model.go`).
+      return immutable copies (`model.go`). The canonical data snapshot lives in
+      `Model.State ui.AppState` (see `internal/ui/state.go`); screens receive it
+      via the `ui.StateSyncer` protocol on entry and on change.
 
 - [x] **Tick/update loop** — `TickMsg` fired every 1 second via `tea.Tick`,
       re-armed on each tick. Started in `Init()` (`tick.go`).
@@ -53,8 +55,10 @@ The application model appears substantially complete for the current architectur
 
 - [x] **Event dispatch** — Central `dispatchEvent(msg)` router in `events.go`.
       Root-level events (window resize, overlays, notifications, navigation,
-      command results, tick) handled directly. Everything else forwarded to the
-      active screen via `forwardToScreen`. Overlay blocks screen input.
+      command results, tick, `StateChangedMsg`) handled directly. Everything
+      else forwarded to the active screen via `forwardToScreen`. Overlay blocks
+      screen input. `StateChangedMsg` drives `syncActiveScreen()`, which pushes
+      the `AppState` snapshot to the active `ui.StateSyncer`.
 
 - [x] **Screen lifecycle** — `Lifecycle` interface with `OnEnter`/`OnLeave`
       hooks. `transitionTo(screen)` calls `OnLeave` on the current screen,

@@ -105,10 +105,15 @@ scroll indicators.
 ## Data Flow
 
 1. On app startup, `app/events.go` loads decks, tags, and deck→tag mapping
-2. All data is pushed to `DeckSelectModel` via `SetData(deckItems, selectedDecks, tagItems, selectedTags, deckTags)`
+2. The data lands in the global `ui.AppState` snapshot; the root pushes it to
+   `DeckSelectModel` via `SyncState(AppState)` (on entry and on state change),
+   and the screen rebuilds its two columns
 3. User interacts (toggle, search, switch columns)
 4. On Enter → emits `ui.DeckSelectionChangedMsg{Selected: deckIDs, SelectedTags: tags}`
-5. `app/events.go` → `handleDeckSelectionWithTags()` → saves state, resets session, loads deck data
+5. `app/events.go` → if quiz is mid-progress with recorded answers, shows confirmation
+   dialog; otherwise applies immediately via `handleDeckSelectionWithTags()`
+6. After applying, navigates back to the previous screen (via `popToPrevious`),
+   or to Home if no navigation history
 
 ## Registration
 
@@ -122,10 +127,12 @@ Replaces the old `screens.NewDecks()` at the same slot (`ui.DecksScreen`).
 ## Navigation Integration
 
 - **From Home**: "deck selection" menu item emits `NavigateToMsg{Screen: ui.DecksScreen}`
-- **Global shortcut**: `ctrl+f` navigates directly to DecksScreen
-- **Quiz confirmation**: If a quiz is in progress with recorded answers,
-  a confirmation dialog ("Changing decks will restart the quiz. Continue?")
-  must be accepted before transitioning
+- **Global shortcut**: `ctrl+f` navigates via `pushTo` (preserves navigation stack)
+- **Return**: After confirming selection, user returns to the screen they came from
+- **Mid-quiz confirmation**: If the quiz is in progress (answered cards not all done),
+  a confirmation dialog ("Already answered cards will be recorded. Are you sure?")
+  must be accepted before the selection takes effect
+- **Completed quiz**: No confirmation — changing decks after the quiz is done is free
 
 ## State Persistence
 

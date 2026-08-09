@@ -47,9 +47,58 @@ Instead they emit typed messages that the root model handles:
 |---|---|---|
 | `ui.NavigateToMsg` | Home, any screen needing transition | `app/events.go` → `transitionTo()` |
 | `events.ThemeSwitchMsg` | Settings | `app/events.go` → `theme.Switch()` |
+| `ui.SetQuizModeMsg` | Quiz / TypingQuiz (mode cycle) | `app/events.go` → global `AppState.QuizMode` |
+| `ui.RefreshStatsMsg` | Statistics (`OnEnter`) | `app/events.go` → `FetchStatsCmd()` |
 
 Global keybindings (`esc`, `?`, `ctrl+c`) are handled in `app/events.go`
 before messages reach screens. Screens only handle their own keys.
+
+---
+
+## Global State Sync
+
+The root `Model` owns a single canonical snapshot, `ui.AppState` (defined in
+`internal/ui/state.go`), holding the shared data screens render from:
+
+- `Deck`, `DeckProgress` — merged selected decks + per-card progress
+- `AllDecks`/`SelectedDecks`, `AllTags`/`SelectedTags`, `AllDeckTags`
+- `QuizMode` — global, shared by both quiz screens
+- `Stats` — latest stats summary
+
+Screens that need this data implement `ui.StateSyncer`:
+
+```go
+type StateSyncer interface {
+    SyncState(AppState) tea.Cmd
+}
+```
+
+The root pushes the snapshot to the **active** screen at exactly two occasions:
+
+1. **On entry** — `transitionTo`/`pushTo`/`popToPrevious` call
+   `syncActiveScreen()` right after `OnEnter` (`app/lifecycle.go`), so a screen
+   that just became visible receives the current state.
+2. **On state change** — every mutation of `AppState` emits `ui.StateChangedMsg`;
+   the root forwards it to the active screen via `syncActiveScreen()`
+   (`app/events.go`). Transient messages (`SaveAnswerMsg`, ticks, notifications)
+   do **not** trigger a sync.
+
+`SyncState` must be **idempotent**: it should recompute derived state (sorting,
+filtering) only when the incoming snapshot actually differs, so unrelated state
+changes don't reset screen-local progress (e.g. a quiz's `cardIndex`).
+
+Current implementers:
+
+| Screen | Reads |
+|---|---|
+| `QuizModel` | `Deck`, `DeckProgress`, `QuizMode` → re-sort |
+| `TypingQuizModel` | `Deck`, `DeckProgress`, `QuizMode` → re-sort |
+| `DeckSelectModel` | `AllDecks`/`SelectedDecks`, `AllTags`/`SelectedTags`, `AllDeckTags` → rebuild columns |
+| `SearchModel` | `Deck.Cards` → rebuild results |
+| `StatisticsModel` | `Stats` → refresh summary |
+
+`DetailModel` is the exception: it receives its entry via `NavigateToDetailMsg`
+(`entrySetter.SetEntry`), a per-entry navigation payload, not from `AppState`.
 
 ---
 
@@ -83,17 +132,23 @@ PaletteScreen
 
 ### QuizModel (`quiz.go`)
 
-- **State**: `cardIndex`, `revealed`, `cards`, `examplesPage`, `inverse`
-- **Keys**: `enter` (reveal), `tab` (inverse), `a`/`h`/`o`/`e` or `1`/`2`/`3`/`4` (grade), `[`/`left` (prev example), `]`/`right` (next example)
+- **State**: `cardIndex`, `revealed`, `cards`, `originalCards`, `cardProgress`,
+  `mode`, `examplesPage`, `inverse`
+- **Keys**: `enter` (reveal), `tab` (inverse), `m` (mode cycle),
+  `a`/`h`/`o`/`e` or `1`/`2`/`3`/`4` (grade), `[`/`left` (prev example),
+  `]`/`right` (next example)
 - **Behavior**: Displays a flashcard. On enter, reveals the answer and shows
   the grade menu (`[a]gain`, `[h]ard`, `[o]kay`, `[e]asy`). Grading advances
-  to the next card; navigating to Statistics when deck finishes. Tab toggles
-  inverse mode — shows translations as the question and the term as the answer.
+  to the next card. When all cards are done, shows "Quiz complete!" with
+  `[enter] restart` and `[esc] back` options. Tab toggles inverse mode —
+  shows translations as the question and the term as the answer.
+- **Data**: receives deck, progress, and mode via `SyncState` (see Global State
+  Sync); re-sorts cards only when that data actually changes. Mode cycling
+  (`m`) emits `ui.SetQuizModeMsg` so both quiz screens stay in sync.
 - **Renders**: Term (centered, vertically padded at height/4) + (if revealed)
   correct answer + centered grade menu + bottom section (notes, tags as PrimaryBg pills,
   paginated examples in single/two-column layout, 8-char side padding) +
   progress "card N/M" + footer shortcuts.
-- **Known issues**: `Cards` is pre-populated — no data loading wired yet.
 
 ### SearchModel (`search.go`)
 
@@ -105,6 +160,8 @@ PaletteScreen
   Enter opens the selected result's detail, Esc returns to input mode.
   Implements `Lifecycle` — `OnEnter` resets to input mode, `OnLeave` clears
   query/results/cursor/mode when navigating away.
+- **Data**: receives the current deck's cards via `SyncState`; re-filters
+  results when a query is active.
 - **Scrolling**: Uses `RenderListClipped` with `scrollOffset` to clip
   results to available terminal height. `adjustScroll()` keeps cursor
   visible when navigating. `↑`/`↓` indicators show when content is clipped.
@@ -113,12 +170,15 @@ PaletteScreen
 
 ### StatisticsModel (`statistics.go`)
 
-- **State**: None (static display)
+- **State**: `summary` (from `SyncState`)
 - **Keys**: None (information only)
 - **Behavior**: Displays 6 study metrics in `styles.Panel` containers:
   Reviewed Today, Accuracy, Due Today, Current Streak, Total Cards, Mastered.
+  `OnEnter` emits `ui.RefreshStatsMsg`; the root fetches stats and pushes them
+  back via `SyncState`.
 - **Renders**: Header + Panel grid + footer
-- **Known issue**: All metrics show zero / "—" — no scheduler wired yet.
+- **Known issue**: Due Today and Current Streak still show 0 / "—" — no
+  scheduler wired yet.
 
 ### SettingsModel (`settings.go`)
 
@@ -150,7 +210,7 @@ PaletteScreen
   in each column. Search filters items in real time via substring match. BackHandler
   intercepts Esc: clears search query (non-empty) or dismisses screen (empty query).
   Enter confirms selection and emits `DeckSelectionChangedMsg` with both `Selected`
-  and `SelectedTags`.
+  and `SelectedTags`. Columns are rebuilt from `AppState` via `SyncState`.
 - **Renders**: Header + two centered columns with secondary-color divider + scrollable
   lists with selected items highlighted via `Secondary.Render("✓ " + name)` + footer
 
@@ -159,12 +219,15 @@ PaletteScreen
 - **State**: `CardIndex`, `Input` (text input), `Feedback`, `Progress`, `Cards`,
   `Inverse` (mode toggle)
 - **Keys**: `enter` (submit answer), `ctrl+r` (reveal without grading),
-  `tab` (toggle inverse mode)
+  `tab` (toggle inverse mode), `m` (mode cycle)
 - **Behavior**: Displays a term, user types the translation. Uses
   `fuzzy.LevenshteinMatcher` to grade the typed answer. `ctrl+r` reveals the
   correct answer (records `Again`, grade 1). Tab toggles inverse mode —
   shows translations as the prompt and expects the term as the answer;
   term variants use the same `()`/`[]` expansion syntax as translations.
+  When all cards are done, shows "Quiz complete!" with `[enter] restart`
+  and `[esc] back` options. Receives deck, progress, and mode via `SyncState`;
+  mode cycling (`m`) emits `ui.SetQuizModeMsg`.
 - **Renders**: Header + term (centered, vertically padded, at height/5) + correct-answer
   slot (always present; empty placeholder when unrevealed, "Correct: ..." text when revealed) +
   centered input with cursor (fixed position — does not shift on reveal) + bottom section after
@@ -292,14 +355,14 @@ screens/
 
 ## Suggestions
 
-1. **Data loading** — Screens like Quiz should accept data at construction
-   time or load it via commands returned from `Init()`. Currently `Cards` is
-   prepopulated and always empty.
+1. **Data loading** — Resolved via the Global State Sync protocol: deck, progress,
+   mode, tags, and stats are pushed into screens through `SyncState` on entry and
+   on change.
 
-2. **Lifecycle hooks** — Search implements `app.Lifecycle`.
-   DeckSelectModel uses `HandleBack()` instead. Quiz and TypingQuiz are
-   candidates for `OnEnter` (load deck data) and Statistics for `OnEnter`
-   (refresh metrics).
+2. **Lifecycle hooks** — Search implements `app.Lifecycle` (resets to input mode).
+   Statistics implements `OnEnter` (emits `RefreshStatsMsg`). DeckSelectModel uses
+   `HandleBack()` instead. Quiz and TypingQuiz are candidates for `OnEnter`
+   (e.g. reset per-visit state).
 
 3. **Home improvements** — After wiring deck loading, show recent decks or
    quick-start options. Consider `components.Text` for descriptions below
@@ -309,19 +372,16 @@ screens/
    during `transitionTo()` via the `Lifecycle` interface. Screens should
    support dynamic sizing rather than relying on hardcoded defaults.
 
-5. **Event-driven search** — When search is wired to real data, consider
-   debouncing the query input and using a channel or command to load results
-   asynchronously.
+5. **Event-driven search** — Search now filters `Deck.Cards` in memory via
+   `SyncState`. Consider debouncing the query input and using a channel or
+   command to load results asynchronously.
 
-6. **Statistics refresh** — Statistics could refresh on `OnEnter()` lifecycle
-   hook to show fresh data each time the screen is visited.
+6. **Statistics refresh** — Statistics refreshes on `OnEnter()` by emitting
+   `ui.RefreshStatsMsg`; the root fetches stats and syncs the screen.
 
 ---
 
 ## TODOs
 
-- [ ] Wire quiz data loading — `QuizModel.Cards` should come from a deck via
-      `app.LoadDeckCmd` or similar
-- [ ] Wire statistics to real metrics — pull from a scheduler/progress store
-- [ ] Add `Width`/`Height` awareness — allow screens to adapt to terminal size
-- [ ] Add `Lifecycle` implementation to QuizModel (load deck on enter)
+- [ ] Add `Lifecycle` implementation to QuizModel (reset per-visit state on enter)
+- [ ] Wire Due Today / Current Streak metrics once the scheduler exists

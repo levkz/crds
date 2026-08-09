@@ -18,6 +18,41 @@ func (q *Queries) DeleteEntriesByDeck(ctx context.Context, deckID string) error 
 	return err
 }
 
+const getAllEntries = `-- name: GetAllEntries :many
+SELECT id, deck_id, term, notes, position, created_at, updated_at FROM entries ORDER BY position
+`
+
+func (q *Queries) GetAllEntries(ctx context.Context) ([]Entry, error) {
+	rows, err := q.db.QueryContext(ctx, getAllEntries)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Entry{}
+	for rows.Next() {
+		var i Entry
+		if err := rows.Scan(
+			&i.ID,
+			&i.DeckID,
+			&i.Term,
+			&i.Notes,
+			&i.Position,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getEntry = `-- name: GetEntry :one
 SELECT id, deck_id, term, notes, position, created_at, updated_at FROM entries WHERE id = ?
 `

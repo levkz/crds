@@ -307,6 +307,247 @@ func (s *Store) EntryProgress(deckID string) (map[string]stats.EntryProgress, er
 	return result, nil
 }
 
+// selectionDecks resolves a deck/tag selection to a concrete deck list.
+// Rule: non-empty deckIDs win; otherwise decks carrying any selected tag;
+// otherwise all decks (empty slice signals "no filter").
+func (s *Store) selectionDecks(deckIDs, tags []string) ([]string, error) {
+	if len(deckIDs) > 0 {
+		return deckIDs, nil
+	}
+	if len(tags) > 0 {
+		seen := make(map[string]bool)
+		for _, t := range tags {
+			rows, err := s.queries.ListDecksByTag(context.Background(), t)
+			if err != nil {
+				return nil, err
+			}
+			for _, d := range rows {
+				seen[d] = true
+			}
+		}
+		var out []string
+		for d := range seen {
+			out = append(out, d)
+		}
+		return out, nil
+	}
+	return nil, nil
+}
+
+// SelectionSummary returns aggregate stats for the deck/tag selection
+// (see selectionDecks for the scope rules).
+func (s *Store) SelectionSummary(deckIDs, tags []string) (stats.Summary, error) {
+	ctx := context.Background()
+	decks, err := s.selectionDecks(deckIDs, tags)
+	if err != nil {
+		return stats.Summary{}, err
+	}
+
+	var total, correct int64
+	if len(decks) == 0 {
+		row, err := s.queries.GetTodayStats(ctx)
+		if err != nil {
+			return stats.Summary{}, err
+		}
+		total, correct = row.TotalReviews, row.CorrectReviews
+	} else {
+		row, err := s.queries.GetTodayStatsByDecks(ctx, decks)
+		if err != nil {
+			return stats.Summary{}, err
+		}
+		total, correct = row.TotalReviews, row.CorrectReviews
+	}
+
+	var accuracy float64
+	if total > 0 {
+		accuracy = float64(correct) / float64(total) * 100
+	}
+
+	mastered := s.masteredCountIn(decks)
+
+	days, err := s.selectionReviewDays(decks)
+	if err != nil {
+		return stats.Summary{}, err
+	}
+
+	return stats.Summary{
+		ReviewedToday: int(total),
+		Accuracy:      accuracy,
+		TotalCards:    s.entryCountIn(decks),
+		Mastered:      mastered,
+		DueToday:      0,
+		Streak:        stats.Streak(days),
+	}, nil
+}
+
+// entryCountIn counts distinct entries across the given decks. Entry IDs are
+// globally unique (PK), so summing per-deck counts is exact. An empty deck
+// list means all decks.
+func (s *Store) entryCountIn(decks []string) int {
+	ctx := context.Background()
+	if len(decks) == 0 {
+		all, err := s.queries.GetAllEntries(ctx)
+		if err != nil {
+			return 0
+		}
+		return len(all)
+	}
+	total := 0
+	for _, d := range decks {
+		n, err := s.queries.GetDeckEntryCount(ctx, d)
+		if err != nil {
+			continue
+		}
+		total += int(n)
+	}
+	return total
+}
+
+// SelectionHistory returns daily review aggregates for the selection.
+func (s *Store) SelectionHistory(deckIDs, tags []string) ([]stats.DayPoint, error) {
+	decks, err := s.selectionDecks(deckIDs, tags)
+	if err != nil {
+		return nil, err
+	}
+	var out []stats.DayPoint
+	if len(decks) == 0 {
+		rows, err := s.queries.GetDailyStats(context.Background())
+		if err != nil {
+			return nil, err
+		}
+		out = make([]stats.DayPoint, 0, len(rows))
+		for _, r := range rows {
+			out = append(out, stats.DayPoint{
+				Day:       r.Day,
+				Correct:   int(r.CorrectReviews),
+				Incorrect: int(r.TotalReviews - r.CorrectReviews),
+			})
+		}
+		return out, nil
+	}
+	rows, err := s.queries.GetDailyStatsByDecks(context.Background(), decks)
+	if err != nil {
+		return nil, err
+	}
+	out = make([]stats.DayPoint, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, stats.DayPoint{
+			Day:       r.Day,
+			Correct:   int(r.CorrectReviews),
+			Incorrect: int(r.TotalReviews - r.CorrectReviews),
+		})
+	}
+	return out, nil
+}
+
+// WordStats returns per-entry statistics for a single entry.
+func (s *Store) WordStats(entryID string) (stats.WordStats, error) {
+	row, err := s.queries.GetEntryStats(context.Background(), entryID)
+	if err != nil {
+		return stats.WordStats{}, err
+	}
+	ws := stats.WordStats{
+		TotalReviews:  int(row.TotalReviews),
+		ReviewedToday: int(row.ReviewedToday),
+		Correct:       int(row.CorrectReviews),
+		Incorrect:     int(row.IncorrectReviews),
+	}
+	if row.LastReviewed != "" {
+		if t, err := parseSQLTime(row.LastReviewed); err == nil {
+			ws.LastReviewed = &t
+		}
+	}
+	return ws, nil
+}
+
+// WordHistory returns daily review aggregates for a single entry.
+func (s *Store) WordHistory(entryID string) ([]stats.DayPoint, error) {
+	rows, err := s.queries.GetEntryDailyStats(context.Background(), entryID)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]stats.DayPoint, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, stats.DayPoint{
+			Day:       r.Day,
+			Correct:   int(r.CorrectReviews),
+			Incorrect: int(r.TotalReviews - r.CorrectReviews),
+		})
+	}
+	return out, nil
+}
+
+func (s *Store) selectionReviewDays(decks []string) ([]time.Time, error) {
+	var days []string
+	var err error
+	if len(decks) == 0 {
+		days, err = s.queries.GetReviewDays(context.Background())
+	} else {
+		days, err = s.queries.GetReviewDaysByDecks(context.Background(), decks)
+	}
+	if err != nil {
+		return nil, err
+	}
+	var out []time.Time
+	for _, d := range days {
+		if t, err := time.Parse("2006-01-02", d); err == nil {
+			out = append(out, t)
+		}
+	}
+	return out, nil
+}
+
+// masteredCountIn counts entries at/above the mastery threshold, restricted
+// to the given decks (nil/empty = all decks).
+func (s *Store) masteredCountIn(decks []string) int {
+	ctx := context.Background()
+	var all []db.GetDeckProgressRow
+	for _, d := range decks {
+		rows, err := s.queries.GetDeckProgress(ctx, d)
+		if err != nil {
+			continue
+		}
+		all = append(all, rows...)
+	}
+	if len(decks) == 0 {
+		allProgress, err := s.queries.GetAllProgress(ctx)
+		if err != nil {
+			return 0
+		}
+		var count int
+		for _, p := range allProgress {
+			correct := int(p.Correct)
+			incorrect := int(p.Incorrect)
+			if stats.Confidence(correct, incorrect) >= 0.8 {
+				count++
+			}
+		}
+		return count
+	}
+
+	// Deduplicate entries appearing in multiple decks.
+	seen := make(map[string]bool)
+	count := 0
+	for _, p := range all {
+		correct := int(p.Correct)
+		incorrect := int(p.Incorrect)
+		if stats.Confidence(correct, incorrect) >= 0.8 && !seen[p.EntryID] {
+			seen[p.EntryID] = true
+			count++
+		}
+	}
+	return count
+}
+
+func parseSQLTime(s string) (time.Time, error) {
+	for _, layout := range []string{time.RFC3339, "2006-01-02 15:04:05"} {
+		if t, err := time.Parse(layout, s); err == nil {
+			return t, nil
+		}
+	}
+	return time.Time{}, fmt.Errorf("parse time %q", s)
+}
+
 // --- Convenience queries ---
 
 // GetReviewsByEntry returns the last n reviews for a given entry.

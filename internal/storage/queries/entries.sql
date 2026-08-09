@@ -11,6 +11,9 @@ ON CONFLICT (id) DO UPDATE SET
 -- name: ListEntriesByDeck :many
 SELECT * FROM entries WHERE deck_id = ? ORDER BY position;
 
+-- name: GetAllEntries :many
+SELECT * FROM entries ORDER BY position;
+
 -- name: GetEntry :one
 SELECT * FROM entries WHERE id = ?;
 

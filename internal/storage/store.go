@@ -14,6 +14,7 @@ import (
 
 	"crds/internal/model"
 	"crds/internal/parser"
+	"crds/internal/stats"
 	"crds/internal/storage/db"
 	"crds/internal/ui"
 
@@ -207,6 +208,103 @@ func (s *Store) Stats() ui.Stats {
 		Accuracy:      accuracy,
 		TotalCards:    int(row.TotalReviews),
 	}
+}
+
+// Summary returns aggregate stats across all decks (stats.Provider).
+func (s *Store) Summary() (stats.Summary, error) {
+	row, err := s.queries.GetTodayStats(context.Background())
+	if err != nil {
+		return stats.Summary{}, err
+	}
+
+	var accuracy float64
+	if row.TotalReviews > 0 {
+		accuracy = float64(row.CorrectReviews) / float64(row.TotalReviews) * 100
+	}
+
+	mastered := s.masteredCount()
+
+	return stats.Summary{
+		ReviewedToday: int(row.TotalReviews),
+		Accuracy:      accuracy,
+		TotalCards:    int(row.TotalReviews),
+		Mastered:      mastered,
+		DueToday:      0,
+	}, nil
+}
+
+func (s *Store) masteredCount() int {
+	ctx := context.Background()
+	allProgress, err := s.queries.GetAllProgress(ctx)
+	if err != nil {
+		return 0
+	}
+	var count int
+	for _, p := range allProgress {
+		correct := int(p.Correct)
+		incorrect := int(p.Incorrect)
+		if stats.Confidence(correct, incorrect) >= 0.8 {
+			count++
+		}
+	}
+	return count
+}
+
+// DeckSummary returns per-deck stats (stats.Provider).
+func (s *Store) DeckSummary(deckID string) (stats.DeckStats, error) {
+	ctx := context.Background()
+
+	entryCount, err := s.queries.GetDeckEntryCount(ctx, deckID)
+	if err != nil {
+		return stats.DeckStats{}, fmt.Errorf("deck stats: get entry count: %w", err)
+	}
+
+	row, err := s.queries.GetTodayStatsByDeck(ctx, deckID)
+	if err != nil {
+		return stats.DeckStats{}, fmt.Errorf("deck stats: get today stats: %w", err)
+	}
+
+	var accuracy float64
+	if row.TotalReviews > 0 {
+		accuracy = float64(row.CorrectReviews) / float64(row.TotalReviews) * 100
+	}
+
+	progress, err := s.queries.GetDeckProgress(ctx, deckID)
+	if err != nil {
+		progress = nil
+	}
+	var totalConf float64
+	for _, p := range progress {
+		totalConf += stats.Confidence(int(p.Correct), int(p.Incorrect))
+	}
+	var avgConf float64
+	if len(progress) > 0 {
+		avgConf = totalConf / float64(len(progress))
+	}
+
+	return stats.DeckStats{
+		TotalEntries:  int(entryCount),
+		ReviewedToday: int(row.TotalReviews),
+		Accuracy:      accuracy,
+		AvgConfidence: avgConf,
+	}, nil
+}
+
+// EntryProgress returns per-entry progress for a deck (stats.Provider).
+func (s *Store) EntryProgress(deckID string) (map[string]stats.EntryProgress, error) {
+	ctx := context.Background()
+	rows, err := s.queries.GetDeckProgress(ctx, deckID)
+	if err != nil {
+		return nil, fmt.Errorf("entry progress: %w", err)
+	}
+	result := make(map[string]stats.EntryProgress, len(rows))
+	for _, r := range rows {
+		result[r.EntryID] = stats.EntryProgress{
+			Correct:   int(r.Correct),
+			Incorrect: int(r.Incorrect),
+		}
+	}
+	return result, nil
 }
 
 // --- Convenience queries ---

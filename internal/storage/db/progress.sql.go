@@ -10,6 +10,81 @@ import (
 	"time"
 )
 
+const getAllProgress = `-- name: GetAllProgress :many
+SELECT deck_id, entry_id, reverse, ease, interval, due, correct, incorrect
+FROM progress
+`
+
+func (q *Queries) GetAllProgress(ctx context.Context) ([]Progress, error) {
+	rows, err := q.db.QueryContext(ctx, getAllProgress)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Progress{}
+	for rows.Next() {
+		var i Progress
+		if err := rows.Scan(
+			&i.DeckID,
+			&i.EntryID,
+			&i.Reverse,
+			&i.Ease,
+			&i.Interval,
+			&i.Due,
+			&i.Correct,
+			&i.Incorrect,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getDeckProgress = `-- name: GetDeckProgress :many
+SELECT entry_id,
+    CAST(SUM(correct) AS INTEGER) as correct,
+    CAST(SUM(incorrect) AS INTEGER) as incorrect
+FROM progress
+WHERE deck_id = ?
+GROUP BY entry_id
+`
+
+type GetDeckProgressRow struct {
+	EntryID   string `db:"entry_id"`
+	Correct   int64  `db:"correct"`
+	Incorrect int64  `db:"incorrect"`
+}
+
+func (q *Queries) GetDeckProgress(ctx context.Context, deckID string) ([]GetDeckProgressRow, error) {
+	rows, err := q.db.QueryContext(ctx, getDeckProgress, deckID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetDeckProgressRow{}
+	for rows.Next() {
+		var i GetDeckProgressRow
+		if err := rows.Scan(&i.EntryID, &i.Correct, &i.Incorrect); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getDueCards = `-- name: GetDueCards :many
 SELECT deck_id, entry_id, reverse, ease, interval, due, correct, incorrect
 FROM progress

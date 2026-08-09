@@ -46,7 +46,7 @@ Total: **296 test functions**, all passing.
 | `internal/stats/` | Stats aggregation for statistics screen | 2 |
 | `internal/editor/` | `$EDITOR`/nano/vim invocation with YAML buffer handling | — |
 | `internal/cli/` | Kong commands: quiz, stats, deck (list/import/export/delete/search/edit), term (add/rm/edit), tag (add/rm/list), state (reserve/revert/sync), profile (export/import) | 9 |
-| `internal/ui/theme/` | Design system: 18-field palette (15 colors + 3 semantic overrides), typography, icons, borders, spacing, 4 built-in themes, YAML loading, store | 61 |
+| `internal/ui/theme/` | Design system: 18-field palette (15 colors + 3 semantic overrides), typography, icons, borders, spacing, 5 built-in themes, YAML loading, store | 61 |
 | `internal/ui/styles/` | Semantic style definitions | 14 |
 | `internal/ui/components/` | 29 components (20 display + 9 interactive) | — |
 | `internal/ui/navigation/` | Stack-based navigation: push/pop/replace/forward/modal/overlay | 74 |

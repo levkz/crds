@@ -2,7 +2,7 @@
 
 Keyboard-first vocabulary learning with flashcards and typing quizzes, entirely in your terminal.
 
-Vocabulary belongs in YAML for easy manipulation. User progress belongs in SQLite 'f.
+Vocabulary belongs in YAML for easy manipulation. User progress belongs in SQLite.
 
 ## Features
 
@@ -10,7 +10,7 @@ Vocabulary belongs in YAML for easy manipulation. User progress belongs in SQLit
 - **Full TUI** — 9 screens with stack-based navigation, theme system, and terminal-wide background fill
 - **YAML decks** — Human-editable, version-controllable vocabulary files with auto-ID generation and variant expansion syntax
 - **SQLite persistence** — Reviews, sessions, progress, typing details (via `modernc.org/sqlite` + goose + sqlc)
-- **4 built-in themes** — default, dark, light, tokyonight; plus custom YAML themes via 18-field color palette with semantic overrides
+- **5 built-in themes** — default, dark, light, tokyonight, mocha; plus custom YAML themes via 18-field color palette with semantic overrides
 - **CLI + TUI** — Manage decks, terms, tags, and backups from the command line or launch the interactive UI
 - **Shell completion** — Deck names, entry IDs, and reserve file paths
 
@@ -354,7 +354,7 @@ Location: `~/.config/crds/`
 
 ### Built-in Themes
 
-Default, dark, light, tokyonight (hex values from [folke/tokyonight.nvim](https://github.com/folke/tokyonight.nvim)). The palette has 18 fields: 15 named colors plus 3 semantic overrides (Primary, Secondary, Accent).
+Default, dark, light, tokyonight (hex values from [folke/tokyonight.nvim](https://github.com/folke/tokyonight.nvim)), mocha. The palette has 18 fields: 15 named colors plus 3 semantic overrides (Primary, Secondary, Accent).
 
 ## Data Locations
 

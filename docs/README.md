@@ -107,5 +107,5 @@ Notes for changes. It contains **no status, test counts, known issues, or plans*
 | `internal/ui/renderer/CONTEXT.md` | Rendering utilities (width, ANSI, wrapping) |
 | `internal/ui/styles/CONTEXT.md` | Semantic style definitions |
 | `internal/ui/theme/CONTEXT.md` | Design system: palette, typography, icons, theming |
-| `internal/ui/theme/DESIGN.md` | Design language documentation (colors, icons, spacing, borders) |
+| `internal/ui/theme/DESIGN.md` | Theme design language (colors, icons, spacing, borders) — decision doc |
 | `internal/ui/actions/CONTEXT.md` | Why the actions layer is deferred |

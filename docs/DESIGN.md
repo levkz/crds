@@ -61,8 +61,9 @@ whitespace, generates missing IDs, detects duplicates. Produces `model.Deck`.
 
 ## quiz
 
-Learning engine (planned). Starts quizzes, validates answers, normalizes text,
-scores, reveals answers. Must not depend on Bubble Tea.
+Learning engine. Starts quizzes, validates answers, normalizes text,
+scores, reveals answers. Must not depend on Bubble Tea. Not yet built —
+see `docs/status.md` and `docs/roadmap.md`.
 
 ## scheduler
 
@@ -79,7 +80,8 @@ syncs YAML decks into the cache using mtime checks. Legacy filesystem
 
 ## importer / exporter
 
-Imports and exports external formats (txt, csv, json, anki, quizlet). Not built.
+Imports and exports external formats (txt, csv, json, anki, quizlet). Not built —
+see `docs/status.md` and `docs/roadmap.md`.
 
 ## config
 

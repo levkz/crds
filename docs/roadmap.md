@@ -12,7 +12,7 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done.
 
 # Completed plans (archived)
 
-## `PLAN.md` — original implementation plan
+## Former `PLAN.md` — original implementation plan
 
 All phases complete. Superseded by this roadmap and `docs/status.md`.
 
@@ -22,7 +22,7 @@ All phases complete. Superseded by this roadmap and `docs/status.md`.
 - Phase 4 — scheduler: not built (still open, see below)
 - Phase 5 — placeholder packages: see below
 
-## `ACTIONS_TODO.md` — missing CLI commands
+## Former `ACTIONS_TODO.md` — missing CLI commands
 
 Mostly shipped with the CLI. Remaining items carried forward below.
 
@@ -32,7 +32,7 @@ Mostly shipped with the CLI. Remaining items carried forward below.
 
 ## Core domain packages (highest priority)
 
-- [ ] **`internal/scheduler/`** — spaced repetition (SM-2, Leitner, or FSRS). Decides due cards and next review dates. Must not depend on Bubble Tea. Unblocks Statistics due/streak and per-answer snapshot refresh. *(source: PLAN Phase 4, ARCHITECTURE "Not Implemented", known issues)*
+- [ ] **`internal/scheduler/`** — spaced repetition (SM-2, Leitner, or FSRS). Decides due cards and next review dates. Must not depend on Bubble Tea. Unblocks Statistics due/streak and per-answer snapshot refresh. *(source: former `PLAN.md` Phase 4, `docs/status.md` "Not Implemented" + known issues)*
 - [ ] **`internal/quiz/`** — quiz session orchestration extracted from UI screens.
 - [ ] **`internal/search/`** — vocabulary search extracted from UI screens.
 
@@ -52,7 +52,7 @@ Mostly shipped with the CLI. Remaining items carried forward below.
 - [ ] Responsive breakpoints — compact mode at narrow terminal widths
 - [ ] Viewport component — scrollable wrapper for overflow content (Statistics, Detail)
 
-*(sources: `components/CONTEXT.md` "Not yet wired" + Suggestions, `components/TODO.md`)*
+*(source: `components/CONTEXT.md` "Not yet wired" + Suggestions)*
 
 ## Keymap
 
@@ -60,7 +60,7 @@ Mostly shipped with the CLI. Remaining items carried forward below.
 - [ ] Mouse binding support
 - [ ] Per-screen keymap overrides in user config
 
-*(source: `keymap/CONTEXT.md` Future work, `keymap/TODO.md`)*
+*(source: `keymap/CONTEXT.md` Future work)*
 
 ## Renderer
 
@@ -71,7 +71,7 @@ Mostly shipped with the CLI. Remaining items carried forward below.
 - [ ] Component-aware character counting
 - [ ] Performance profiling utilities
 
-*(source: `renderer/TODO.md` Phases 2–4)*
+*(source: `renderer/CONTEXT.md` Future work)*
 
 ## Events package
 
@@ -80,7 +80,7 @@ Mostly shipped with the CLI. Remaining items carried forward below.
 - [ ] Focus / blur events
 - [ ] Session updated / review completed events
 
-*(source: `events/TODO.md` "Deferred")*
+*(source: `docs/status.md` "Not Implemented" — events placeholder)*
 
 ## Actions package
 
@@ -91,7 +91,7 @@ Deferred until a concrete trigger appears:
 - [ ] "Back" logic duplicated in 3+ screens (extract to shared action)
 - [ ] Accessibility / alternative input methods
 
-*(source: `actions/TODO.md`, `actions/CONTEXT.md`)*
+*(source: `actions/CONTEXT.md`)*
 
 ## CLI enhancements
 
@@ -99,7 +99,7 @@ Deferred until a concrete trigger appears:
 - [ ] `crds stats --tag <tag>` / `--level <level>` filters
 - [ ] Wire `quiz --limit` and `quiz --reverse` into the TUI
 
-*(sources: `ACTIONS_TODO.md`, `internal/cli/CONTEXT.md` Known limitations)*
+*(sources: former `ACTIONS_TODO.md`, `internal/cli/CONTEXT.md`)*
 
 ## Theme
 
@@ -110,7 +110,7 @@ Deferred until a concrete trigger appears:
 - [ ] `FocusedInput(active bool)` variant for unfocused state
 - [ ] Style composition helpers if duplication emerges
 
-*(sources: `theme/CONTEXT.md` Future work, `styles/CONTEXT.md` TODOs)*
+*(sources: `theme/CONTEXT.md` Future work, `styles/CONTEXT.md`)*
 
 ## Navigation
 
@@ -127,11 +127,10 @@ Deferred until a concrete trigger appears:
 - [ ] `internal/ui/debug/` — debug overlay, layout inspector, event logger, FPS counter
 - [ ] `internal/ui/testdata/` — reusable fixtures (sample decks, sessions, stats, app state)
 
-*(sources: `animations/TODO.md`, `debug/TODO.md`, `testdata/TODO.md`)*
+*(sources: `docs/status.md` "Not Implemented" — placeholder packages)*
 
 ## Stretch / product ideas (from `docs/DESIGN.md`)
 
-- [ ] Spaced repetition with FSRS scheduler
 - [ ] Audio pronunciation
 - [ ] Images attached to vocabulary
 - [ ] AI-generated example sentences / grammar hints / auto-quizzes

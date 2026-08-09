@@ -2,6 +2,7 @@ package screens
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"crds/internal/stats"
@@ -30,6 +31,7 @@ type metricCell struct {
 type StatisticsModel struct {
 	selectionStats   stats.Summary
 	selectionHistory []stats.DayPoint
+	dueIDs           []string
 
 	tab statsTab
 	// per-word search state
@@ -88,6 +90,9 @@ func (m *StatisticsModel) SyncState(s ui.AppState) tea.Cmd {
 	}
 	if s.SelectionHistory != nil {
 		m.selectionHistory = s.SelectionHistory
+	}
+	if s.Due != nil {
+		m.dueIDs = s.Due
 	}
 	if m.query != "" {
 		m.filterWordResults()
@@ -375,11 +380,10 @@ func (m StatisticsModel) selectionMetrics() []metricCell {
 	if s.ReviewedToday > 0 {
 		accuracy = fmt.Sprintf("%.0f%%", s.Accuracy)
 	}
-	due := "—"
 	return []metricCell{
 		{"Reviewed Today", fmt.Sprintf("%d", s.ReviewedToday)},
 		{"Accuracy", accuracy},
-		{"Due Today", due},
+		{"Due Today", fmt.Sprintf("%d", s.DueToday)},
 		{"Current Streak", fmt.Sprintf("%d days", s.Streak)},
 		{"Total Cards", fmt.Sprintf("%d", s.TotalCards)},
 		{"Mastered", fmt.Sprintf("%d", s.Mastered)},
@@ -403,10 +407,14 @@ func (m StatisticsModel) wordMetrics() []metricCell {
 	if ws.Mastered() {
 		mastered = "yes"
 	}
+	due := "no"
+	if m.selected != nil && slices.Contains(m.dueIDs, m.selected.ID) {
+		due = "yes"
+	}
 	return []metricCell{
 		{"Reviewed Today", fmt.Sprintf("%d", ws.ReviewedToday)},
 		{"Accuracy", accuracy},
-		{"Due Today", "—"},
+		{"Due Today", due},
 		{"Last Reviewed", last},
 		{"Total Reviews", fmt.Sprintf("%d", ws.TotalReviews)},
 		{"Mastered", mastered},

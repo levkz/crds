@@ -140,6 +140,41 @@ func TestStatisticsWordStatsLoaded(t *testing.T) {
 	}
 }
 
+func TestStatisticsDueTodayMetric(t *testing.T) {
+	m := newTestStatistics()
+	sel := stats.Summary{DueToday: 4}
+	m.SyncState(ui.AppState{
+		Deck:           &ui.DeckData{Cards: []ui.CardData{{ID: "a", Front: "alpha"}}},
+		SelectionStats: &sel,
+		Due:            []string{"a", "b"},
+	})
+
+	for _, cell := range m.selectionMetrics() {
+		if cell.label == "Due Today" && cell.value != "4" {
+			t.Errorf("selection Due Today = %q, want 4", cell.value)
+		}
+	}
+}
+
+func TestStatisticsWordDueTodayYesNo(t *testing.T) {
+	m := newTestStatistics()
+	m.selected = &searchEntry{ID: "a"}
+
+	m.dueIDs = []string{"a", "c"}
+	for _, cell := range m.wordMetrics() {
+		if cell.label == "Due Today" && cell.value != "yes" {
+			t.Errorf("due word = %q, want yes", cell.value)
+		}
+	}
+
+	m.dueIDs = []string{"c"}
+	for _, cell := range m.wordMetrics() {
+		if cell.label == "Due Today" && cell.value != "no" {
+			t.Errorf("not-due word = %q, want no", cell.value)
+		}
+	}
+}
+
 func TestStatisticsHandleBack(t *testing.T) {
 	m := newTestStatistics()
 

@@ -195,3 +195,29 @@ func TestStatisticsViewRenders(t *testing.T) {
 		}
 	}
 }
+
+func TestStatisticsWordDetailNoData(t *testing.T) {
+	m := newTestStatistics()
+	m.tab = statsTabWords
+	m.selected = &searchEntry{ID: "bonjour", front: "bonjour", back: []string{"hello"}}
+
+	out := m.renderWordDetail(40)
+	if !strings.Contains(out, "Loading") {
+		t.Errorf("pre-load detail missing Loading, got:\n%s", out)
+	}
+
+	_, _ = m.Update(ui.WordStatsLoadedMsg{EntryID: "bonjour", Stats: stats.WordStats{}})
+	out = m.renderWordDetail(40)
+	if !strings.Contains(out, "No data") {
+		t.Errorf("zero-review word should show No data, got:\n%s", out)
+	}
+
+	_, _ = m.Update(ui.WordStatsLoadedMsg{EntryID: "bonjour", Stats: stats.WordStats{TotalReviews: 2}})
+	out = m.renderWordDetail(40)
+	if strings.Contains(out, "No data") {
+		t.Errorf("reviewed word should not show No data, got:\n%s", out)
+	}
+	if !strings.Contains(out, "Total") {
+		t.Errorf("reviewed word detail missing metrics, got:\n%s", out)
+	}
+}

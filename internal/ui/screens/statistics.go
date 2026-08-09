@@ -355,6 +355,11 @@ func (m StatisticsModel) renderWordDetail(width int) string {
 		return b.String()
 	}
 
+	if m.wordStats.TotalReviews == 0 {
+		b.WriteString(styles.MutedText().Render("No data for this word yet"))
+		return b.String()
+	}
+
 	graph := components.Graph(components.ToGraphPoints(m.wordHistory), width)
 	b.WriteString(components.Section("Confidence over time", graph, width))
 	b.WriteString("\n\n")

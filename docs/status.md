@@ -29,9 +29,9 @@ Ran `go test ./...` from the repo root. Results are stable and current:
 | `internal/ui/navigation/tests/` | 74 | Black-box navigation tests |
 | `internal/ui/app/tests/` | 5 | State-sync protocol |
 | `internal/ui/components/display/` | 5 | Graph bar chart |
-| `internal/ui/screens/` | 8 | Statistics screen logic |
+| `internal/ui/screens/` | 9 | Statistics screen logic |
 
-Total: **319 test functions**, all passing.
+Total: **320 test functions**, all passing.
 
 ---
 

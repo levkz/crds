@@ -62,7 +62,6 @@ func setupSyncedDeck(t *testing.T, store *Store) string {
 
 func TestImportDeck(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	srcDir := t.TempDir()
 	deckDir := t.TempDir()
@@ -89,7 +88,6 @@ func TestImportDeck(t *testing.T) {
 
 func TestImportDeck_DuplicateID(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	deckDir := setupSyncedDeck(t, store)
 
@@ -110,7 +108,6 @@ func TestImportDeck_DuplicateID(t *testing.T) {
 
 func TestImportDeck_InvalidYAML(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	srcDir := t.TempDir()
 	srcPath := filepath.Join(srcDir, "bad.yaml")
@@ -128,7 +125,6 @@ func TestImportDeck_InvalidYAML(t *testing.T) {
 
 func TestExportDeck(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	deckDir := setupSyncedDeck(t, store)
 
@@ -151,7 +147,6 @@ func TestExportDeck(t *testing.T) {
 
 func TestExportDeck_NotFound(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	err := store.ExportDeck("nonexistent", "/tmp/out.yaml", t.TempDir())
 	if err == nil {
@@ -166,7 +161,6 @@ func TestExportDeck_NotFound(t *testing.T) {
 
 func TestExportDeckFromCache(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	deckDir := setupSyncedDeck(t, store)
 
@@ -191,7 +185,9 @@ func TestExportDeckFromCache(t *testing.T) {
 	}
 
 	// Remove the source file and verify cache still works
-	os.Remove(filepath.Join(deckDir, "test_deck.yaml"))
+	if err := os.Remove(filepath.Join(deckDir, "test_deck.yaml")); err != nil {
+		t.Fatalf("remove source yaml: %v", err)
+	}
 	dstPath2 := filepath.Join(t.TempDir(), "cached2.yaml")
 	if err := store.ExportDeckFromCache("test_deck", dstPath2); err != nil {
 		t.Fatalf("ExportDeckFromCache after source deleted: %v", err)
@@ -200,7 +196,6 @@ func TestExportDeckFromCache(t *testing.T) {
 
 func TestExportDeckFromCache_NotFound(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	err := store.ExportDeckFromCache("nonexistent", "/tmp/out.yaml")
 	if err == nil {
@@ -212,7 +207,6 @@ func TestExportDeckFromCache_NotFound(t *testing.T) {
 
 func TestRenameDeck(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	deckDir := setupSyncedDeck(t, store)
 
@@ -240,7 +234,6 @@ func TestRenameDeck(t *testing.T) {
 
 func TestRenameDeck_NotFound(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	deckDir := t.TempDir()
 	err := store.RenameDeck("nonexistent", "New Name", deckDir)
@@ -253,7 +246,6 @@ func TestRenameDeck_NotFound(t *testing.T) {
 
 func TestChangeDeckID(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	deckDir := setupSyncedDeck(t, store)
 
@@ -297,7 +289,6 @@ func TestChangeDeckID(t *testing.T) {
 
 func TestChangeDeckID_Duplicate(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	deckDir := setupSyncedDeck(t, store)
 
@@ -331,7 +322,6 @@ entries:
 
 func TestChangeDeckID_WithProgress(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	deckDir := setupSyncedDeck(t, store)
 	ctx := context.Background()
@@ -400,7 +390,6 @@ func TestChangeDeckID_WithProgress(t *testing.T) {
 // into a fresh store.
 func TestExportDeckFromCache_RoundTrip(t *testing.T) {
 	store1 := newTestStore(t)
-	defer store1.Close()
 
 	setupSyncedDeck(t, store1)
 
@@ -410,7 +399,6 @@ func TestExportDeckFromCache_RoundTrip(t *testing.T) {
 	}
 
 	store2 := newTestStore(t)
-	defer store2.Close()
 
 	importDir := t.TempDir()
 	if err := store2.ImportDeck(dstPath, importDir); err != nil {
@@ -429,7 +417,6 @@ func TestExportDeckFromCache_RoundTrip(t *testing.T) {
 // TestRenameDeck_Resync verifies that SyncDecks after rename is a no-op.
 func TestRenameDeck_Resync(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	deckDir := setupSyncedDeck(t, store)
 
@@ -454,7 +441,6 @@ func TestRenameDeck_Resync(t *testing.T) {
 // TestChangeDeckID_Resync verifies that SyncDecks after ID change is a no-op.
 func TestChangeDeckID_Resync(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	deckDir := setupSyncedDeck(t, store)
 
@@ -475,7 +461,6 @@ func TestChangeDeckID_Resync(t *testing.T) {
 // TestImportDeck_ImportToEmptyDir verifies importing without prior SyncDecks.
 func TestImportDeck_ImportToEmptyDir(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	srcDir := t.TempDir()
 	srcPath := filepath.Join(srcDir, "source.yaml")
@@ -501,7 +486,6 @@ func TestImportDeck_ImportToEmptyDir(t *testing.T) {
 // TestExportDeckFromCache_EmptyDeck verifies exporting a deck with no entries.
 func TestExportDeckFromCache_EmptyDeck(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	deckDir := t.TempDir()
 	emptyYAML := `id: empty_deck
@@ -534,7 +518,6 @@ translation_language: en`
 // TestExportDeckFromCache_RendersYamlCorrectly verifies the YAML output structure.
 func TestExportDeckFromCache_RendersYamlCorrectly(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	setupSyncedDeck(t, store)
 	dstPath := filepath.Join(t.TempDir(), "out.yaml")
@@ -584,7 +567,6 @@ func TestExportDeckFromCache_RendersYamlCorrectly(t *testing.T) {
 
 func TestDeleteDeck(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	deckDir := setupSyncedDeck(t, store)
 
@@ -613,7 +595,6 @@ func TestDeleteDeck(t *testing.T) {
 
 func TestDeleteDeck_NotFound(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	err := store.DeleteDeck("nonexistent", t.TempDir())
 	if err == nil {
@@ -623,7 +604,6 @@ func TestDeleteDeck_NotFound(t *testing.T) {
 
 func TestDeleteDeck_WithProgress(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	deckDir := setupSyncedDeck(t, store)
 
@@ -660,7 +640,6 @@ func TestDeleteDeck_WithProgress(t *testing.T) {
 
 func TestDeleteDeck_FileMissing(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	deckDir := setupSyncedDeck(t, store)
 
@@ -684,7 +663,6 @@ func TestDeleteDeck_FileMissing(t *testing.T) {
 
 func TestAddEntry(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	deckDir := setupSyncedDeck(t, store)
 
@@ -731,7 +709,6 @@ func TestAddEntry(t *testing.T) {
 
 func TestAddEntry_DuplicateID(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	deckDir := setupSyncedDeck(t, store)
 
@@ -754,7 +731,6 @@ func TestAddEntry_DuplicateID(t *testing.T) {
 
 func TestUpdateEntry(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	deckDir := setupSyncedDeck(t, store)
 
@@ -799,7 +775,6 @@ func TestUpdateEntry(t *testing.T) {
 
 func TestUpdateEntry_NotFound(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	deckDir := setupSyncedDeck(t, store)
 
@@ -814,7 +789,6 @@ func TestUpdateEntry_NotFound(t *testing.T) {
 
 func TestReplaceEntryID(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	deckDir := setupSyncedDeck(t, store)
 
@@ -881,7 +855,6 @@ func TestReplaceEntryID(t *testing.T) {
 
 func TestReplaceEntryID_Duplicate(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	deckDir := setupSyncedDeck(t, store)
 
@@ -896,7 +869,6 @@ func TestReplaceEntryID_Duplicate(t *testing.T) {
 
 func TestRemoveEntry(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	deckDir := setupSyncedDeck(t, store)
 
@@ -965,7 +937,6 @@ func TestRemoveEntry(t *testing.T) {
 
 func TestRemoveEntry_NotFound(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	deckDir := setupSyncedDeck(t, store)
 

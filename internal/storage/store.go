@@ -53,7 +53,7 @@ func NewStore(dbPath string) (*Store, error) {
 
 	// Run embedded migrations
 	goose.SetBaseFS(migrationsFS)
-	goose.SetDialect("sqlite")
+	_ = goose.SetDialect("sqlite")
 	if err := goose.Up(conn, "migrations"); err != nil {
 		return nil, fmt.Errorf("migrations: %w", err)
 	}
@@ -140,7 +140,7 @@ func (s *Store) RecordAnswer(deckID, cardID string, grade int, reverse bool) err
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	q := s.queries.WithTx(tx)
 	if _, err := q.CreateReview(ctx, db.CreateReviewParams{
@@ -175,7 +175,7 @@ func (s *Store) RecordAnswerFull(sessionID int64, deckID, entryID string, grade 
 	if err != nil {
 		return 0, fmt.Errorf("begin tx: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	q := s.queries.WithTx(tx)
 	review, err := q.CreateReview(ctx, db.CreateReviewParams{
@@ -663,7 +663,7 @@ func (s *Store) ImportDeck(srcPath, deckDir string) error {
 	}
 
 	if err := s.syncDeck(dstPath); err != nil {
-		os.Remove(dstPath)
+		_ = os.Remove(dstPath)
 		return fmt.Errorf("import: sync %s: %w", dstPath, err)
 	}
 
@@ -819,10 +819,10 @@ func (s *Store) ChangeDeckID(deckID, newID, deckDir string) error {
 
 	tx, err := s.conn.BeginTx(ctx, nil)
 	if err != nil {
-		os.Remove(newYamlPath)
+		_ = os.Remove(newYamlPath)
 		return fmt.Errorf("change-id: begin tx: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	_, err = tx.ExecContext(ctx,
 		`INSERT INTO decks (id, name, language, translation_language, created_at, updated_at)
@@ -859,7 +859,7 @@ func (s *Store) ChangeDeckID(deckID, newID, deckDir string) error {
 	}
 
 	if err := tx.Commit(); err != nil {
-		os.Remove(newYamlPath)
+		_ = os.Remove(newYamlPath)
 		return fmt.Errorf("change-id: commit: %w", err)
 	}
 
@@ -891,7 +891,7 @@ func (s *Store) DeleteDeck(deckID, deckDir string) error {
 	if err != nil {
 		return fmt.Errorf("delete: begin tx: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	_, err = tx.ExecContext(ctx, "DELETE FROM progress WHERE deck_id = ?", deckID)
 	if err != nil {
@@ -1230,7 +1230,7 @@ func (s *Store) FilterDecksByTags(tags []string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("filter decks by tags: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var deckIDs []string
 	for rows.Next() {
@@ -1271,7 +1271,7 @@ func (s *Store) FilterTagsByDecks(deckIDs []string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("filter tags by decks: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var tags []string
 	for rows.Next() {

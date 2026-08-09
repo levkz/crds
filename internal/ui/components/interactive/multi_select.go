@@ -127,10 +127,10 @@ func (m MultiSelectModel) View(options []string, selected map[int]bool, width in
 }
 
 func selectedLabel(options []string, selected map[int]bool, count int) string {
-	switch {
-	case count == 0:
+	switch count {
+	case 0:
 		return "None selected"
-	case count == 1:
+	case 1:
 		for i, v := range selected {
 			if v && i < len(options) {
 				return options[i]

@@ -23,10 +23,14 @@ func (c *ListCmd) Run(a *app.App) error {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "DECK ID\tNAME\tENTRIES\tLANGUAGE\tTRANSLATION LANGUAGE")
+	if _, err := fmt.Fprintln(w, "DECK ID\tNAME\tENTRIES\tLANGUAGE\tTRANSLATION LANGUAGE"); err != nil {
+		return err
+	}
 	for _, d := range decks {
-		fmt.Fprintf(w, "%s\t%s\t%d\t%s\t%s\n",
-			d.ID, d.Name, d.EntryCount, d.Language, d.TranslationLanguage)
+		if _, err := fmt.Fprintf(w, "%s\t%s\t%d\t%s\t%s\n",
+			d.ID, d.Name, d.EntryCount, d.Language, d.TranslationLanguage); err != nil {
+			return err
+		}
 	}
 	return w.Flush()
 }

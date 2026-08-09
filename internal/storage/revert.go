@@ -34,7 +34,7 @@ func (s *Store) RevertReserve(sharedDir, reservePath string) error {
 	if err != nil {
 		return fmt.Errorf("revert: temp dir: %w", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	extracted, err := extractTarGz(reservePath, tmpDir)
 	if err != nil {
@@ -76,7 +76,7 @@ func (s *Store) RevertReserve(sharedDir, reservePath string) error {
 	}
 
 	goose.SetBaseFS(migrationsFS)
-	goose.SetDialect("sqlite")
+	_ = goose.SetDialect("sqlite")
 	if err := goose.Up(conn, "migrations"); err != nil {
 		return fmt.Errorf("revert: migrations: %w", err)
 	}
@@ -102,13 +102,13 @@ func validateReserveArchive(path string) error {
 	if err != nil {
 		return fmt.Errorf("open: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	gzr, err := gzip.NewReader(f)
 	if err != nil {
 		return fmt.Errorf("gzip: %w", err)
 	}
-	defer gzr.Close()
+	defer func() { _ = gzr.Close() }()
 
 	tr := tar.NewReader(gzr)
 	hasDB := false
@@ -139,13 +139,13 @@ func extractTarGz(path, dir string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	gzr, err := gzip.NewReader(f)
 	if err != nil {
 		return nil, err
 	}
-	defer gzr.Close()
+	defer func() { _ = gzr.Close() }()
 
 	tr := tar.NewReader(gzr)
 	var extracted []string
@@ -176,7 +176,10 @@ func extractTarGz(path, dir string) ([]string, error) {
 				return nil, err
 			}
 			_, err = io.Copy(out, tr)
-			out.Close()
+			closeErr := out.Close()
+			if closeErr != nil {
+				return nil, closeErr
+			}
 			if err != nil {
 				return nil, err
 			}

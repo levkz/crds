@@ -140,7 +140,7 @@ func renderHelpOverlay() string {
 		b.WriteString(ui.Theme.Muted.Render(group.name))
 		b.WriteString("\n")
 		for _, bind := range group.bind {
-			b.WriteString(fmt.Sprintf("  %-*s  %s\n", keyColWidth, bind.keys, bind.help))
+			fmt.Fprintf(&b, "  %-*s  %s\n", keyColWidth, bind.keys, bind.help)
 		}
 	}
 

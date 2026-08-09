@@ -61,11 +61,9 @@ func (m SettingsModel) View() string {
 		if i == m.cursor {
 			marker = ui.Theme.Primary.Render(ui.Theme.Icons.Navigate)
 		}
-		line := "  " + marker + " " + name
+		line := styles.MutedText().Render("  " + marker + " " + name)
 		if i == m.cursor {
 			line = styles.MutedText().Render("  ") + marker + styles.MutedText().Render(" " + name)
-		} else {
-			line = styles.MutedText().Render("  " + marker + " " + name)
 		}
 		if name == current {
 			line += styles.MutedText().Render(" ") + ui.Theme.Success.Render(ui.Theme.Icons.Check)

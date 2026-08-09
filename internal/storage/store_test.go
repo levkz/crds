@@ -12,7 +12,7 @@ import (
 )
 
 // newTestStore creates a Store backed by an in-memory SQLite database
-// for use in tests. Callers must close the returned store.
+// for use in tests. The store is closed automatically via t.Cleanup.
 func newTestStore(t *testing.T) *Store {
 	t.Helper()
 
@@ -24,16 +24,20 @@ func newTestStore(t *testing.T) *Store {
 	// Run embedded migrations
 	runMigrations(t, conn)
 
-	return &Store{
+	s := &Store{
 		queries: db.New(conn),
 		conn:    conn,
 	}
+	t.Cleanup(func() {
+		_ = s.Close()
+	})
+	return s
 }
 
 func runMigrations(t *testing.T, conn *sql.DB) {
 	t.Helper()
 	goose.SetBaseFS(migrationsFS)
-	goose.SetDialect("sqlite")
+	_ = goose.SetDialect("sqlite")
 	if err := goose.Up(conn, "migrations"); err != nil {
 		t.Fatalf("migrations: %v", err)
 	}
@@ -41,7 +45,6 @@ func runMigrations(t *testing.T, conn *sql.DB) {
 
 func TestStoreCreateSession(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	id, err := store.EnsureSession()
 	if err != nil {
@@ -54,7 +57,6 @@ func TestStoreCreateSession(t *testing.T) {
 
 func TestStoreRecordAnswer(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	if err := store.RecordAnswer("", "test_entry", 3, false); err != nil {
 		t.Fatalf("RecordAnswer: %v", err)
@@ -71,7 +73,6 @@ func TestStoreRecordAnswer(t *testing.T) {
 
 func TestStoreRecordAnswerFull(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	ctx := context.Background()
 
@@ -107,7 +108,6 @@ func TestStoreRecordAnswerFull(t *testing.T) {
 
 func TestStoreAnswerStats(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	if err := store.RecordAnswer("", "entry_a", 3, false); err != nil {
 		t.Fatalf("RecordAnswer grade 3: %v", err)
@@ -133,7 +133,6 @@ func TestStoreAnswerStats(t *testing.T) {
 
 func TestStoreSessionReset(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	// Record in the first session
 	if err := store.RecordAnswer("", "entry1", 3, false); err != nil {
@@ -162,7 +161,6 @@ func TestStoreSessionReset(t *testing.T) {
 
 func TestStoreWeakTypingEntries(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	sessionID, err := store.EnsureSession()
 	if err != nil {
@@ -196,7 +194,6 @@ func TestStoreWeakTypingEntries(t *testing.T) {
 
 func TestStoreProgress(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	ctx := context.Background()
 
@@ -236,11 +233,19 @@ func TestStoreProgress(t *testing.T) {
 
 func TestStoreGetReviewsByEntry(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
-	store.RecordAnswer("", "entry_x", 3, false)
-	store.RecordAnswer("", "entry_y", 2, false)
-	store.RecordAnswer("", "entry_x", 4, false)
+	for _, tc := range []struct {
+		entry string
+		grade int
+	}{
+		{"entry_x", 3},
+		{"entry_y", 2},
+		{"entry_x", 4},
+	} {
+		if err := store.RecordAnswer("", tc.entry, tc.grade, false); err != nil {
+			t.Fatalf("RecordAnswer(%s, %d): %v", tc.entry, tc.grade, err)
+		}
+	}
 
 	reviews, err := store.GetReviewsByEntry("entry_x", 5)
 	if err != nil {
@@ -261,7 +266,6 @@ func TestStoreGetReviewsByEntry(t *testing.T) {
 
 func TestStoreListAllTags(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	ctx := context.Background()
 
@@ -290,7 +294,6 @@ func TestStoreListAllTags(t *testing.T) {
 
 func TestStoreListDeckTags(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	ctx := context.Background()
 
@@ -358,7 +361,6 @@ func TestStoreListDeckTags(t *testing.T) {
 
 func TestStoreListDecksByTag(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	ctx := context.Background()
 
@@ -408,7 +410,6 @@ func TestStoreListDecksByTag(t *testing.T) {
 
 func TestStoreFilterDecksByTags(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	ctx := context.Background()
 
@@ -468,7 +469,6 @@ func TestStoreFilterDecksByTags(t *testing.T) {
 
 func TestStoreFilterTagsByDecks(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	ctx := context.Background()
 

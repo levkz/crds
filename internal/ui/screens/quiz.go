@@ -292,7 +292,7 @@ func (m *QuizModel) renderGradeMenu() string {
 }
 
 func renderMenuLetterItem(name, primary string) string {
-	var highlight lipgloss.Style = ui.Theme.Primary
+	highlight := ui.Theme.Primary
 
 	if isSingleLetter(primary) {
 		lowerPrimary := strings.ToLower(primary)

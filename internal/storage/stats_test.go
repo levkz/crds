@@ -55,7 +55,6 @@ func todayAt(hhmmss string) string {
 
 func TestStoreSelectionSummary(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	upsertDeck(t, store, "d1")
 	upsertDeck(t, store, "d2")
@@ -114,7 +113,6 @@ func TestStoreSelectionSummary(t *testing.T) {
 
 func TestStoreSelectionSummaryByTag(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	upsertDeck(t, store, "d1")
 	upsertDeck(t, store, "d2")
@@ -148,7 +146,6 @@ func TestStoreSelectionSummaryByTag(t *testing.T) {
 
 func TestStoreSelectionHistory(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	upsertDeck(t, store, "d1")
 	upsertDeck(t, store, "d2")
@@ -198,7 +195,6 @@ func TestStoreSelectionHistory(t *testing.T) {
 
 func TestStoreWordStats(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	upsertDeck(t, store, "d1")
 	upsertEntry(t, store, "e1", "d1")
@@ -230,7 +226,6 @@ func TestStoreWordStats(t *testing.T) {
 
 func TestStoreWordHistory(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	upsertDeck(t, store, "d1")
 	upsertEntry(t, store, "e1", "d1")

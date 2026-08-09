@@ -11,7 +11,7 @@ func StripANSI(s string) string {
 			if i < len(s) {
 				if s[i] == '[' {
 					i++
-					for i < len(s) && !(s[i] >= 'A' && s[i] <= 'Z' || s[i] >= 'a' && s[i] <= 'z') {
+					for i < len(s) && (s[i] < 'A' || s[i] > 'Z') && (s[i] < 'a' || s[i] > 'z') {
 						i++
 					}
 				} else if s[i] >= 0x40 && s[i] <= 0x5F {
@@ -34,7 +34,7 @@ func CountANSISequences(s string) int {
 			i++
 			if i < len(s) && s[i] == '[' {
 				i++
-				for i < len(s) && !(s[i] >= 'A' && s[i] <= 'Z' || s[i] >= 'a' && s[i] <= 'z') {
+				for i < len(s) && (s[i] < 'A' || s[i] > 'Z') && (s[i] < 'a' || s[i] > 'z') {
 					i++
 				}
 				n++

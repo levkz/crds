@@ -65,7 +65,7 @@ func TestEntrySyncOnFirstRender(t *testing.T) {
 	}
 	m := newTestModel(ui.QuizScreen, fake, st)
 
-	m = navigateTo(t, m, ui.QuizScreen)
+	navigateTo(t, m, ui.QuizScreen)
 
 	if !fake.called {
 		t.Fatal("SyncState was not called when the screen became visible")

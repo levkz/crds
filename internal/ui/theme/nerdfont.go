@@ -31,8 +31,5 @@ func NerdFontSupported() bool {
 			return true
 		}
 	}
-	if strings.HasPrefix(term, "xterm") {
-		return true
-	}
-	return false
+	return strings.HasPrefix(term, "xterm")
 }

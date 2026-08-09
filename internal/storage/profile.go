@@ -67,13 +67,13 @@ func (s *Store) createProfileArchive(sharedDir, configDir, profilePath string) e
 	if err != nil {
 		return fmt.Errorf("profile: create %s: %w", profilePath, err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	gzw := gzip.NewWriter(f)
-	defer gzw.Close()
+	defer func() { _ = gzw.Close() }()
 
 	tw := tar.NewWriter(gzw)
-	defer tw.Close()
+	defer func() { _ = tw.Close() }()
 
 	for _, name := range []string{"state.yaml", "crds.db"} {
 		if err := addFileToTar(tw, sharedDir, name); err != nil {
@@ -153,7 +153,7 @@ func addFileWithTarName(tw *tar.Writer, filePath, tarName string) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	_, err = io.Copy(tw, f)
 	return err
@@ -173,7 +173,7 @@ func (s *Store) ImportProfile(sharedDir, configDir, profilePath string) error {
 	if err != nil {
 		return fmt.Errorf("profile-import: temp dir: %w", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	extracted, err := extractTarGz(profilePath, tmpDir)
 	if err != nil {
@@ -223,7 +223,7 @@ func (s *Store) ImportProfile(sharedDir, configDir, profilePath string) error {
 	}
 
 	goose.SetBaseFS(migrationsFS)
-	goose.SetDialect("sqlite")
+	_ = goose.SetDialect("sqlite")
 	if err := goose.Up(conn, "migrations"); err != nil {
 		return fmt.Errorf("profile-import: migrations: %w", err)
 	}
@@ -249,13 +249,13 @@ func validateProfileArchive(path string) error {
 	if err != nil {
 		return fmt.Errorf("open: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	gzr, err := gzip.NewReader(f)
 	if err != nil {
 		return fmt.Errorf("gzip: %w", err)
 	}
-	defer gzr.Close()
+	defer func() { _ = gzr.Close() }()
 
 	tr := tar.NewReader(gzr)
 	hasDB := false

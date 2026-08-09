@@ -287,7 +287,6 @@ func (m *SearchModel) renderCenteredResults() string {
 				itemLimit--
 				if itemLimit < 1 {
 					itemLimit = 1
-					showBelow = false
 				}
 				end = offset + itemLimit
 				if end > len(items) {

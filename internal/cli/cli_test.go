@@ -28,7 +28,7 @@ func newTestApp(t *testing.T) *app.App {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { store.Close() })
+	t.Cleanup(func() { _ = store.Close() })
 
 	stateStore := storage.NewStateStore(sharedDir)
 

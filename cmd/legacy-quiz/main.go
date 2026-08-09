@@ -131,7 +131,7 @@ func readLines(filename string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	var lines []string
 
@@ -239,7 +239,7 @@ func main() {
 
 			if !known {
 				answer := strings.ToLower(
-					prompt(reader, "Did you know[118;1:3u it? Press 's' to skip next time, ↵ to keep reviewing: "),
+					prompt(reader, "Did you know it? Press 's' to skip next time, ↵ to keep reviewing: "),
 				)
 
 				if answer == "s" {

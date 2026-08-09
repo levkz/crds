@@ -73,7 +73,7 @@ func TestStatisticsWordSearchFilters(t *testing.T) {
 		{ID: "merci", Front: "merci", Back: []string{"thanks"}},
 	}
 
-	for _, r := range []rune("bon") {
+	for _, r := range "bon" {
 		_, _ = m.Update(tea.KeyMsg(tea.Key{Type: tea.KeyRunes, Runes: []rune{r}}))
 	}
 	if m.query != "bon" {

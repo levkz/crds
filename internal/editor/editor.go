@@ -31,7 +31,7 @@ func Edit(content string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("editor: temp dir: %w", err)
 	}
-	defer os.RemoveAll(dir)
+	defer func() { _ = os.RemoveAll(dir) }()
 
 	tmp := filepath.Join(dir, "entry.yaml")
 	if err := os.WriteFile(tmp, []byte(content), 0644); err != nil {

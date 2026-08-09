@@ -190,19 +190,20 @@ func TestDefaultHomeKeys(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var match bool
-			if tt.key == "ctrl+f" {
+			switch tt.key {
+			case "ctrl+f":
 				match = tt.b.Match(tea.KeyMsg(tea.Key{Type: tea.KeyCtrlF}))
-			} else if tt.key == "left" {
+			case "left":
 				match = tt.b.Match(tea.KeyMsg(tea.Key{Type: tea.KeyLeft}))
-			} else if tt.key == "right" {
+			case "right":
 				match = tt.b.Match(tea.KeyMsg(tea.Key{Type: tea.KeyRight}))
-			} else if tt.key == "up" {
+			case "up":
 				match = tt.b.Match(tea.KeyMsg(tea.Key{Type: tea.KeyUp}))
-			} else if tt.key == "down" {
+			case "down":
 				match = tt.b.Match(tea.KeyMsg(tea.Key{Type: tea.KeyDown}))
-			} else if tt.key == "enter" {
+			case "enter":
 				match = tt.b.Match(tea.KeyMsg(tea.Key{Type: tea.KeyEnter}))
-			} else {
+			default:
 				match = tt.b.Match(tea.KeyMsg(tea.Key{Type: tea.KeyRunes, Runes: []rune(tt.key)}))
 			}
 			if !match {

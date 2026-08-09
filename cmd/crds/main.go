@@ -87,7 +87,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer sqliteStore.Close()
+	defer func() { _ = sqliteStore.Close() }()
 
 	stateStore := storage.NewStateStore(sharedDir)
 

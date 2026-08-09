@@ -111,19 +111,6 @@ func (m SelectableListModel) View(items []string, width int) string {
 	return b.String()
 }
 
-func (m *SelectableListModel) clampCursor(n int) {
-	if n == 0 {
-		m.cursor = 0
-		return
-	}
-	if m.cursor >= n {
-		m.cursor = n - 1
-	}
-	if m.cursor < 0 {
-		m.cursor = 0
-	}
-}
-
 func (m *SelectableListModel) Cursor() int       { return m.cursor }
 func (m *SelectableListModel) SetCursor(n int)   { m.cursor = n }
 

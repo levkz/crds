@@ -14,7 +14,6 @@ import (
 // writes a scheduling state (ease, interval, due, counters) via the SM-2 rule.
 func TestRecordAnswerPersistsProgress(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	if err := store.RecordAnswer("deck1", "entry1", scheduler.GradeGood, false); err != nil {
 		t.Fatalf("RecordAnswer: %v", err)
@@ -42,7 +41,6 @@ func TestRecordAnswerPersistsProgress(t *testing.T) {
 // answers land in separate progress rows.
 func TestRecordAnswerTracksReverseSeparately(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 
 	if err := store.RecordAnswer("deck1", "entry1", scheduler.GradeAgain, true); err != nil {
 		t.Fatalf("RecordAnswer: %v", err)
@@ -64,7 +62,6 @@ func TestRecordAnswerTracksReverseSeparately(t *testing.T) {
 // due cards; non-due cards are dropped.
 func TestDueForSelection(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 	setupSyncedDeck(t, store)
 
 	// Both entries are unseen -> both in the queue, deck order.
@@ -105,7 +102,6 @@ func TestDueForSelection(t *testing.T) {
 // scheduling state is already past due, not unseen cards.
 func TestSummaryDueToday(t *testing.T) {
 	store := newTestStore(t)
-	defer store.Close()
 	setupSyncedDeck(t, store)
 
 	before, err := store.Summary()

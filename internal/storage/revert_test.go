@@ -11,7 +11,6 @@ import (
 func TestRevertReserve(t *testing.T) {
 	sharedDir := t.TempDir()
 	store := newFileStore(t, sharedDir)
-	defer store.Close()
 
 	// Set up initial state: state.yaml + a deck
 	if err := os.WriteFile(filepath.Join(sharedDir, "state.yaml"), []byte("theme: dark\nselected_decks:\n  - test_deck\n"), 0644); err != nil {
@@ -100,7 +99,6 @@ func TestRevertReserve(t *testing.T) {
 func TestRevertReserve_InvalidArchive(t *testing.T) {
 	sharedDir := t.TempDir()
 	store := newFileStore(t, sharedDir)
-	defer store.Close()
 
 	// Create a dummy tar.gz without crds.db
 	badPath := filepath.Join(t.TempDir(), "bad.tar.gz")
@@ -119,7 +117,6 @@ func TestRevertReserve_InvalidArchive(t *testing.T) {
 func TestRevertReserve_StoreUsableAfterRevert(t *testing.T) {
 	sharedDir := t.TempDir()
 	store := newFileStore(t, sharedDir)
-	defer store.Close()
 
 	// Set up minimal state
 	if err := os.WriteFile(filepath.Join(sharedDir, "state.yaml"), []byte("{}\n"), 0644); err != nil {
@@ -151,7 +148,6 @@ func TestRevertReserve_StoreUsableAfterRevert(t *testing.T) {
 func TestRevertReserve_MissingArchive(t *testing.T) {
 	sharedDir := t.TempDir()
 	store := newFileStore(t, sharedDir)
-	defer store.Close()
 
 	err := store.RevertReserve(sharedDir, "/nonexistent/path.tar.gz")
 	if err == nil {

@@ -70,13 +70,13 @@ func (s *Store) createReserveArchive(sharedDir, reservePath string) error {
 	if err != nil {
 		return fmt.Errorf("reserve: create %s: %w", reservePath, err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	gzw := gzip.NewWriter(f)
-	defer gzw.Close()
+	defer func() { _ = gzw.Close() }()
 
 	tw := tar.NewWriter(gzw)
-	defer tw.Close()
+	defer func() { _ = tw.Close() }()
 
 	for _, name := range []string{"state.yaml", "crds.db"} {
 		if err := addFileToTar(tw, sharedDir, name); err != nil {
@@ -142,7 +142,7 @@ func addFileToTar(tw *tar.Writer, baseDir, relPath string) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	_, err = io.Copy(tw, f)
 	return err

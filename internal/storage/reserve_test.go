@@ -26,7 +26,6 @@ func newFileStore(t *testing.T, dir string) *Store {
 func TestCreateReserve(t *testing.T) {
 	sharedDir := t.TempDir()
 	store := newFileStore(t, sharedDir)
-	defer store.Close()
 
 	ctx := context.Background()
 
@@ -87,13 +86,13 @@ func TestCreateReserve(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	gzr, err := gzip.NewReader(f)
 	if err != nil {
 		t.Fatalf("gzip reader: %v", err)
 	}
-	defer gzr.Close()
+	defer func() { _ = gzr.Close() }()
 
 	tr := tar.NewReader(gzr)
 	found := map[string]bool{}
@@ -119,7 +118,6 @@ func TestCreateReserve(t *testing.T) {
 func TestCreateReserve_Increment(t *testing.T) {
 	sharedDir := t.TempDir()
 	store := newFileStore(t, sharedDir)
-	defer store.Close()
 
 	if err := os.WriteFile(filepath.Join(sharedDir, "state.yaml"), []byte("{}\n"), 0644); err != nil {
 		t.Fatalf("write state.yaml: %v", err)
@@ -164,7 +162,6 @@ func TestCreateReserve_Increment(t *testing.T) {
 func TestCreateReserve_MissingFiles(t *testing.T) {
 	sharedDir := t.TempDir()
 	store := newFileStore(t, sharedDir)
-	defer store.Close()
 
 	// No state.yaml, no decks, but a DB exists from newFileStore.
 	// Should not error — missing files are skipped silently.
@@ -182,7 +179,6 @@ func TestCreateReserve_MissingFiles(t *testing.T) {
 func TestCreateReserve_ExtractRoundTrip(t *testing.T) {
 	sharedDir := t.TempDir()
 	store := newFileStore(t, sharedDir)
-	defer store.Close()
 
 	if err := os.WriteFile(filepath.Join(sharedDir, "state.yaml"), []byte("theme: light\n"), 0644); err != nil {
 		t.Fatalf("write state.yaml: %v", err)
@@ -214,13 +210,13 @@ func TestCreateReserve_ExtractRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	gzr, err := gzip.NewReader(f)
 	if err != nil {
 		t.Fatalf("gzip: %v", err)
 	}
-	defer gzr.Close()
+	defer func() { _ = gzr.Close() }()
 
 	tr := tar.NewReader(gzr)
 	for {
@@ -233,16 +229,23 @@ func TestCreateReserve_ExtractRoundTrip(t *testing.T) {
 		}
 		target := filepath.Join(extractDir, filepath.FromSlash(hdr.Name))
 		if hdr.FileInfo().IsDir() {
-			os.MkdirAll(target, 0755)
+			if err := os.MkdirAll(target, 0755); err != nil {
+				t.Fatalf("mkdir %s: %v", target, err)
+			}
 			continue
 		}
-		os.MkdirAll(filepath.Dir(target), 0755)
+		if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
+			t.Fatalf("mkdir %s: %v", filepath.Dir(target), err)
+		}
 		out, err := os.Create(target)
 		if err != nil {
 			t.Fatalf("create %s: %v", target, err)
 		}
 		_, err = io.Copy(out, tr)
-		out.Close()
+		closeErr := out.Close()
+		if closeErr != nil {
+			t.Fatalf("close %s: %v", target, closeErr)
+		}
 		if err != nil {
 			t.Fatalf("write %s: %v", target, err)
 		}

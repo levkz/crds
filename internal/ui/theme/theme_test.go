@@ -794,7 +794,7 @@ func TestStoreGet(t *testing.T) {
 func TestStoreUnregister(t *testing.T) {
 	s := NewStore()
 	s.Register("temp", NewTheme(DefaultPalette))
-	s.Switch("temp")
+	_, _ = s.Switch("temp")
 	s.Unregister("temp")
 	if s.Has("temp") {
 		t.Error("expected 'temp' to be unregistered")

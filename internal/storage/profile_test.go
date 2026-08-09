@@ -11,7 +11,6 @@ func TestCreateProfile_RoundTrip(t *testing.T) {
 	sharedDir := t.TempDir()
 	configDir := t.TempDir()
 	store := newFileStore(t, sharedDir)
-	defer store.Close()
 
 	// Write state.yaml
 	if err := os.WriteFile(filepath.Join(sharedDir, "state.yaml"), []byte("theme: dark\nselected_decks:\n  - test_deck\n"), 0644); err != nil {
@@ -92,11 +91,12 @@ func TestCreateProfile_RoundTrip(t *testing.T) {
 	}
 
 	// Close and re-create store to simulate fresh start
-	store.Close()
+	if err := store.Close(); err != nil {
+		t.Fatalf("close store: %v", err)
+	}
 
 	// Reopen to have a fresh store for import
 	store2 := newFileStore(t, sharedDir)
-	defer store2.Close()
 
 	// Import profile
 	if err := store2.ImportProfile(sharedDir, configDir, path); err != nil {
@@ -149,7 +149,6 @@ func TestCreateProfile_Naming(t *testing.T) {
 	sharedDir := t.TempDir()
 	configDir := t.TempDir()
 	store := newFileStore(t, sharedDir)
-	defer store.Close()
 
 	// Write minimal files
 	if err := os.WriteFile(filepath.Join(sharedDir, "state.yaml"), []byte("{}\n"), 0644); err != nil {
@@ -190,7 +189,6 @@ func TestCreateProfile_CustomName(t *testing.T) {
 	sharedDir := t.TempDir()
 	configDir := t.TempDir()
 	store := newFileStore(t, sharedDir)
-	defer store.Close()
 
 	if err := os.WriteFile(filepath.Join(sharedDir, "state.yaml"), []byte("{}\n"), 0644); err != nil {
 		t.Fatalf("write state.yaml: %v", err)
@@ -211,7 +209,6 @@ func TestImportProfile_InvalidArchive(t *testing.T) {
 	sharedDir := t.TempDir()
 	configDir := t.TempDir()
 	store := newFileStore(t, sharedDir)
-	defer store.Close()
 
 	badPath := filepath.Join(t.TempDir(), "bad.tar.gz")
 	if err := os.WriteFile(badPath, []byte("not gzip data"), 0644); err != nil {
@@ -228,7 +225,6 @@ func TestCreateProfile_NoConfigFiles(t *testing.T) {
 	sharedDir := t.TempDir()
 	configDir := t.TempDir()
 	store := newFileStore(t, sharedDir)
-	defer store.Close()
 
 	if err := os.WriteFile(filepath.Join(sharedDir, "state.yaml"), []byte("{}\n"), 0644); err != nil {
 		t.Fatalf("write state.yaml: %v", err)

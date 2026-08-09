@@ -49,7 +49,6 @@ func RenderListClipped(items []string, selected int, offset int, maxItems int, w
 			itemLimit--
 			if itemLimit < 1 {
 				itemLimit = 1
-				showBelow = false
 			}
 			end = offset + itemLimit
 			if end > len(items) {

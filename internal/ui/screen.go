@@ -37,6 +37,7 @@ type ExampleData struct {
 
 type CardData struct {
 	ID       string
+	DeckID   string
 	Front    string
 	Back     []string
 	Variants []string

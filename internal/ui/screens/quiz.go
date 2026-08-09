@@ -96,7 +96,6 @@ func (m *QuizModel) grade(g ui.Grade) (*QuizModel, tea.Cmd) {
 	}
 
 	card := m.cards[m.cardIndex]
-	cardID := card.Front
 
 	m.cardIndex++
 	m.revealed = false
@@ -104,8 +103,8 @@ func (m *QuizModel) grade(g ui.Grade) (*QuizModel, tea.Cmd) {
 
 	return m, func() tea.Msg {
 		return ui.SaveAnswerMsg{
-			DeckID:  m.deckName,
-			CardID:  cardID,
+			DeckID:  card.DeckID,
+			CardID:  card.ID,
 			Grade:   g,
 			Reverse: m.inverse,
 		}

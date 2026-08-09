@@ -272,6 +272,7 @@ func (s *Store) buildCard(ctx context.Context, entry db.Entry) ui.CardData {
 
 	return ui.CardData{
 		ID:       entry.ID,
+		DeckID:   entry.DeckID,
 		Front:    entry.Term,
 		Back:     texts,
 		Variants: variants,

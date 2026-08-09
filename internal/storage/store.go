@@ -106,7 +106,7 @@ func (s *Store) ResetSession() error {
 		reviewed := int64(len(reviews))
 		var correct int64
 		for _, r := range reviews {
-			if r.Grade >= 3 {
+			if r.Grade >= int64(ui.GradeGood) {
 				correct++
 			}
 		}

@@ -41,22 +41,26 @@ while IFS= read -r file; do
   case "$file" in
     "$ROOT/docs/status.md") continue ;;
   esac
-  # 'Known Issues' / 'Current Status' sections, and inline test counts
-  # like "(74 tests)" / "60+ tests", must not appear in reference/decision docs.
-  if grep -Eq '^#+ +Known Issues|^#+ +Current Status|^#+ +Future (Work|Extensions)' "$file"; then
-    warn "$(basename "$file") has status/future section: $(grep -E '^#+ +(Known Issues|Current Status|Future (Work|Extensions))' "$file" | tr '\n' ' ')"
+  # 'Known Issues' / 'Current Status' / 'Future Work' / 'Known Limitations'
+  # sections (any casing), and inline test counts ("(74 tests)", "60+ tests",
+  # "8 Stack tests"), must not appear outside docs/status.md.
+  if grep -Eqi '^#+ +(Known Issues|Current Status|Future (Work|Extensions)|Known Limitations)' "$file"; then
+    warn "$(basename "$file") has status/future section: $(grep -Ei '^#+ +(Known Issues|Current Status|Future (Work|Extensions)|Known Limitations)' "$file" | tr '\n' ' ')"
   fi
-  if grep -Eq '\([0-9]+\+? tests\)' "$file"; then
+  if grep -Eq '\([0-9]+\+? tests?\)' "$file"; then
     warn "$(basename "$file") contains inline test counts"
   fi
-done < <(find "$ROOT/docs" "$ROOT/internal" -name '*.md' -not -path '*/testdata/*')
+  if grep -Eq '[0-9]+\+? (tests?|[A-Za-z][A-Za-z-]* tests?)\b' "$file"; then
+    warn "$(basename "$file") contains bare test counts"
+  fi
+done < <(find "$ROOT/docs" "$ROOT/internal" -name '*.md' -not -path '*/testdata/*'; echo "$ROOT/README.md"; echo "$ROOT/AGENTS.md")
 
 echo "== CONTEXT.md skeleton and header =="
 while IFS= read -r file; do
   if ! grep -q '^> Per-package context: how this package works today. Status and plans live in' "$file"; then
     warn "$(basename "$file") missing pointer header (see docs/README.md taxonomy)"
   fi
-  if grep -Eq '^#+ +(Known Issues|Current Status|Future (Work|Extensions)|TODOs|Suggestions)' "$file"; then
+  if grep -Eqi '^#+ +(Known Issues|Current Status|Current status|Future (Work|Extensions)|Known Limitations|TODOs|Suggestions)' "$file"; then
     warn "$(basename "$file") has status/plan section; fold into docs/status.md or docs/roadmap.md"
   fi
 done < <(find "$ROOT/internal" -name 'CONTEXT.md')

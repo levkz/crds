@@ -105,7 +105,15 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 
 	case ui.SaveAnswerMsg:
 		m.AnswersRecorded = true
-		return m, RecordAnswerCmd(m.Dispatcher, msg)
+		return m, tea.Batch(
+			RecordAnswerCmd(m.Dispatcher, msg),
+			LoadDueProgressCmd(m.Dispatcher, m.State.SelectedDecks, m.State.SelectedTags),
+		)
+
+	case LoadDueProgressMsg:
+		m.State.Due = msg.Due
+		m.State.DeckProgress = msg.Progress
+		return m, m.stateChangedCmd()
 
 	case StatsLoadedMsg:
 		m.State.Stats = &msg.Stats
@@ -208,11 +216,13 @@ func (m Model) handleDataLoaded(msg DataLoadedMsg) (Model, tea.Cmd) {
 		// Load selected decks or show empty
 		if len(validSelected) > 0 {
 			cmds = append(cmds, LoadSelectedDecksCmd(m.Dispatcher, validSelected))
+			cmds = append(cmds, LoadDueProgressCmd(m.Dispatcher, validSelected, m.State.SelectedTags))
 		} else {
 			// Handle empty selection: empty deck so screens show "No cards loaded"
 			emptyDeck := ui.DeckData{}
 			m.State.Deck = &emptyDeck
 			m.State.DeckProgress = nil
+			cmds = append(cmds, LoadDueProgressCmd(m.Dispatcher, nil, m.State.SelectedTags))
 		}
 		cmds = append(cmds, m.stateChangedCmd())
 		return m, tea.Batch(cmds...)
@@ -264,11 +274,13 @@ func (m Model) handleDeckSelectionWithTags(selected []string, selectedTags []str
 	cmds = append(cmds, ResetSessionCmd(m.Dispatcher))
 	if len(selected) > 0 {
 		cmds = append(cmds, LoadSelectedDecksCmd(m.Dispatcher, selected))
+		cmds = append(cmds, LoadDueProgressCmd(m.Dispatcher, selected, selectedTags))
 	} else {
 		m.State.Deck = nil
 		cmds = append(cmds, func() tea.Msg {
 			return DataLoadedMsg{Kind: MsgKindDeck, Data: ui.DeckData{}}
 		})
+		cmds = append(cmds, LoadDueProgressCmd(m.Dispatcher, nil, selectedTags))
 	}
 	cmds = append(cmds, m.stateChangedCmd())
 	return m, tea.Batch(cmds...)

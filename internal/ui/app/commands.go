@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"crds/internal/stats"
 	"crds/internal/storage"
@@ -51,6 +52,7 @@ type Dispatcher struct {
 	Sessions SessionManager
 	Typing   TypingRecorder
 	Tags     TagProvider
+	Due      DueProvider
 }
 
 // Cmd wraps a side-effect function as a tea.Cmd for Bubble Tea dispatch.
@@ -149,6 +151,42 @@ func mergeDecks(decks []ui.DeckData) ui.DeckData {
 		Name:  strings.Join(nameParts, " + "),
 		Cards: allCards,
 	}
+}
+
+// LoadDueProgressMsg carries the refreshed review queue (due entry IDs) and
+// per-card aggregate progress for the selection. It is returned by
+// LoadDueProgressCmd, which is invoked after every recorded answer so the
+// statistics due count and the due-mode queue stay fresh without reshuffling
+// the active quiz session.
+
+type LoadDueProgressMsg struct {
+	Due      []string
+	Progress map[string]stats.EntryProgress
+}
+
+// LoadDueProgressCmd refreshes the due queue and per-entry progress for a
+// deck/tag selection.
+func LoadDueProgressCmd(d *Dispatcher, deckIDs, tags []string) tea.Cmd {
+	return Dispatch(d, func(d *Dispatcher) tea.Msg {
+		msg := LoadDueProgressMsg{Progress: make(map[string]stats.EntryProgress)}
+		for _, name := range deckIDs {
+			prog, err := d.Stats.EntryProgress(name)
+			if err != nil {
+				continue
+			}
+			for k, v := range prog {
+				msg.Progress[k] = v
+			}
+		}
+		if d.Due != nil {
+			due, err := d.Due.DueForSelection(deckIDs, tags, time.Now())
+			if err != nil {
+				return DataErrorMsg{Kind: MsgKindStats, Err: err}
+			}
+			msg.Due = due
+		}
+		return msg
+	})
 }
 
 // SaveStateCmd persists the selected decks, tags, and active theme.

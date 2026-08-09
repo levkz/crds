@@ -32,6 +32,7 @@ func (c *CLI) Run(a *app.App, ctx *kong.Context) error {
 		Progress: a.Store,
 		Stats:    a.Store,
 		State:    a.State,
+		Due:      a.Store,
 	}
 
 	return uiapp.RunWithDefaults(deps)

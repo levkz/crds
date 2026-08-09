@@ -20,9 +20,11 @@ type TypingQuizModel struct {
 	cards         []ui.CardData
 	originalCards []ui.CardData
 	cardProgress  map[string]stats.EntryProgress
+	dueIDs        []string
 	mode          ui.QuizMode
 	cardIndex     int
 	revealed      bool
+	inProgress    bool
 	input         string
 	cursor        int
 	grade         int
@@ -54,6 +56,7 @@ func (m *TypingQuizModel) SyncState(s ui.AppState) tea.Cmd {
 			m.deckName = s.Deck.Name
 			m.inverse = false
 			m.examplesPage = 0
+			m.inProgress = false
 			changed = true
 		}
 	}
@@ -61,11 +64,17 @@ func (m *TypingQuizModel) SyncState(s ui.AppState) tea.Cmd {
 		m.cardProgress = s.DeckProgress
 		changed = true
 	}
+	if !reflect.DeepEqual(m.dueIDs, s.Due) {
+		m.dueIDs = s.Due
+		changed = true
+	}
 	if m.mode != s.QuizMode {
 		m.mode = s.QuizMode
 		changed = true
 	}
-	if changed {
+	// Session snapshot: once the quiz is in progress, progress/due refreshes
+	// update the stored data but never reshuffle the remaining cards.
+	if changed && !m.inProgress {
 		m.applySort()
 	}
 	return nil
@@ -80,9 +89,10 @@ func (m *TypingQuizModel) SetModeFromKey() tea.Cmd {
 }
 
 func (m *TypingQuizModel) applySort() {
-	m.cards = ui.SortCards(m.mode, m.originalCards, m.cardProgress)
+	m.cards = ui.SortCards(m.mode, m.originalCards, m.cardProgress, m.dueIDs)
 	m.cardIndex = 0
 	m.revealed = false
+	m.inProgress = false
 	m.grade = 0
 	m.score = 0
 	m.input = ""
@@ -146,6 +156,7 @@ func (m *TypingQuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 			case keymap.DefaultTypingQuiz.Submit.Match(msg):
 				if m.gradeInput() {
 					m.revealed = true
+					m.inProgress = true
 					card := m.cards[m.cardIndex]
 					return m, func() tea.Msg {
 						return ui.SaveAnswerMsg{
@@ -163,6 +174,7 @@ func (m *TypingQuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 
 			case keymap.DefaultTypingQuiz.Reveal.Match(msg):
 				m.revealed = true
+				m.inProgress = true
 				m.grade = fuzzy.Again
 				m.score = 0
 				card := m.cards[m.cardIndex]
@@ -281,9 +293,13 @@ func isTextInputRune(s string) bool {
 
 func (m *TypingQuizModel) View() string {
 	if len(m.cards) == 0 {
+		msg := "No cards loaded"
+		if m.mode == ui.QuizModeDue && len(m.originalCards) > 0 {
+			msg = "No cards due"
+		}
 		return layout.Page(
 			"",
-			layout.Center(styles.MutedText().Render("No cards loaded"), m.width),
+			layout.Center(styles.MutedText().Render(msg), m.width),
 			componentsFooter(keymap.DefaultGlobal.Back.Help, m.width),
 			m.height,
 		)

@@ -1,6 +1,8 @@
 package app
 
 import (
+	"time"
+
 	"crds/internal/stats"
 	"crds/internal/storage"
 	"crds/internal/ui"
@@ -37,6 +39,12 @@ type TypingRecorder interface {
 	RecordAnswerFull(sessionID int64, deckID, entryID string, grade int, reverse bool, userInput, correctAnswer string, similarity float64) (int64, error)
 }
 
+// DueProvider reports which cards belong in the review queue for a
+// deck/tag selection (unseen cards first, then due cards).
+type DueProvider interface {
+	DueForSelection(deckIDs, tags []string, now time.Time) ([]string, error)
+}
+
 // Dependencies bundles all external services the UI needs.
 type Dependencies struct {
 	Decks    DeckProvider
@@ -44,4 +52,5 @@ type Dependencies struct {
 	Stats    stats.Provider
 	State    *storage.StateStore
 	Tags     TagProvider
+	Due      DueProvider
 }

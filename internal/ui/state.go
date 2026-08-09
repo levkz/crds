@@ -12,6 +12,7 @@ import (
 type AppState struct {
 	Deck             *DeckData
 	DeckProgress     map[string]stats.EntryProgress
+	Due              []string
 	AllDecks         []string
 	SelectedDecks    []string
 	AllTags          []string

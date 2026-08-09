@@ -7,6 +7,7 @@ const (
 	QuizModeRandom
 	QuizModeSmart
 	QuizModeKindaSmart
+	QuizModeDue
 	NumQuizModes
 )
 
@@ -20,6 +21,8 @@ func (m QuizMode) String() string {
 		return "smart"
 	case QuizModeKindaSmart:
 		return "kinda-smart"
+	case QuizModeDue:
+		return "due"
 	default:
 		return "normal"
 	}
@@ -37,6 +40,8 @@ func ParseQuizMode(s string) QuizMode {
 		return QuizModeSmart
 	case "kinda-smart":
 		return QuizModeKindaSmart
+	case "due":
+		return QuizModeDue
 	default:
 		return QuizModeNormal
 	}

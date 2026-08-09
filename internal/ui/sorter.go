@@ -7,7 +7,7 @@ import (
 	"crds/internal/stats"
 )
 
-func SortCards(mode QuizMode, cards []CardData, progress map[string]stats.EntryProgress) []CardData {
+func SortCards(mode QuizMode, cards []CardData, progress map[string]stats.EntryProgress, due []string) []CardData {
 	out := make([]CardData, len(cards))
 	copy(out, cards)
 
@@ -27,8 +27,33 @@ func SortCards(mode QuizMode, cards []CardData, progress map[string]stats.EntryP
 			cj := entryConfidence(out[j].ID, progress) + rand.Float64()*0.1
 			return ci < cj
 		})
+	case QuizModeDue:
+		out = filterDue(out, due)
 	}
 	return out
+}
+
+// filterDue keeps only cards whose entry appears in the due set, ordered by
+// the due set's ordering (unseen first, then by due date).
+func filterDue(cards []CardData, due []string) []CardData {
+	if len(due) == 0 {
+		return nil
+	}
+	byID := make(map[string]CardData, len(cards))
+	for _, c := range cards {
+		byID[c.ID] = c
+	}
+	filtered := make([]CardData, 0, len(due))
+	seen := make(map[string]bool, len(due))
+	for _, id := range due {
+		c, ok := byID[id]
+		if !ok || seen[id] {
+			continue
+		}
+		seen[id] = true
+		filtered = append(filtered, c)
+	}
+	return filtered
 }
 
 func entryConfidence(id string, progress map[string]stats.EntryProgress) float64 {

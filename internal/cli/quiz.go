@@ -39,6 +39,7 @@ func (q *QuizCmd) Run(a *app.App) error {
 		Progress: a.Store,
 		Stats:    a.Store,
 		State:    a.State,
+		Due:      a.Store,
 	}
 
 	return uiapp.RunWithDefaults(deps)

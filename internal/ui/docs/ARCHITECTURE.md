@@ -1,5 +1,8 @@
 # UI Architecture
 
+> Package guide: how the `ui` package is structured and wired. Status and
+> plans live in `docs/status.md` and `docs/roadmap.md` (see `docs/README.md`).
+
 ## Purpose
 
 The `ui` package is responsible for the entire terminal user interface.
@@ -15,6 +18,33 @@ The UI should:
 
 The scheduler, repositories, parser, importer and database remain outside this
 package.
+
+## Philosophy
+
+The UI is intentionally conservative.
+
+The goal is not to impress with visuals.
+
+The goal is to disappear and let the user focus on learning.
+
+Whitespace is preferred over borders.
+
+Typography is preferred over decoration.
+
+Colors communicate meaning.
+
+## Libraries
+
+Primary library:
+
+- Bubble Tea
+
+Supporting libraries:
+
+- Lip Gloss
+
+Do not reinvent functionality already provided by Bubble Tea unless there is a
+strong reason.
 
 ---
 
@@ -180,6 +210,8 @@ Root model:
 - global shortcuts
 - overlays
 - event dispatching
+- the canonical `AppState` snapshot (`Model.State`) and its propagation to
+  screens via the `ui.StateSyncer` protocol
 
 Screen:
 
@@ -231,6 +263,9 @@ Footer
 
 The footer always displays currently available shortcuts.
 
+Screen views are composed with `layout.Page()` and `layout.Column()`
+instead of manual string concatenation.
+
 ---
 
 # Styling
@@ -248,9 +283,36 @@ The `theme` package provides a complete design system:
 - **Border roles**: 6 semantic roles (Container, Card, Modal, Emphasis, Section, None)
 - **YAML loading**: Custom theme files with palette, icons, and typography overrides
 - **Store**: Multi-theme registry with runtime switching via Settings screen (built-in: default, dark, light, tokyonight)
-- **Background fill**: `fillBackground()` in `app/view.go` re-wraps each ANSI-reset-delimited segment with `Background(p.Background)` so the theme background covers the entire terminal
 
 Components use semantic styles instead of hardcoded colors. They should never use terminal color codes directly.
+
+---
+
+# Rendering
+
+Rendering should be declarative.
+
+Prefer:
+
+```
+Page(
+    Header(...),
+    Content(...),
+    Footer(...),
+    height,
+)
+```
+
+instead of manually concatenating strings throughout the codebase.
+
+`fillBackground()` in `app/view.go` wraps each ANSI-reset-delimited segment
+with the theme's `Background` color, ensuring full-width background coverage
+across the entire terminal. This runs after screen composition and
+notification injection.
+
+The `renderer` package provides Unicode-aware width measurement, ANSI
+stripping, and text wrapping/truncation for terminal-aware layout. See
+`renderer/CONTEXT.md`.
 
 ---
 
@@ -392,50 +454,200 @@ Animations should remain optional.
 
 ---
 
-# Current Implementation Status
+# Code Style
 
-## Complete
+Prefer:
 
-- **Navigation** (`navigation/`): Full Manager, stack, Registry with 82 black-box tests
-- **Theme** (`theme/`): Complete design system with 54 tests:
-  - 18-field palette (15 named colors + 3 semantic overrides: Primary, Secondary, Accent)
-  - 14 semantic styles (Primary, Secondary, Accent, Success, Warning, Danger, Muted, Header, Background, Surface, PrimaryBg, SuccessBg, ErrorBg, WarningBg)
-  - Typography system (Title, Subtitle, Body, Caption, Emphasis, Key)
-  - Border styles (Normal, Rounded, Double, Thick, None)
-  - 10-slot icon set with 4 sources: NerdFont → Emoji → Unicode → ASCII
-  - Environment auto-detection (CRDS_ICON_SOURCE, NerdFont, Emoji, Unicode)
-  - Spacing scale (7 tiers), border roles (6 semantic roles)
-  - YAML theme loading with 6 test fixtures + style/typography overrides
-  - Theme store with runtime switching
-- **Styles** (`styles/`): 16 style definitions with 60+ tests (Header, Footer, SelectedItem, FocusedInput, Error, Warning, Success, Hint, MutedText, Card, Panel, Modal, PrimaryBg, SuccessBg, ErrorBg, WarningBg)
-- **Components** (`components/`): 29 components across `display/` (20 stateless) and `interactive/` (9 stateful) — all implemented
-- **Screens** (`screens/`): All 9 screens — Home (activity menu), Quiz (flashcard), TypingQuiz (typing-based with inverse mode), DeckSelect (split-column deck + tag selection), Search (two-phase: input + results), Statistics (metrics), Settings (theme switch), Detail (entry view), Palette (theme palette test with live preview)
-- **Keymap** (`keymap/`): Centralized keybinding definitions with `Binding.Match()`, `BindingList.Help()`, per-screen keymap structs (`Global`, `List`, `Quiz`, `TypingQuiz`, `Decks`, `DeckSelect`, `Search`) with `Footer()` methods, `Registry` with `Bindings()`/`FindBinding()`, `KeymapConfig` for user overrides, and 16 tests. All screens and the root model use `keymap.Default*` instead of hardcoded strings.
-- **Config** (`internal/config/`): User configuration from `~/.config/crds/` — directory auto-creation, `config.yaml` loading, `keymaps.yaml` loading with `keymap.ApplyDefaultOverrides()`, theme discovery from `themes/*.yaml`. 13 tests.
-- **Events** (`events/`): 4 centralized event types (`TickMsg`, `ThemeSwitchMsg`, `ShowNotificationMsg`, `HideNotificationMsg`)
-- **Layout** (`layout/`): Layout helpers (Page, Column, Row, Center, Align, Stack, Grid, Spacer)
-- **Renderer** (`renderer/`): Custom renderer utilities (Wrap, Truncate, AnsiWidth, VisibleWidth)
+small methods
 
-## Placeholder Directories
+small structs
 
-- **actions** (empty): Action types
-- **animations** (empty): Animation utilities
-- **debug** (empty): Debug utilities
-- **testdata** (empty): Test fixtures
+small components
+
+Avoid deeply nested switch statements.
+
+Prefer early returns.
+
+Keep rendering code readable.
 
 ---
 
-# Future Extensions
+# Performance
 
-The architecture should support:
+Rendering should avoid unnecessary allocations.
 
-- Vim keybindings (partial — `"k"`/`"j"` already defined in `keymap.DefaultList`)
-- Chord bindings (e.g. `g` then `g` for top of list)
-- mouse mode
-- plugin widgets
-- split views
-- audio
-- inline images
-- AI hints
+Use `layout.Page()` and `layout.Column()` for view composition
+instead of manual `strings.Builder` concatenation.
 
-These additions should not require redesigning existing screens.
+Do not prematurely optimize.
+
+Bubble Tea already performs efficient redraws.
+
+---
+
+# Testing
+
+Business logic should be testable without Bubble Tea.
+
+Rendering helpers should be deterministic.
+
+Navigation should be testable through emitted events.
+
+---
+
+# File Organization
+
+Related packages outside `ui/`:
+
+- **`internal/config/`** — User configuration from `~/.config/crds/`: directory creation, `config.yaml`, `keymaps.yaml`, `themes/*.yaml` discovery
+
+```
+ui/
+├── screen.go           Screen interface + ScreenIndex type
+├── theme.go            Semantic color theme (re-exports theme.Default)
+├── state.go            AppState snapshot + StateSyncer protocol + StateChangedMsg
+├── quiz_mode.go        QuizMode enum + parse/next
+├── sorter.go           SortCards (mode-aware card ordering)
+
+├── app/                Root model (Bubble Tea entry point)
+│   ├── app.go          New() + Run() + config/keymap/theme init
+│   ├── model.go        Root Model struct, GlobalState + State (AppState), messages
+│   ├── events.go       dispatchEvent + dispatchKeyEvent + forwardToScreen + syncActiveScreen
+│   ├── view.go         Root View() + help overlay using keymap.Registry
+│   ├── update.go       Root Update()
+│   ├── lifecycle.go    Lifecycle hooks, transitionTo, pushTo, popToPrevious (entry state sync)
+│   ├── commands.go     NavigateToMsg, Dispatcher, config update
+│   ├── config.go       Config + DefaultConfig + ApplyYAML
+│   ├── dependencies.go DeckProvider, ProgressRecorder interfaces
+│   ├── tick.go         Tick loop
+│   └── tests/          state sync protocol tests
+
+├── navigation/         Centralized navigation
+│   ├── manager.go      Manager (Push, Pop, Replace, Forward, Reset, ...)
+│   ├── stack.go        History stack with depth limit
+│   ├── registry.go     Registry (ScreenIndex → Screen)
+│   ├── events.go       9 event types (Push, Pop, Replace, Forward, ...)
+│   └── tests/          82 black-box tests
+
+├── screens/            Screen implementations
+│   ├── home.go         HomeModel — activity menu
+│   ├── quiz.go         QuizModel — flashcard quiz
+│   ├── typing_quiz.go  TypingQuizModel — typing-based quiz with fuzzy matching
+│   ├── deck_select.go  DeckSelectModel — split-column deck+tag selection with search
+│   ├── search.go       SearchModel — two-phase: input mode (type + filter) + results mode (navigate + select)
+│   ├── statistics.go   StatisticsModel — study metrics
+│   ├── settings.go     SettingsModel — theme switching
+│   ├── detail.go       DetailModel — entry detail view
+│   └── palette.go      PaletteModel — theme palette test
+
+├── components/         Reusable components (29 total)
+│   ├── display/        20 stateless render functions
+│   │   ├── text.go           Text(content)
+│   │   ├── label.go          Label(text)
+│   │   ├── paragraph.go      Paragraph(content, width)
+│   │   ├── divider.go        Divider(width)
+│   │   ├── badge.go          Badge(text, variant)
+│   │   ├── header.go         Header(title, width)
+│   │   ├── footer.go         Footer(keys, width)
+│   │   ├── card.go           Card struct + RenderCard(c, revealed, width)
+│   │   ├── panel.go          Panel(content, width)
+│   │   ├── section.go        Section(title, content, width)
+│   │   ├── group.go          Group(title, content, width)
+│   │   ├── window.go         Window(title, content, footer, width)
+│   │   ├── list.go           RenderList + RenderListClipped (scrollable)
+│   │   ├── table.go          Table(headers, rows, width)
+│   │   ├── progress.go       ProgressBar(progress)
+│   │   ├── notification.go   RenderNotification(text)
+│   │   ├── status_bar.go     StatusBar(left, right, width)
+│   │   ├── modal.go          RenderModal(title, content, width, height)
+│   │   ├── confirm_dialog.go ConfirmDialog(title, msg, confirm, cancel, w, h)
+│   │   └── error_dialog.go   ErrorDialog(title, msg, width, height)
+│   └── interactive/    9 stateful Bubble Tea sub-models
+│       ├── input_keys.go     Key config structs + keyIn() helper
+│       ├── text_input.go     TextInputModel (cursor, focus)
+│       ├── search_input.go   SearchInputModel (extends TextInput)
+│       ├── checkbox.go       CheckboxModel (toggle, focus)
+│       ├── radio_group.go    RadioGroupModel (single select)
+│       ├── select.go         SelectModel (dropdown)
+│       ├── multi_select.go   MultiSelectModel (checkbox dropdown)
+│       ├── selectable_list.go SelectableListModel (multi-select)
+│       ├── tree.go           TreeModel (expand/collapse)
+│       └── spinner.go        SpinnerModel (animation frames)
+
+├── styles/             Semantic style definitions
+│   ├── header.go       Header(width int)
+│   ├── footer.go       Footer(width int)
+│   ├── selected_item.go SelectedItem()
+│   ├── focused_input.go FocusedInput()
+│   ├── error.go        Error()
+│   ├── warning.go      Warning()
+│   ├── success.go      Success()
+│   ├── hint.go         Hint()
+│   ├── muted_text.go   MutedText()
+│   ├── card.go         Card(width int)
+│   ├── panel.go        Panel(width int)
+│   ├── modal.go        Modal(width, height int)
+│   ├── primary_bg.go   PrimaryBg()
+│   ├── success_bg.go   SuccessBg()
+│   ├── error_bg.go     ErrorBg()
+│   ├── warning_bg.go   WarningBg()
+│   └── styles_test.go  Tests
+
+├── theme/              Design system (colors, typography, icons, borders)
+│   ├── palette.go      18-field Palette (15 colors + Primary/Secondary/Accent) + DefaultPalette
+│   ├── theme.go        Theme struct + NewTheme() + BorderFor()
+│   ├── typography.go   6 text role styles
+│   ├── borders.go      5 border styles
+│   ├── icons.go        4 icon sets × 10 semantic slots
+│   ├── spacing.go      7-tier Spacing scale
+│   ├── border_role.go  BorderRole enum
+│   ├── detect.go       Icon source auto-detection
+│   ├── nerdfont.go     NerdFont detection
+│   ├── config.go       YAML loading + style overrides
+│   ├── presets.go      Dark/light/tokyonight presets
+│   ├── store.go        Theme registry + switching
+│   ├── DESIGN.md       Design language documentation
+│   ├── theme_test.go   Tests
+│   └── testdata/       6 YAML fixtures
+
+├── keymap/             Centralized keybinding definitions
+│   ├── keymap.go       Binding, BindingList, Global, List, Quiz, TypingQuiz,
+│   │                   Decks, Search, Registry, NamedBinding, KeymapConfig,
+│   │                   ApplyDefaultOverrides
+│   └── keymap_test.go  Tests
+
+├── layout/             Layout helpers
+│   ├── page.go         Page(header, content, footer, height)
+│   ├── column.go       Column(items...)
+│   ├── row.go          Row(items...)
+│   ├── center.go       Center(content, width, height)
+│   ├── align.go        Align direction enum
+│   ├── grid.go         Grid(items, columns, width)
+│   ├── stack.go        Stack(items...)
+│   ├── spacer.go       Spacer(n)
+│   └── layout_test.go  Tests
+
+├── events/             Centralized event types
+│   └── events.go       TickMsg, ThemeSwitchMsg, ShowNotificationMsg,
+│                       HideNotificationMsg
+
+├── renderer/           Text rendering utilities
+│   ├── width.go        VisibleWidth, LineWidth, MaxLineWidth, TextDimensions
+│   ├── ansi.go         StripANSI, CountANSISequences
+│   ├── wrap.go         Wrap, Truncate, Fit
+│   └── renderer_test.go Tests
+
+├── actions/            Action types (empty)
+├── animations/         Animation helpers (empty)
+├── debug/              Debug utilities (empty)
+└── testdata/           Test fixtures (empty)
+```
+
+Keep responsibilities separate.
+
+Avoid large files.
+
+Most implementation work happens in `app/`, `navigation/`, and `screens/`.
+
+Each package carries a `CONTEXT.md` describing how it works today. See
+`docs/README.md` for the taxonomy.

@@ -12,6 +12,20 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done.
 
 # Completed plans (archived)
 
+## Statistics screen revamp (words + selection tabs)
+
+- [x] Per-word tab: search-driven vocabulary lookup with per-word stats (total
+      reviews, accuracy, confidence, mastered, last reviewed) and a per-word
+      confidence graph
+- [x] Selection tab: summary metrics for the selected decks/tags (reviewed
+      today, accuracy, due today, current streak, total cards, mastered) with a
+      confidence-over-time bar graph
+- [x] Streak computed from review history (`internal/stats.Streak`)
+- [x] Word-level + selection queries in `internal/storage` (sqlc) behind the
+      `internal/stats.Provider` interface
+- [x] `Statistics` keymap group (`tab` switch, `esc` back) with user overrides
+- [ ] Due Today from a real scheduler (`internal/scheduler/`) — still open
+
 ## Former `PLAN.md` — original implementation plan
 
 All phases complete. Superseded by this roadmap and `docs/status.md`.
@@ -45,12 +59,12 @@ Mostly shipped with the CLI. Remaining items carried forward below.
 - [ ] Wire `ConfirmDialog` into `screens/quiz.go` (confirm quit before abandoning)
 - [ ] Wire `RadioGroupModel` / `SelectModel` / `MultiSelectModel` into settings forms
 - [ ] Wire `TreeModel` into a deck/category browser
-- [ ] Wire `Table` into statistics/leaderboard screens
+- [ ] Wire `Table` into a leaderboard screen (Statistics uses graph + metric grid)
 - [ ] Add tests for the 20 display + 9 interactive components
 - [ ] `FocusGroup` component — manage tab-order between interactive components on one screen
 - [ ] Error boundaries — `RenderError` component or pattern for render panics
 - [ ] Responsive breakpoints — compact mode at narrow terminal widths
-- [ ] Viewport component — scrollable wrapper for overflow content (Statistics, Detail)
+- [ ] Viewport component — scrollable wrapper for overflow content (Statistics word list, Detail)
 
 *(source: `components/CONTEXT.md` "Not yet wired" + Suggestions)*
 
@@ -137,7 +151,8 @@ Deferred until a concrete trigger appears:
 - [ ] TUI dashboard — reviews due, streak, accuracy, recently learned
 - [ ] Instant fuzzy search
 - [ ] Tag taxonomy (food, travel, verbs, adjectives, A1–B2)
-- [ ] Statistics — daily reviews, streak, accuracy, avg response time, cards due, mastered, weakest words
+- [ ] Statistics — avg response time, weakest words (daily reviews, streak,
+      accuracy, mastered shipped in the 2026 statistics revamp; see "Completed plans")
 - [ ] `crds sync --prune` — remove stale decks from the SQLite cache
 
 ## Data model extensions (from `docs/DATAMODEL.md`)

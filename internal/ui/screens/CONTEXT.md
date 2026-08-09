@@ -173,15 +173,24 @@ PaletteScreen
 
 ### StatisticsModel (`statistics.go`)
 
-- **State**: `summary` (from `SyncState`)
-- **Keys**: None (information only)
-- **Behavior**: Displays 6 study metrics in `styles.Panel` containers:
-  Reviewed Today, Accuracy, Due Today, Current Streak, Total Cards, Mastered.
+- **State**: `tab`, `summary`/`selectionStats` + `selectionHistory` (from `SyncState`),
+  per-word search state (`query`, `cursor`, `results`, `selected`, `wordStats`, `wordHistory`)
+- **Keys**: `tab` (switch words/selection tab), `escape` (back to Home)
+- **Behavior**: Two tabs.
+  - *Words* tab: type to search the deck (`search_shared.go` `filterCards`); the
+    highlighted result shows per-word stats in the metric grid (Total Reviews,
+    Accuracy, Confidence, Mastered, Last Reviewed) and a per-word confidence
+    graph. On select, emits `ui.RefreshWordStatsMsg`; the root dispatches
+    `FetchWordStatsCmd` and pushes results back via `WordStatsLoadedMsg`.
+  - *Selection* tab: shows the selected decks/tags' summary (Reviewed Today,
+    Accuracy, Due Today, Current Streak, Total Cards, Mastered) with a
+    confidence-over-time bar graph (`components/display/graph.go`).
   `OnEnter` emits `ui.RefreshStatsMsg`; the root fetches stats and pushes them
-  back via `SyncState`.
-- **Renders**: Header + Panel grid + footer
-- **Known issue**: Due Today and Current Streak show 0 / "—" — no scheduler
-  wired yet. Tracked in `docs/status.md`.
+  back via `SyncState`. Streak is computed from review history in
+  `internal/stats` (`Summary.Streak`).
+- **Renders**: Tabs + row 1 graph + row 2 metric grid + footer
+- **Known issue**: Due Today shows "—" — no scheduler wired yet. Tracked in
+  `docs/status.md`.
 
 ### SettingsModel (`settings.go`)
 

@@ -249,7 +249,7 @@ var DefaultQuiz = Quiz{
 	Inverse:      Binding{Keys: []string{"tab"},            Help: "tab inverse"},
 	PrevExample:  Binding{Keys: []string{"left", "["},     Help: "[ previous"},
 	NextExample:  Binding{Keys: []string{"right", "]"},    Help: "] next"},
-	ModeCycle:    Binding{Keys: []string{"m"},              Help: "m mode"},
+	ModeCycle:    Binding{Keys: []string{"ctrl+m"},          Help: "ctrl+m mode"},
 }
 
 var DefaultTypingQuiz = TypingQuiz{
@@ -258,7 +258,7 @@ var DefaultTypingQuiz = TypingQuiz{
 	Inverse:      Binding{Keys: []string{"tab"},       Help: "tab inverse"},
 	PrevExample:  Binding{Keys: []string{"left", "["}, Help: "[ previous"},
 	NextExample:  Binding{Keys: []string{"right", "]"},Help: "] next"},
-	ModeCycle:    Binding{Keys: []string{"m"},         Help: "m mode"},
+	ModeCycle:    Binding{Keys: []string{"ctrl+m"},         Help: "ctrl+m mode"},
 }
 
 var DefaultDecks = Decks{

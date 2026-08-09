@@ -28,5 +28,12 @@ GROUP BY entry_id;
 -- name: GetDueCards :many
 SELECT deck_id, entry_id, reverse, ease, interval, due, correct, incorrect
 FROM progress
-WHERE deck_id = ? AND due <= CURRENT_TIMESTAMP
+WHERE deck_id = ? AND due <= ?
 ORDER BY due ASC;
+
+-- name: ListNewEntriesByDeck :many
+SELECT e.id
+FROM entries e
+LEFT JOIN progress p ON p.deck_id = e.deck_id AND p.entry_id = e.id
+WHERE e.deck_id = ? AND p.entry_id IS NULL
+ORDER BY e.position ASC;

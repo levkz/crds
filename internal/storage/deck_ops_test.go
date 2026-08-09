@@ -367,7 +367,10 @@ func TestChangeDeckID_WithProgress(t *testing.T) {
 		t.Fatalf("ChangeDeckID: %v", err)
 	}
 
-	// Verify progress now points to new ID
+	// Verify progress now points to new ID. entry_1 was answered (grade 3,
+	// reverse) so its correct count advanced to 4; entry_2 was answered in the
+	// reverse direction, leaving its forward row untouched.
+	wantCorrect := map[string]int{"entry_1": 4, "entry_2": 3}
 	for _, entryID := range []string{"entry_1", "entry_2"} {
 		p, err := store.queries.GetProgress(ctx, db.GetProgressParams{
 			DeckID:  "renamed_deck",
@@ -376,8 +379,8 @@ func TestChangeDeckID_WithProgress(t *testing.T) {
 		})
 		if err != nil {
 			t.Errorf("GetProgress(%q) after rename: %v", entryID, err)
-		} else if p.Correct != 3 {
-			t.Errorf("expected correct=3 for %q, got %d", entryID, p.Correct)
+		} else if p.Correct != int64(wantCorrect[entryID]) {
+			t.Errorf("expected correct=%d for %q, got %d", wantCorrect[entryID], entryID, p.Correct)
 		}
 	}
 
@@ -852,7 +855,8 @@ func TestReplaceEntryID(t *testing.T) {
 		t.Errorf("expected entry_1_new, got %q", got.ID)
 	}
 
-	// Verify progress migrated to new ID
+	// Verify progress migrated to new ID. The seeded correct count (3) advanced
+	// to 4 because RecordAnswer(grade 3) persisted scheduling progress.
 	p, err := store.queries.GetProgress(context.Background(), db.GetProgressParams{
 		DeckID:  "test_deck",
 		EntryID: "entry_1_new",
@@ -861,8 +865,8 @@ func TestReplaceEntryID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetProgress after replace: %v", err)
 	}
-	if p.Correct != 3 {
-		t.Errorf("expected progress.correct=3, got %d", p.Correct)
+	if p.Correct != 4 {
+		t.Errorf("expected progress.correct=4, got %d", p.Correct)
 	}
 
 	// Verify reviews migrated to new ID

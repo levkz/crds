@@ -88,12 +88,17 @@ func (q *Queries) GetDeckProgress(ctx context.Context, deckID string) ([]GetDeck
 const getDueCards = `-- name: GetDueCards :many
 SELECT deck_id, entry_id, reverse, ease, interval, due, correct, incorrect
 FROM progress
-WHERE deck_id = ? AND due <= CURRENT_TIMESTAMP
+WHERE deck_id = ? AND due <= ?
 ORDER BY due ASC
 `
 
-func (q *Queries) GetDueCards(ctx context.Context, deckID string) ([]Progress, error) {
-	rows, err := q.db.QueryContext(ctx, getDueCards, deckID)
+type GetDueCardsParams struct {
+	DeckID string     `db:"deck_id"`
+	Due    *time.Time `db:"due"`
+}
+
+func (q *Queries) GetDueCards(ctx context.Context, arg GetDueCardsParams) ([]Progress, error) {
+	rows, err := q.db.QueryContext(ctx, getDueCards, arg.DeckID, arg.Due)
 	if err != nil {
 		return nil, err
 	}
@@ -150,6 +155,37 @@ func (q *Queries) GetProgress(ctx context.Context, arg GetProgressParams) (Progr
 		&i.Incorrect,
 	)
 	return i, err
+}
+
+const listNewEntriesByDeck = `-- name: ListNewEntriesByDeck :many
+SELECT e.id
+FROM entries e
+LEFT JOIN progress p ON p.deck_id = e.deck_id AND p.entry_id = e.id
+WHERE e.deck_id = ? AND p.entry_id IS NULL
+ORDER BY e.position ASC
+`
+
+func (q *Queries) ListNewEntriesByDeck(ctx context.Context, deckID string) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, listNewEntriesByDeck, deckID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []string{}
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const upsertProgress = `-- name: UpsertProgress :exec

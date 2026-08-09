@@ -127,24 +127,37 @@ func (s *Store) ResetSession() error {
 // --- RecordAnswer (ProgressRecorder interface) ---
 
 // RecordAnswer persists a single quiz answer. An implicit session is created
-// on the first call and reused until ResetSession is called.
+// on the first call and reused until ResetSession is called. The review row
+// and the updated scheduling state (progress) are written together.
 func (s *Store) RecordAnswer(deckID, cardID string, grade int, reverse bool) error {
 	sessionID, err := s.EnsureSession()
 	if err != nil {
 		return err
 	}
-	reverseInt := int64(0)
-	if reverse {
-		reverseInt = 1
+
+	ctx := context.Background()
+	tx, err := s.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
 	}
-	_, err = s.queries.CreateReview(context.Background(), db.CreateReviewParams{
+	defer tx.Rollback()
+
+	q := s.queries.WithTx(tx)
+	if _, err := q.CreateReview(ctx, db.CreateReviewParams{
 		SessionID: sessionID,
 		DeckID:    deckID,
 		EntryID:   cardID,
 		Grade:     int64(grade),
-		Reverse:   reverseInt,
-	})
-	return err
+		Reverse:   boolInt(reverse),
+	}); err != nil {
+		return err
+	}
+
+	if err := persistAnswer(ctx, q, deckID, cardID, grade, reverse, time.Now().UTC()); err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 // RecordAnswerFull records a quiz answer with all available metadata.
@@ -157,24 +170,27 @@ func (s *Store) RecordAnswerFull(sessionID int64, deckID, entryID string, grade 
 		}
 	}
 
-	reverseInt := int64(0)
-	if reverse {
-		reverseInt = 1
+	ctx := context.Background()
+	tx, err := s.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, fmt.Errorf("begin tx: %w", err)
 	}
+	defer tx.Rollback()
 
-	review, err := s.queries.CreateReview(context.Background(), db.CreateReviewParams{
+	q := s.queries.WithTx(tx)
+	review, err := q.CreateReview(ctx, db.CreateReviewParams{
 		SessionID: sessionID,
 		DeckID:    deckID,
 		EntryID:   entryID,
 		Grade:     int64(grade),
-		Reverse:   reverseInt,
+		Reverse:   boolInt(reverse),
 	})
 	if err != nil {
 		return 0, err
 	}
 
 	if userInput != "" || correctAnswer != "" {
-		if err := s.queries.CreateTypingDetail(context.Background(), db.CreateTypingDetailParams{
+		if err := q.CreateTypingDetail(ctx, db.CreateTypingDetailParams{
 			ReviewID:      review.ID,
 			UserInput:     userInput,
 			CorrectAnswer: correctAnswer,
@@ -184,7 +200,11 @@ func (s *Store) RecordAnswerFull(sessionID int64, deckID, entryID string, grade 
 		}
 	}
 
-	return review.ID, nil
+	if err := persistAnswer(ctx, q, deckID, entryID, grade, reverse, time.Now().UTC()); err != nil {
+		return 0, err
+	}
+
+	return review.ID, tx.Commit()
 }
 
 // --- Stats (StatsProvider interface) ---
@@ -223,13 +243,17 @@ func (s *Store) Summary() (stats.Summary, error) {
 	}
 
 	mastered := s.masteredCount()
+	dueToday, err := s.dueTodayCount(nil, time.Now().UTC())
+	if err != nil {
+		return stats.Summary{}, err
+	}
 
 	return stats.Summary{
 		ReviewedToday: int(row.TotalReviews),
 		Accuracy:      accuracy,
 		TotalCards:    int(row.TotalReviews),
 		Mastered:      mastered,
-		DueToday:      0,
+		DueToday:      dueToday,
 	}, nil
 }
 
@@ -370,12 +394,17 @@ func (s *Store) SelectionSummary(deckIDs, tags []string) (stats.Summary, error) 
 		return stats.Summary{}, err
 	}
 
+	dueToday, err := s.dueTodayCount(decks, time.Now().UTC())
+	if err != nil {
+		return stats.Summary{}, err
+	}
+
 	return stats.Summary{
 		ReviewedToday: int(total),
 		Accuracy:      accuracy,
 		TotalCards:    s.entryCountIn(decks),
 		Mastered:      mastered,
-		DueToday:      0,
+		DueToday:      dueToday,
 		Streak:        stats.Streak(days),
 	}, nil
 }

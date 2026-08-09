@@ -8,6 +8,9 @@
 The `actions` package would define high-level user intentions as typed
 constants, decoupling "what key was pressed" from "what the user wants to do."
 
+It does not exist yet; candidate action types are tracked in
+`docs/roadmap.md`.
+
 Proposed flow:
 
 ```
@@ -19,11 +22,6 @@ Compared to the current flow:
 ```
 Key press → keymap matches → screen handles directly
 ```
-
-## Current status
-
-Not implemented. The directory is empty; candidate action types are
-tracked in `docs/roadmap.md`.
 
 ## Integration
 

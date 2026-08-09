@@ -14,7 +14,11 @@ A style is called `Primary`, not `Blue`. An icon is `Navigate`, not `ArrowRight`
 
 ### 2. Minimal palette
 
-Ten colors, each with a single role. No gradients, no opacity, no per-component overrides. If a new color is needed, it should earn its place by serving a role that none of the existing colors can fill.
+Fifteen named colors. A subset drives the semantic styles (one role per
+color); the remaining slots exist for custom themes and direct use. No
+gradients, no opacity, no per-component overrides. If a new color is
+needed, it should earn its place by serving a role that none of the
+existing colors can fill.
 
 ### 3. Graceful degradation
 
@@ -45,6 +49,10 @@ All four icon sources (NerdFont, Emoji, Unicode, Fallback) cover the same semant
 | Border     | 236  | 245   | Structural dividers                |
 | Link       | 39   | 33    | Navigable / tappable elements      |
 | Surface    | 236  | 250   | Elevated card / container surfaces |
+| Magenta    | 177  | 171   | Extra palette slots for custom themes |
+| Purple     | 140  | 98    | Extra palette slots for custom themes |
+| Cyan       | 117  | 45    | Extra palette slots for custom themes |
+| Yellow     | 220  | 208   | Extra palette slots for custom themes |
 
 ### Semantic styles
 
@@ -199,12 +207,13 @@ Use `Theme.BorderFor(role)` rather than selecting a border directly. This keeps 
 
 Themes are registered by name and stored in `Store`. Built-in themes:
 
-| Name    | Palette          |
-| ------- | ---------------- |
-| default | `DefaultPalette` |
-| dark    | `DarkPalette`    |
-| light   | `LightPalette`   |
-| mocha   | `MochaPalette`   |
+| Name       | Palette              |
+| ---------- | -------------------- |
+| default    | `DefaultPalette`     |
+| dark       | `DarkPalette`        |
+| light      | `LightPalette`       |
+| tokyonight | `TokyonightPalette`  |
+| mocha      | `MochaPalette`       |
 
 Custom themes can be registered from YAML files via `store.RegisterPath()`.
 

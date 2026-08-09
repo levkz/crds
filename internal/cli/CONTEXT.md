@@ -268,9 +268,3 @@ func (c *ImportCmd) Run(a *app.App) error {
 | `default:"20"` | `Limit int \`default:"20"\`` | Default value |
 | `completion-predictor:"deck"` | `Deck string \`completion-predictor:"deck"\`` | Deck ID completion |
 | `completion-predictor:"term"` | `TermID string \`completion-predictor:"term"\`` | Entry ID completion |
-
----
-
-## Known limitations
-
-See `docs/status.md` for current known issues.

@@ -90,13 +90,13 @@ navigation/
 │                       modal/overlay)
 └── tests/
     ├── helpers_test.go     Shared constants + mockScreen
-    ├── stack_test.go       8 Stack tests
-    ├── manager_test.go     14 Manager + CurrentScreen integration tests
-    ├── registry_test.go    9 Registry tests
-    ├── forward_test.go     10 Forward navigation tests
-    ├── modal_test.go       11 Modal navigation tests
-    ├── overlay_test.go     11 Overlay navigation tests
-    └── history_test.go     11 History/depth-limit tests
+    ├── stack_test.go       Stack tests
+    ├── manager_test.go     Manager + CurrentScreen integration tests
+    ├── registry_test.go    Registry tests
+    ├── forward_test.go     Forward navigation tests
+    ├── modal_test.go       Modal navigation tests
+    ├── overlay_test.go     Overlay navigation tests
+    └── history_test.go     History/depth-limit tests
 ```
 
 ---

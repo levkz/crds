@@ -93,7 +93,8 @@ Implemented and tested. See `docs/status.md` for the test baseline.
 - **Store & Switching** `store.go` — `Store` is a named‑theme registry:
   `Register(name, Theme)`, `Switch(name)` (returns the Theme),
   `Current()`, `CurrentName()`, `Names()`, `Get()`, `Unregister()`,
-  `Has()`, `Len()`. Pre-registers `"default"`, `"dark"`, `"light"`, `"tokyonight"`.
+  `Has()`, `Len()`. Pre-registers `"default"`, `"dark"`, `"light"`, `"tokyonight"`,
+  `"mocha"`.
   Package‑level functions delegate to `DefaultStore`.
 
   Callers switch by:
@@ -173,10 +174,11 @@ theme/
 │                     YAML structs, LoadTheme, ParseTheme,
 │                     Config.Build, paletteColor, resolveDirectColor,
 │                     applyTextRole
-├── presets.go        DarkPalette, LightPalette, TokyonightPalette, DarkTheme, LightTheme, TokyonightTheme
+├── presets.go        DarkPalette, LightPalette, TokyonightPalette,
+│                     MochaPalette, DarkTheme, LightTheme,
+│                     TokyonightTheme, MochaTheme
 ├── store.go          Store (Register, Switch, Current, Names,
 │                     etc.), DefaultStore, package-level convs
-├── theme_test.go     54 tests
 └── testdata/
     ├── full.yaml         15 palette colors + 3 style overrides +
     │                     nerdfont icons + typography
@@ -201,8 +203,8 @@ No dependency on Bubble Tea, terminal detection, or the `ui/app` package.
 
 ## Testing
 
-All tests are in-package (`package theme`). 54 tests, all table-driven
-where practical.
+All tests are in-package (`package theme`), table-driven where practical.
+See `docs/status.md` for the test baseline.
 
 Run:
 

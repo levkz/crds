@@ -157,17 +157,18 @@ styles/
 ├── success_bg.go      SuccessBg()
 ├── error_bg.go        ErrorBg()
 ├── warning_bg.go      WarningBg()
-└── styles_test.go     60+ tests
+└── styles_test.go
 ```
 
 ---
 
 # Testing
 
-All tests are in-package (`package styles`). 60+ tests total:
+All tests are in-package (`package styles`). See `docs/status.md` for the
+test baseline.
 
-- Each style has 3–5 sub-tests: render, parameter verification, color/border checks, chaining
-- `TestAllStylesRender` — smoke test that all 16 styles render without panic
+- Each style has sub-tests: render, parameter verification, color/border checks, chaining
+- `TestAllStylesRender` — smoke test that all styles render without panic
 - `TestThemeSwitchUpdatesStyles` — verifies live theme switching propagates
 
 Run:

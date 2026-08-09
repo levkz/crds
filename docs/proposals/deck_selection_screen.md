@@ -1,5 +1,8 @@
 # Deck Selection Screen
 
+> Status: **implemented** — `internal/ui/screens/deck_select.go`. See
+> `docs/status.md` and `docs/roadmap.md`.
+
 ## Current State
 
 Single unified screen in `internal/ui/screens/deck_select.go` (~500 lines).

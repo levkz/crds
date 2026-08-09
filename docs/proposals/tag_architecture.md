@@ -1,5 +1,9 @@
 # Tag Architecture
 
+> Status: **partially implemented** — storage layer (`entry_tags` tables and
+> queries) done; deck-level aggregation and deck/tag filtering UI deferred.
+> See `docs/status.md` and `docs/roadmap.md`.
+
 ## Current State
 
 Tags are stored per-entry in the `entry_tags` table (composite PK `entry_id, tag`).

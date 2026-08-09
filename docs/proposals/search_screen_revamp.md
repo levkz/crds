@@ -1,5 +1,7 @@
 # Search Screen Revamp
 
+> Status: **not started**. See `docs/roadmap.md`.
+
 ## Current State
 
 `SearchModel` in `internal/ui/screens/search.go` (416 lines) is a single-column

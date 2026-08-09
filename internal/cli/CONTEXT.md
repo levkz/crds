@@ -1,5 +1,8 @@
 # CLI Package Context
 
+> Per-package context: how this package works today. Status and plans live in
+> `docs/status.md` and `docs/roadmap.md` (see `docs/README.md`).
+
 ## Kong Wiring
 
 The CLI uses [Kong v1.16](https://github.com/alecthomas/kong) for command-line parsing. Declarative struct tags define flags, arguments, and help text. Every command implements `Run(a *app.App) error`. The root struct also receives `*kong.Context` to detect subcommand dispatch.
@@ -270,7 +273,4 @@ func (c *ImportCmd) Run(a *app.App) error {
 
 ## Known limitations
 
-- `QuizCmd` has `--limit` and `--reverse` flags acknowledged with stderr warnings but not wired to the TUI
-- Grade scale mismatch: Flashcard uses 0-3, Typing uses 1-3 (needs normalization)
-- `scheduler/`, `search/`, `quiz/` implementations don't exist yet in the storage layer — only the UI and CLI wiring are done
-- `crds deck edit` prompts cannot be tested automatically (interactive stdin reader)
+See `docs/status.md` for current known issues.

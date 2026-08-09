@@ -1,8 +1,7 @@
 # Components Context
 
-This document provides implementation context for future development sessions.
-
----
+> Per-package context: how this package works today. Status and plans live in
+> `docs/status.md` and `docs/roadmap.md` (see `docs/README.md`).
 
 ## Purpose
 
@@ -330,7 +329,6 @@ key strings. See `input_keys.go` for all defaults and the helper function.
 ```
 components/
 ├── CONTEXT.md
-├── TODO.md
 ├── display/              Stateless render functions
 │   ├── text.go           Text(content)
 │   ├── label.go          Label(text)
@@ -401,29 +399,8 @@ import components "crds/internal/ui/components/display"
 
 ---
 
-## Suggestions
-
-1. **Error boundaries** — Consider a `RenderError` component or pattern for
-   gracefully handling component render panics in development
-
-2. **Responsive breakpoints** — If screens pass terminal width, components
-   could adapt behavior (e.g., compact mode at < 60 columns)
-
-3. **Animation support** — Spinner and ProgressBar could accept an
-   animation tick channel from the parent for frame-driven updates
-
-4. **Composite components** — Pre-built combinations like
-   `ConfirmDialog(title, message, onConfirm, onCancel)` could reduce
-   boilerplate in screens
-
-5. **Viewport component** — A scrollable viewport wrapper would be useful
-   for screens with overflow content (Statistics, Detail)
-
-6. **Keyboard navigation composability** — Consider a `FocusGroup` component
-   that manages tab-order between multiple interactive components on one
-   screen (e.g., Search with input + list)
-
 7. **Wiring components to screens** — Interactive components (TextInput,
    SelectableList, etc.) are built and ready but not yet wired into any
    screen. Screens like `search.go` and `settings.go` still handle input
-   inline. Wiring them to use the new components is the next step.
+   inline. Wiring them to use the new components is tracked in
+   `docs/roadmap.md`.

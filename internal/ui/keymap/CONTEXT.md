@@ -1,5 +1,8 @@
 # Keymap Context
 
+> Per-package context: how this package works today. Status and plans live in
+> `docs/status.md` and `docs/roadmap.md` (see `docs/README.md`).
+
 ## Purpose
 
 The `keymap` package centralizes keybinding definitions so screens and the
@@ -233,10 +236,7 @@ Screens compose them with ` · ` to build complete footers.
 - **`internal/ui/app/view.go`** — `renderHelpOverlay()` uses `keymap.DefaultRegistry.Bindings()` to show all shortcuts grouped by category
 - **`internal/ui/screens/*.go`** — All 8 screens use `keymap.Default*` for key dispatch and footer generation
 
----
+## Notes for changes
 
-## Future work
-
-- Support chord bindings (e.g. `g` then `g` for top of list)
-- Add mouse binding support
-- Allow per-screen keymap overrides in user config
+- Chord bindings (e.g. `g` then `g` for top of list), mouse bindings, and
+  per-screen keymap overrides are planned — tracked in `docs/roadmap.md`.

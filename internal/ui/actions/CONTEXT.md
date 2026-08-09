@@ -1,5 +1,8 @@
 # Actions Context
 
+> Per-package context: how this package works today. Status and plans live in
+> `docs/status.md` and `docs/roadmap.md` (see `docs/README.md`).
+
 ## Purpose
 
 The `actions` package would define high-level user intentions as typed
@@ -19,8 +22,14 @@ Key press → keymap matches → screen handles directly
 
 ## Current status
 
-Not implemented. The directory contains only a TODO.md with candidate
-action types.
+Not implemented. The directory is empty; candidate action types are
+tracked in `docs/roadmap.md`.
+
+## Integration
+
+The `events/` package defines messages that cross package boundaries
+(TickMsg, ThemeSwitchMsg, notifications); `actions/` would represent
+within-screen intent. The two must not overlap if implemented.
 
 ## Why it does not exist yet
 
@@ -57,16 +66,9 @@ only matters in Search).
 - **Accessibility** — screen readers or alternative input methods benefit
   from a well-defined set of actions rather than raw key bindings.
 
-## Relationship to `events/`
-
-The `events/` package defines messages that cross package boundaries
-(TickMsg, ThemeSwitchMsg, notifications). Actions would represent
-within-screen intent — a different concern. The two packages should
-not overlap.
-
 ## Candidate actions
 
-From TODO.md:
+Recorded in `docs/roadmap.md`:
 
 - Navigate
 - Back

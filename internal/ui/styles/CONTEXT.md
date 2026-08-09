@@ -1,8 +1,7 @@
 # Styles Context
 
-This document provides implementation context for future development sessions.
-
----
+> Per-package context: how this package works today. Status and plans live in
+> `docs/status.md` and `docs/roadmap.md` (see `docs/README.md`).
 
 # Purpose
 
@@ -35,9 +34,9 @@ ui.Theme.Success  // Instead of lipgloss.Color("#00ff00")
 
 ---
 
-# Current Status
+# Style Reference
 
-**All 16 style definitions are implemented** (60+ tests):
+Implemented styles (see `docs/status.md` for the test baseline):
 
 | Style | Function | Source |
 |---|---|---|
@@ -142,7 +141,6 @@ No dependency on Bubble Tea, state management, or application logic.
 ```
 styles/
 ├── CONTEXT.md
-├── TODO.md
 ├── header.go          Header(width int)
 ├── footer.go          Footer(width int)
 ├── selected_item.go   SelectedItem()
@@ -217,32 +215,5 @@ Currently wired consumers:
 | `components.Text()` | `styles.MutedText()` |
 | `screens/typing_quiz.go` | `styles.PrimaryBg()` — tag pills |
 
----
-
-# Suggestions
-
-1. **Icon-aware markers** — Some styles (SelectedItem, Error, Success) could
-   expose icons from `ui.Theme.Icons` to respect NerdFont/Emoji/Unicode.
-
-2. **Width parameter consistency** — All "full-width" styles (Header, Footer,
-   Card, Panel) now take `width int`. If screens later need dynamic widths
-   from terminal size, the parameter stays the same — callers pass
-   `t.Width` or similar.
-
-3. **FocusedInput variants** — Consider `FocusedInput(active bool)` to toggle
-   between focused/unfocused border colors.
-
-4. **Style composition helpers** — If patterns like "bold + primary" or
-   "italic + muted" appear frequently, consider helper functions that
-   compose base styles.
-
----
-
-## TODOs
-
-- [ ] Add icon-aware marker helpers — e.g., `SelectedItemIcon()` that returns
-      `ui.Theme.Icons.Bullet` or similar for the selected item marker
-- [ ] Add `FocusedInput(active bool)` variant for unfocused state
-- [ ] Add style composition functions if duplication emerges across consumers
-- [ ] Consider `testdata/` directory if parameterized test fixtures become
-      useful (currently not needed — all styles are pure functions)
+Planned enhancements (icon-aware markers, `FocusedInput(active bool)`
+variant, style composition helpers) are tracked in `docs/roadmap.md`.

@@ -1,5 +1,8 @@
 # Theme Context
 
+> Per-package context: how this package works today. Status and plans live in
+> `docs/status.md` and `docs/roadmap.md` (see `docs/README.md`).
+
 ## Purpose
 
 The `theme` package provides a centralized visual design system for the
@@ -11,7 +14,7 @@ or characters.
 
 ## Current State
 
-All TODO items are implemented and tested (68+ tests).
+Implemented and tested. See `docs/status.md` for the test baseline.
 
 ### What's in place
 
@@ -149,7 +152,6 @@ automatically pick up the switched theme.
 ```
 theme/
 ├── CONTEXT.md
-├── TODO.md
 ├── DESIGN.md          Design language documentation
 ├── theme.go          Theme struct, NewTheme, NewTerminalTheme,
 │                     WithIconSource, WithFallbackIcons, Default,
@@ -221,16 +223,5 @@ unknown color error in typography config, dark/light preset themes
 (surface values), built-in theme registration, theme switching with custom
 palette, theme border role resolution.
 
----
-
-## Future Work
-
-- **CLI flag for theme path** — wire `--theme` flag in the Kong CLI to
-  `app.Config.ThemePath` so users can specify a custom YAML theme file
-  from the command line.
-
-- **More `ConfigTextRole` fields** — expose underline, strikethrough,
-  background color, and padding in the YAML typography config.
-
-- **Plugin themes** — allow loading themes from `~/.config/crds/themes/`
-  or similar well-known directories.
+Planned enhancements (CLI `--theme` flag, more `ConfigTextRole` fields,
+plugin theme loading) are tracked in `docs/roadmap.md`.

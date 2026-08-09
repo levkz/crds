@@ -1,5 +1,8 @@
 # Navigation Context
 
+> Per-package context: how this package works today. Status and plans live in
+> `docs/status.md` and `docs/roadmap.md` (see `docs/README.md`).
+
 ## Purpose
 
 The `navigation` package manages screen transitions within the UI application.
@@ -11,7 +14,7 @@ operations, and support for modal, overlay, and forward navigation.
 
 ## Current State
 
-All 14 original TODO items are implemented and tested (82 tests).
+Implemented and tested. See `docs/status.md` for the test baseline.
 
 ### What's in place
 
@@ -78,7 +81,6 @@ All 14 original TODO items are implemented and tested (82 tests).
 ```
 navigation/
 ├── CONTEXT.md
-├── TODO.md
 ├── manager.go          Manager struct + Push, Pop, Replace, Forward,
 │                       Reset, SetRegistry, CurrentScreen, ShowOverlay,
 │                       HideOverlay, SetMaxHistory, FullHistory, etc.
@@ -126,24 +128,3 @@ Run with:
 ```
 go test ./internal/ui/navigation/tests/
 ```
-
----
-
-## Future Work
-
-### Near-term (within `app/` integration)
-
-- Refactor screen stubs in `app/screens.go` to implement `ui.Screen`
-- Use `nav.Registry` + `mgr.CurrentScreen()` to replace the `forwardToScreen`
-  and `View` switches
-- Wire `Push`/`Pop` for history-based navigation (back button)
-- Replace `NavigateToMsg` with direct Manager calls
-
-### Longer-term (new navigation features)
-
-- **Forward navigation** — already implemented in the navigation package;
-  `app/` could expose a "forward" keybinding
-- **Stacked overlays** — currently single-overlay; could support stacking
-- **Navigation middleware** — hooks that fire on every transition (logging,
-  analytics, validation)
-- **Deep linking** — parse a path string into a sequence of Push/Pop calls

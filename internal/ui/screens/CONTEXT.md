@@ -1,5 +1,8 @@
 # Screens Context
 
+> Per-package context: how this package works today. Status and plans live in
+> `docs/status.md` and `docs/roadmap.md` (see `docs/README.md`).
+
 ## Purpose
 
 The `screens` package implements all application screens. Each screen is a
@@ -177,8 +180,8 @@ PaletteScreen
   `OnEnter` emits `ui.RefreshStatsMsg`; the root fetches stats and pushes them
   back via `SyncState`.
 - **Renders**: Header + Panel grid + footer
-- **Known issue**: Due Today and Current Streak still show 0 / "—" — no
-  scheduler wired yet.
+- **Known issue**: Due Today and Current Streak show 0 / "—" — no scheduler
+  wired yet. Tracked in `docs/status.md`.
 
 ### SettingsModel (`settings.go`)
 
@@ -351,37 +354,15 @@ screens/
 └── palette.go       PaletteModel — theme palette test
 ```
 
----
+## Notes for changes
 
-## Suggestions
+- Home could show recent decks or quick-start options once deck loading is
+  richer.
+- Screens should support dynamic sizing via `SetSize(w, h int)` rather than
+  relying on hardcoded defaults.
+- Search filters `Deck.Cards` in memory via `SyncState`; debouncing and
+  async loading are potential future refinements.
+- Quiz and TypingQuiz are candidates for `OnEnter` lifecycle hooks (e.g.
+  reset per-visit state).
 
-1. **Data loading** — Resolved via the Global State Sync protocol: deck, progress,
-   mode, tags, and stats are pushed into screens through `SyncState` on entry and
-   on change.
-
-2. **Lifecycle hooks** — Search implements `app.Lifecycle` (resets to input mode).
-   Statistics implements `OnEnter` (emits `RefreshStatsMsg`). DeckSelectModel uses
-   `HandleBack()` instead. Quiz and TypingQuiz are candidates for `OnEnter`
-   (e.g. reset per-visit state).
-
-3. **Home improvements** — After wiring deck loading, show recent decks or
-   quick-start options. Consider `components.Text` for descriptions below
-   each activity.
-
-4. **Width awareness** — `SetSize(w, h int)` is now called on every screen
-   during `transitionTo()` via the `Lifecycle` interface. Screens should
-   support dynamic sizing rather than relying on hardcoded defaults.
-
-5. **Event-driven search** — Search now filters `Deck.Cards` in memory via
-   `SyncState`. Consider debouncing the query input and using a channel or
-   command to load results asynchronously.
-
-6. **Statistics refresh** — Statistics refreshes on `OnEnter()` by emitting
-   `ui.RefreshStatsMsg`; the root fetches stats and syncs the screen.
-
----
-
-## TODOs
-
-- [ ] Add `Lifecycle` implementation to QuizModel (reset per-visit state on enter)
-- [ ] Wire Due Today / Current Streak metrics once the scheduler exists
+These ideas are tracked in `docs/roadmap.md`.

@@ -369,47 +369,9 @@ Default, dark, light, tokyonight (hex values from [folke/tokyonight.nvim](https:
 
 ## Architecture
 
-```
-                cmd/crds
-                    │
-                    ▼
-            CLI (Kong)
-                    │
-                    ▼
-          Application (App)
-                    │
-        ┌───────────┼───────────┐
-        ▼           ▼           ▼
-    Quiz       Scheduler     Search
-        │           │           │
-        └───────────┼───────────┘
-                    ▼
-              Domain Model
-           (internal/model)
-         ┌─────────┴─────────┐
-         ▼                   ▼
-     Parser              Storage
-      (YAML)             (SQLite)
-```
-
 **Stack:** Go + [Kong](https://github.com/alecthomas/kong) (CLI) + [Bubble Tea](https://github.com/charmbracelet/bubbletea) (TUI) + `modernc.org/sqlite` (pure Go SQLite, no CGo) + [goose](https://github.com/pressly/goose) (migrations) + [sqlc](https://sqlc.dev/) (type-safe query generation)
 
 **Core principle:** Vocabulary content lives in YAML files (portable, version-controllable, human-editable). User progress lives in SQLite (reviews, sessions, spaced repetition state, typing details). The SQLite cache is rebuilt from YAML on startup via mtime-based incremental sync.
-
-### Package Map
-
-| Package               | Responsibility |
-|-----------------------|----------------|
-| `cmd/crds/`           | Entry point: Kong wiring, DB init, shell completion predictors |
-| `cmd/legacy-quiz/`    | Legacy txt-based quiz (reads `exercises/*.txt`) |
-| `internal/cli/`       | 17 Kong commands across 6 groups |
-| `internal/model/`     | Domain types: Deck, Entry, Progress, Review, Session |
-| `internal/parser/`    | YAML parsing, normalization, validation, auto-ID generation |
-| `internal/storage/`   | SQLite persistence via Store (goose + sqlc), YAML deck operations |
-| `internal/ui/`        | Bubble Tea UI: navigation (9 screens), components (29), theme, layout, keymap |
-| `internal/fuzzy/`     | Levenshtein string matching for typing quiz grading |
-| `internal/editor/`    | `$EDITOR` invocation and YAML buffer handling |
-| `internal/config/`    | User configuration from `~/.config/crds/` |
 
 ## Development
 
@@ -419,19 +381,15 @@ make lint     # golangci-lint run
 make tidy     # go mod tidy
 make build    # go build -o crds ./cmd/crds/
 make legacy   # go build -o crds-legacy ./cmd/legacy-quiz/
+make docs-check  # verify documentation links and single-source rules
 ```
 
-## Documentation Index
+## Documentation
 
-| Document | Purpose |
-|----------|---------|
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Full system architecture and subsystem descriptions |
-| [docs/DATAMODEL.md](docs/DATAMODEL.md) | Data model: YAML vocabulary + SQLite persistence schema |
-| [docs/DECK_CREATION_GUIDE.md](docs/DECK_CREATION_GUIDE.md) | Creating and managing vocabulary decks with variant syntax |
-| [docs/DESIGN.md](docs/DESIGN.md) | Design decisions, goals, and rationale |
-| [docs/CONTEXT.md](docs/CONTEXT.md) | Project context, status, and contribution guide |
-| [internal/cli/CONTEXT.md](internal/cli/CONTEXT.md) | CLI wiring guide for Kong commands |
-| [internal/ui/docs/CONTEXT.md](internal/ui/docs/CONTEXT.md) | UI subsystem documentation |
+All project documentation is indexed in [`docs/README.md`](docs/README.md),
+which defines the documentation taxonomy and where each fact lives. For status
+and known issues see [`docs/status.md`](docs/status.md); for planned work see
+[`docs/roadmap.md`](docs/roadmap.md).
 
 ## License
 

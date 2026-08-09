@@ -1,5 +1,11 @@
 # AGENTS.md
 
+Instructions for AI coding agents and human contributors.
+
+For implementation status, known issues, and the roadmap, see `docs/README.md`
+(the documentation map) → `docs/status.md` and `docs/roadmap.md`. This file only
+contains workflow, conventions, and project-specific gotchas.
+
 ## Entry points
 
 - `cmd/crds/main.go` — main app (Kong CLI + Bubble Tea TUI)
@@ -21,34 +27,12 @@
 | Lint | `make lint` (requires `golangci-lint`) |
 | Tidy | `make tidy` |
 | Build legacy quiz | `make legacy` |
-
-## Known issues
-
-- `scheduler/`, `search/`, `quiz/` implementations don't exist yet — those are aspirational (docs/ outruns code)
-- CLI commands are all stubs — see `internal/cli/CONTEXT.md` for the wiring guide
-- `app.App` is empty — must be extended with Store/State/SharedDir/DataDir before CLI commands can work
-- Background fill ANSI nesting: `fillBackground()` must split at every `\033[0m` (full reset) and re-wrap each segment — otherwise inner resets destroy outer backgrounds. This is handled in `app/view.go` but any new ANSI-producing code must account for it.
-
-## Architecture (current vs docs)
-
-Docs describe an aspirational layered architecture. Reality is partial:
-
-- **model/** — domain types (Deck, Entry, Progress, Review, Session). `TypingDetail` only exists in sqlc-generated code.
-- **parser/** — YAML parsing + validation + normalization (has tests)
-- **cli/** — Kong command stubs — see `internal/cli/CONTEXT.md` for the full wiring guide
-- **app/** — empty composition root struct (but `internal/ui/app/` has real UI scaffolding)
-- **editor/** — `$EDITOR`/nano/vim invocation + YAML buffer handling for entry editing
-- **ui/** — Full Bubble Tea UI: navigation/ fully implemented, app/ wired, 8 screens, theme system with 18-field palette (15 colors + 3 semantic overrides) and 4 built-in themes (dark, light, tokyonight, default), background fill across entire terminal, inline notifications
-- **storage/** — SQLite fully implemented via `Store` (goose + sqlc). On startup, `SyncDecks()` caches YAML decks in SQLite. `Store` implements `DeckProvider`, `ProgressRecorder`, and `StatsProvider`. Deck+entry CRUD, reserve/backup, revert all implemented. `DeckStore` (legacy filesystem) remains but is not wired.
-
-SQL stack: SQLite (`modernc.org/sqlite`) + goose (migrations) + sqlc (type-safe queries)
-
-Most work ahead: wiring CLI commands (`internal/cli/CONTEXT.md`) → quiz/scheduler logic.
+| Docs link check | `make docs-check` |
 
 ## Commit workflow
 
-After each feature is implemented and tests pass (`make test` + `make build`), commit
-manually with logical grouping:
+After each feature is implemented and tests pass (`make test` + `make build`),
+commit manually with logical grouping:
 
 1. `git add <files>` for each logical change
 2. `git commit -m "scope: description"` with a short subject line and a blank line
@@ -61,13 +45,23 @@ Keep the subject line under 72 characters. Use imperative mood.
 If something needs fixing after a commit, use `git reset --soft HEAD~1`, fix, test,
 and re-commit.
 
+## Documentation conventions
+
+- Update documentation in the **same commit** as the code change it describes.
+- Status, known issues, and test counts live **only** in `docs/status.md`.
+- Plans live **only** in `docs/roadmap.md`.
+- Per-package `CONTEXT.md` files describe the package as it is: no status, no
+  plans, no proposals.
+- Never restate a fact that has a home elsewhere — link to it. See
+  `docs/README.md` for the taxonomy and "where a fact lives" table.
+
 ## Parser specifics
 
 - Uses `go.yaml.in/yaml/v3` (NOT the standard `gopkg.in/yaml/v3`)
 - `Normalize()` trims whitespace on all fields in-place
 - `assignIDs()` generates IDs for entries missing them: expands the term via `ExpandText`, picks the shortest variant, sanitises
 - `Validate()` checks: deck id/name/language required, entry id required (auto-filled), no duplicate IDs, term required, ≥1 translation
-- Test fixtures in `internal/parser/testdata/` (13 YAML files)
+- Test fixtures in `internal/parser/testdata/` (12 YAML files)
 - `testdata/auto_ids.yaml` tests entries without explicit IDs
 
 ## Theme specifics
@@ -95,12 +89,24 @@ Unified 0-3 scale across both quiz types:
 - `ProgressStore.Stats()` considers `Grade >= ui.GradeGood` as correct
 - `SaveAnswerMsg.Grade` is typed as `ui.Grade`; cast to `int` at the storage boundary in `commands.go`
 
+## Gotchas
+
+- **Background fill ANSI nesting:** `fillBackground()` must split at every
+  `\033[0m` (full reset) and re-wrap each segment — otherwise inner resets
+  destroy outer backgrounds. This is handled in `app/view.go` but any new
+  ANSI-producing code must account for it.
+- **SQLite pragmas:** `PRAGMA foreign_keys = ON` must be set via the DSN
+  `_pragma` parameters, not `db.Exec()` — pooled connections ignore
+  `db.Exec` pragmas (see `docs/DATAMODEL.md`).
+
 ## Style
 
 - Prefer table-driven tests with `testdata/` fixtures
 - One responsibility per package; no circular deps
 - Explicit over implicit; small functions; early returns
 - Avoid unnecessary interfaces and global state
+- Never hardcode colors — use semantic theme values
+- Keyboard first — every visible action has a shortcut
 
 ## Other
 

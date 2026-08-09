@@ -1,6 +1,6 @@
 BINARY := crds
 
-.PHONY: all build install test lint tidy legacy run
+.PHONY: all build install test lint tidy legacy run docs-check
 
 all: build
 
@@ -24,3 +24,6 @@ legacy:
 
 run:
 	go run ./cmd/crds/
+
+docs-check:
+	./scripts/check-docs.sh

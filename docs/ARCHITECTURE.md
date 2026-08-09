@@ -95,7 +95,7 @@ acyclic.
 | Parser | Loading and validating vocabulary files | Complete |
 | Storage | Persisting user-specific state (SQLite) | Implemented |
 | Quiz | Learning session orchestration | Not implemented (logic lives in UI screens) |
-| Scheduler | Determining review order | Not implemented |
+| Scheduler | Determining review order | Implemented (SM-2 in `internal/scheduler/`, queue in `internal/storage/`) |
 | Search | Vocabulary lookup | Not implemented (logic lives in UI screens) |
 | UI | Terminal presentation (Bubble Tea) | Implemented |
 | Model | Shared domain objects | Complete |

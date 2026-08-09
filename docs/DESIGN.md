@@ -67,9 +67,11 @@ see `docs/status.md` and `docs/roadmap.md`.
 
 ## scheduler
 
-Decides what should be shown next. Initially a simple repeat-until-known
-algorithm; eventually spaced repetition (Leitner, SM-2, or FSRS). Must not know
-anything about Bubble Tea. Only returns cards that should be reviewed.
+Decides what should be shown next. Implements SM-2 spaced repetition
+(`internal/scheduler/`): grade → next interval via ease, with a lapse penalty
+on "again". Must not know anything about Bubble Tea. Only returns cards that
+should be reviewed; `internal/storage` exposes the review queue
+(`DueForSelection`) and persists scheduling with every answer.
 
 ## storage
 

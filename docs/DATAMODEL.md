@@ -359,6 +359,15 @@ type Progress struct {
 Each progress record references an entry by deck ID + entry ID, avoiding
 conflicts between different decks.
 
+### Scheduling
+
+Every answer persists the updated scheduling state (ease, interval, due,
+outcomes) in the same transaction as the review (`internal/storage.Store` →
+`persistAnswer`). The next due date is computed by `internal/scheduler` (SM-2).
+The review queue for a deck/tag selection (`DueForSelection`) is: unseen cards
+first (deck order), then due cards ordered by due date; entries across decks
+are deduplicated.
+
 ---
 
 # Review History

@@ -64,6 +64,7 @@ The root `Model` owns a single canonical snapshot, `ui.AppState` (defined in
 `internal/ui/state.go`), holding the shared data screens render from:
 
 - `Deck`, `DeckProgress` — merged selected decks + per-card progress
+- `Due` — order of the selection's review queue (unseen first, then by due date)
 - `AllDecks`/`SelectedDecks`, `AllTags`/`SelectedTags`, `AllDeckTags`
 - `QuizMode` — global, shared by both quiz screens
 - `Stats` — latest stats summary
@@ -88,17 +89,20 @@ The root pushes the snapshot to the **active** screen at exactly two occasions:
 
 `SyncState` must be **idempotent**: it should recompute derived state (sorting,
 filtering) only when the incoming snapshot actually differs, so unrelated state
-changes don't reset screen-local progress (e.g. a quiz's `cardIndex`).
+changes don't reset screen-local progress (e.g. a quiz's `cardIndex`). Once a
+quiz has recorded its first answer (`inProgress`), later progress/due refreshes
+update the stored data but never reshuffle the remaining cards — a session
+snapshot.
 
 Current implementers:
 
 | Screen | Reads |
 |---|---|
-| `QuizModel` | `Deck`, `DeckProgress`, `QuizMode` → re-sort |
-| `TypingQuizModel` | `Deck`, `DeckProgress`, `QuizMode` → re-sort |
+| `QuizModel` | `Deck`, `DeckProgress`, `Due`, `QuizMode` → re-sort |
+| `TypingQuizModel` | `Deck`, `DeckProgress`, `Due`, `QuizMode` → re-sort |
 | `DeckSelectModel` | `AllDecks`/`SelectedDecks`, `AllTags`/`SelectedTags`, `AllDeckTags` → rebuild columns |
 | `SearchModel` | `Deck.Cards` → rebuild results |
-| `StatisticsModel` | `Stats` → refresh summary |
+| `StatisticsModel` | `Stats`, `Due` → refresh summary |
 
 `DetailModel` is the exception: it receives its entry via `NavigateToDetailMsg`
 (`entrySetter.SetEntry`), a per-entry navigation payload, not from `AppState`.
@@ -136,7 +140,7 @@ PaletteScreen
 ### QuizModel (`quiz.go`)
 
 - **State**: `cardIndex`, `revealed`, `cards`, `originalCards`, `cardProgress`,
-  `mode`, `examplesPage`, `inverse`
+  `dueIDs`, `inProgress`, `mode`, `examplesPage`, `inverse`
 - **Keys**: `enter` (reveal), `tab` (inverse), `m` (mode cycle),
   `a`/`h`/`o`/`e` or `1`/`2`/`3`/`4` (grade), `[`/`left` (prev example),
   `]`/`right` (next example)
@@ -145,9 +149,11 @@ PaletteScreen
   to the next card. When all cards are done, shows "Quiz complete!" with
   `[enter] restart` and `[esc] back` options. Tab toggles inverse mode —
   shows translations as the question and the term as the answer.
-- **Data**: receives deck, progress, and mode via `SyncState` (see Global State
-  Sync); re-sorts cards only when that data actually changes. Mode cycling
-  (`m`) emits `ui.SetQuizModeMsg` so both quiz screens stay in sync.
+- **Data**: receives deck, progress, due set, and mode via `SyncState` (see Global
+  State Sync); re-sorts cards only when that data actually changes. In due mode
+  the card queue follows the review queue's order (unseen first, then due by
+  date); when no cards are due it shows "No cards due". Mode cycling (`m`)
+  emits `ui.SetQuizModeMsg` so both quiz screens stay in sync.
 - **Renders**: Term (centered, vertically padded at height/4) + (if revealed)
   correct answer + centered grade menu + bottom section (notes, tags as PrimaryBg pills,
   paginated examples in single/two-column layout, 8-char side padding) +
@@ -187,10 +193,10 @@ PaletteScreen
     confidence-over-time bar graph (`components/display/graph.go`).
   `OnEnter` emits `ui.RefreshStatsMsg`; the root fetches stats and pushes them
   back via `SyncState`. Streak is computed from review history in
-  `internal/stats` (`Summary.Streak`).
+  `internal/stats` (`Summary.Streak`). Due Today is wired to the review queue:
+  a count for the selection summary, yes/no per word using the selection's due
+  set.
 - **Renders**: Tabs + row 1 graph + row 2 metric grid + footer
-- **Known issue**: Due Today shows "—" — no scheduler wired yet. Tracked in
-  `docs/status.md`.
 
 ### SettingsModel (`settings.go`)
 
@@ -228,8 +234,8 @@ PaletteScreen
 
 ### TypingQuizModel (`typing_quiz.go`)
 
-- **State**: `CardIndex`, `Input` (text input), `Feedback`, `Progress`, `Cards`,
-  `Inverse` (mode toggle)
+- **State**: `cardIndex`, `input`, `revealed`, `inProgress`, `cards`,
+  `originalCards`, `cardProgress`, `dueIDs`, `mode`, `inverse`
 - **Keys**: `enter` (submit answer), `ctrl+r` (reveal without grading),
   `tab` (toggle inverse mode), `m` (mode cycle)
 - **Behavior**: Displays a term, user types the translation. Uses
@@ -238,8 +244,10 @@ PaletteScreen
   shows translations as the prompt and expects the term as the answer;
   term variants use the same `()`/`[]` expansion syntax as translations.
   When all cards are done, shows "Quiz complete!" with `[enter] restart`
-  and `[esc] back` options. Receives deck, progress, and mode via `SyncState`;
-  mode cycling (`m`) emits `ui.SetQuizModeMsg`.
+  and `[esc] back` options. Receives deck, progress, due set, and mode via
+  `SyncState`; in due mode it follows the review queue's order and freezes its
+  queue once in progress (session snapshot). Mode cycling (`m`) emits
+  `ui.SetQuizModeMsg`.
 - **Renders**: Header + term (centered, vertically padded, at height/5) + correct-answer
   slot (always present; empty placeholder when unrevealed, "Correct: ..." text when revealed) +
   centered input with cursor (fixed position — does not shift on reveal) + bottom section after

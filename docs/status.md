@@ -19,8 +19,10 @@ Ran `go test ./...` from the repo root. Results are stable and current:
 | `internal/config/` | 12 | User configuration |
 | `internal/fuzzy/` | 6 | Levenshtein matching |
 | `internal/stats/` | 5 | Stats aggregation, streak, word stats |
-| `internal/storage/` | 77 | SQLite Store (goose + sqlc) |
+| `internal/scheduler/` | 7 | SM-2 spaced-repetition algorithm |
+| `internal/storage/` | 81 | SQLite Store (goose + sqlc) |
 | `internal/cli/` | 9 | Kong command wiring |
+| `internal/ui/` | 7 | Quiz modes, card sorting |
 | `internal/ui/theme/` | 61 | Design system, 6 fixtures |
 | `internal/ui/styles/` | 14 | Semantic styles |
 | `internal/ui/layout/` | 10 | Layout primitives |
@@ -29,9 +31,9 @@ Ran `go test ./...` from the repo root. Results are stable and current:
 | `internal/ui/navigation/tests/` | 74 | Black-box navigation tests |
 | `internal/ui/app/tests/` | 5 | State-sync protocol |
 | `internal/ui/components/display/` | 5 | Graph bar chart |
-| `internal/ui/screens/` | 9 | Statistics screen logic |
+| `internal/ui/screens/` | 11 | Statistics screen logic |
 
-Total: **320 test functions**, all passing.
+Total: **340 test functions**, all passing.
 
 ---
 
@@ -46,6 +48,7 @@ Total: **320 test functions**, all passing.
 | `internal/config/` | User config from `~/.config/crds/`: `config.yaml`, `keymaps.yaml`, `themes/*.yaml` | 12 |
 | `internal/fuzzy/` | Levenshtein-based fuzzy matching for typed answers | 6 |
 | `internal/stats/` | Stats aggregation for statistics screen, word-level stats, streak from review history | 5 |
+| `internal/scheduler/` | SM-2 spaced-repetition algorithm: ease, interval, lapse penalty, grade→interval mapping | 7 |
 | `internal/editor/` | `$EDITOR`/nano/vim invocation with YAML buffer handling | — |
 | `internal/cli/` | Kong commands: quiz, stats, deck (list/import/export/delete/search/edit), term (add/rm/edit), tag (add/rm/list), state (reserve/revert/sync), profile (export/import) | 9 |
 | `internal/ui/theme/` | Design system: 18-field palette (15 colors + 3 semantic overrides), typography, icons, borders, spacing, 5 built-in themes, YAML loading, store | 61 |
@@ -62,9 +65,9 @@ Total: **320 test functions**, all passing.
 
 | Package | Status |
 |---|---|
-| `internal/storage/` | `Store` (SQLite) fully implemented: deck+entry CRUD, tags/`deck_tags`, reserve/backup, revert, profile export/import, sync. Legacy `DeckStore` and `ProgressStore` remain but are not wired. |
+| `internal/storage/` | `Store` (SQLite) fully implemented: deck+entry CRUD, tags/`deck_tags`, reserve/backup, revert, profile export/import, sync. SM-2 scheduling persisted with every answer via `RecordAnswer`/`RecordAnswerFull`; due queue (`DueForSelection`) and due-today counts wired. Legacy `DeckStore` and `ProgressStore` remain but are not wired. |
 | `internal/app/` | Composition root with Store/State/SharedDir/DataDir, pre-wired before Kong dispatch. |
-| `internal/ui/screens/` | 9 screens implemented and functional: Home, Quiz, TypingQuiz, DeckSelect, Search, Statistics, Settings, Detail, Palette (dev screen). Statistics has words/selection tabs: per-word search with per-word stats, and a selection summary with a confidence-over-time graph. Due Today shows "—" (no scheduler). |
+| `internal/ui/screens/` | 9 screens implemented and functional: Home, Quiz, TypingQuiz, DeckSelect, Search, Statistics, Settings, Detail, Palette (dev screen). Statistics has words/selection tabs: per-word search with per-word stats, and a selection summary with a confidence-over-time graph. Due Today is wired for both the selection summary (count) and per-word detail (yes/no). |
 | `internal/ui/components/` | All 29 built; the 9 interactive components are not yet wired into screens. |
 
 ## Not Implemented
@@ -72,7 +75,6 @@ Total: **320 test functions**, all passing.
 | Package | Status |
 |---|---|
 | `internal/quiz/` | Does not exist. Quiz logic lives in UI screens only. |
-| `internal/scheduler/` | Does not exist. No spaced repetition. |
 | `internal/search/` | Does not exist. Search lives in UI screens only. |
 | `internal/ui/actions/` | Empty placeholder. |
 | `internal/ui/events/` | 4 basic event types defined; rest deferred. |
@@ -87,8 +89,8 @@ Total: **320 test functions**, all passing.
 - Deck selection requires at least one deck — empty selection means no quiz.
 - `crds quiz --limit` and `--reverse` flags are acknowledged with warnings but not wired to the TUI.
 - `crds deck edit` prompts are interactive and cannot be tested automatically.
-- Statistics "Due Today" shows "—" (scheduler not wired); streak is now computed from review history.
-- Quiz progress in the global `AppState` snapshot is refreshed on deck load, not after each answer.
+- Quiz progress in the global `AppState` snapshot is refreshed after each answer, but a running quiz freezes its queue (session snapshot) to avoid reshuffling mid-session.
+- Due-mode reviews are drawn from the selection's review queue (unseen first, then due by date); the "Due Today" stat counts only due entries, so it can differ from the length of the due-mode queue when unseen cards are pending.
 - Interactive components are built but not yet wired into screens (`search.go`, `settings.go` still handle input inline).
 - `internal/editor/` has no tests yet.
 - Legacy `ProgressStore` and `DeckStore` remain in the codebase but are not wired.

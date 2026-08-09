@@ -12,6 +12,21 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done.
 
 # Completed plans (archived)
 
+## Scheduler: SM-2 spaced repetition
+
+- [x] `internal/scheduler/` — pure Go SM-2 algorithm (ease, interval, lapse
+      penalty, grade→interval mapping), no Bubble Tea dependency
+- [x] Persist scheduling state with every answer (`RecordAnswer`/
+      `RecordAnswerFull` transactional progress upsert)
+- [x] Review queue (`DueForSelection`): unseen cards first, then due cards by
+      due date; distinct across decks/tags
+- [x] Due quiz mode (`QuizModeDue`) shared by Quiz and TypingQuiz, with the
+      queue ordered by the review queue
+- [x] Session snapshot — a running quiz keeps its queue; progress/due refreshes
+      update state without reshuffling mid-session
+- [x] Stats wiring — selection "Due Today" count and per-word yes/no, refreshed
+      after every answer
+
 ## Statistics screen revamp (words + selection tabs)
 
 - [x] Per-word tab: search-driven vocabulary lookup with per-word stats (total
@@ -24,7 +39,7 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done.
 - [x] Word-level + selection queries in `internal/storage` (sqlc) behind the
       `internal/stats.Provider` interface
 - [x] `Statistics` keymap group (`tab` switch, `esc` back) with user overrides
-- [ ] Due Today from a real scheduler (`internal/scheduler/`) — still open
+- [x] Due Today from a real scheduler (`internal/scheduler/`) — see Scheduler above
 
 ## Former `PLAN.md` — original implementation plan
 
@@ -33,7 +48,7 @@ All phases complete. Superseded by this roadmap and `docs/status.md`.
 - Phase 1 — renderer core utilities: done
 - Phase 2 — layout adoption across screens: done
 - Phase 3 — data pipeline (storage → app → screens): done
-- Phase 4 — scheduler: not built (still open, see below)
+- Phase 4 — scheduler: done (see Scheduler above)
 - Phase 5 — placeholder packages: see below
 
 ## Former `ACTIONS_TODO.md` — missing CLI commands
@@ -46,7 +61,6 @@ Mostly shipped with the CLI. Remaining items carried forward below.
 
 ## Core domain packages (highest priority)
 
-- [ ] **`internal/scheduler/`** — spaced repetition (SM-2, Leitner, or FSRS). Decides due cards and next review dates. Must not depend on Bubble Tea. Unblocks Statistics due/streak and per-answer snapshot refresh. *(source: former `PLAN.md` Phase 4, `docs/status.md` "Not Implemented" + known issues)*
 - [ ] **`internal/quiz/`** — quiz session orchestration extracted from UI screens.
 - [ ] **`internal/search/`** — vocabulary search extracted from UI screens.
 

@@ -65,6 +65,7 @@ type ConfigYAML struct {
 	Theme            string `yaml:"theme,omitempty"`
 	AnimationEnabled *bool  `yaml:"animation_enabled,omitempty"`
 	DefaultQuizLimit *int   `yaml:"default_quiz_limit,omitempty"`
+	QuizMode         string `yaml:"quiz_mode,omitempty"`
 }
 
 func LoadConfigYAML(path string) (*ConfigYAML, error) {

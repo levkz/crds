@@ -64,14 +64,15 @@ type Quiz struct {
 	Inverse      Binding
 	PrevExample  Binding
 	NextExample  Binding
+	ModeCycle    Binding
 }
 
 func (km Quiz) Unrevealed() string {
-	return BindingList{km.Reveal, km.Inverse}.Help()
+	return BindingList{km.Reveal, km.Inverse, km.ModeCycle}.Help()
 }
 
 func (km Quiz) Revealed() string {
-	return BindingList{km.Again, km.Hard, km.Good, km.Easy, km.Inverse}.Help()
+	return BindingList{km.Again, km.Hard, km.Good, km.Easy, km.Inverse, km.ModeCycle}.Help()
 }
 
 type TypingQuiz struct {
@@ -80,10 +81,11 @@ type TypingQuiz struct {
 	Inverse      Binding
 	PrevExample  Binding
 	NextExample  Binding
+	ModeCycle    Binding
 }
 
 func (km TypingQuiz) Footer() string {
-	return BindingList{km.Submit, km.Reveal, km.Inverse, km.PrevExample, km.NextExample}.Help()
+	return BindingList{km.Submit, km.Reveal, km.Inverse, km.PrevExample, km.NextExample, km.ModeCycle}.Help()
 }
 
 func (km TypingQuiz) ExamplesFooter() string {
@@ -182,11 +184,13 @@ func (r Registry) Bindings() []NamedBinding {
 		{"Quiz", "Inverse", r.Quiz.Inverse},
 		{"Quiz", "PrevExample", r.Quiz.PrevExample},
 		{"Quiz", "NextExample", r.Quiz.NextExample},
+		{"Quiz", "ModeCycle", r.Quiz.ModeCycle},
 		{"TypingQuiz", "Submit", r.TypingQuiz.Submit},
 		{"TypingQuiz", "Reveal", r.TypingQuiz.Reveal},
 		{"TypingQuiz", "Inverse", r.TypingQuiz.Inverse},
 		{"TypingQuiz", "PrevExample", r.TypingQuiz.PrevExample},
 		{"TypingQuiz", "NextExample", r.TypingQuiz.NextExample},
+		{"TypingQuiz", "ModeCycle", r.TypingQuiz.ModeCycle},
 		{"Decks", "Toggle", r.Decks.Toggle},
 		{"Decks", "ToggleAll", r.Decks.ToggleAll},
 		{"DeckSelect", "Toggle", r.DeckSelect.Toggle},
@@ -233,6 +237,7 @@ var DefaultQuiz = Quiz{
 	Inverse:      Binding{Keys: []string{"tab"},            Help: "tab inverse"},
 	PrevExample:  Binding{Keys: []string{"left", "["},     Help: "[ previous"},
 	NextExample:  Binding{Keys: []string{"right", "]"},    Help: "] next"},
+	ModeCycle:    Binding{Keys: []string{"m"},              Help: "m mode"},
 }
 
 var DefaultTypingQuiz = TypingQuiz{
@@ -241,6 +246,7 @@ var DefaultTypingQuiz = TypingQuiz{
 	Inverse:      Binding{Keys: []string{"tab"},       Help: "tab inverse"},
 	PrevExample:  Binding{Keys: []string{"left", "["}, Help: "[ previous"},
 	NextExample:  Binding{Keys: []string{"right", "]"},Help: "] next"},
+	ModeCycle:    Binding{Keys: []string{"m"},         Help: "m mode"},
 }
 
 var DefaultDecks = Decks{
@@ -331,6 +337,7 @@ type KeymapConfig struct {
 		Inverse      *BindingOverride `yaml:"inverse,omitempty"`
 		PrevExample  *BindingOverride `yaml:"prev_example,omitempty"`
 		NextExample  *BindingOverride `yaml:"next_example,omitempty"`
+		ModeCycle    *BindingOverride `yaml:"mode_cycle,omitempty"`
 	} `yaml:"quiz,omitempty"`
 	TypingQuiz *struct {
 		Submit       *BindingOverride `yaml:"submit,omitempty"`
@@ -338,6 +345,7 @@ type KeymapConfig struct {
 		Inverse      *BindingOverride `yaml:"inverse,omitempty"`
 		PrevExample  *BindingOverride `yaml:"prev_example,omitempty"`
 		NextExample  *BindingOverride `yaml:"next_example,omitempty"`
+		ModeCycle    *BindingOverride `yaml:"mode_cycle,omitempty"`
 	} `yaml:"typing_quiz,omitempty"`
 	Decks *struct {
 		Toggle    *BindingOverride `yaml:"toggle,omitempty"`
@@ -449,6 +457,9 @@ func ApplyDefaultOverrides(cfg KeymapConfig) {
 		if cfg.Quiz.NextExample != nil {
 			DefaultQuiz.NextExample = applyOverride(DefaultQuiz.NextExample, *cfg.Quiz.NextExample)
 		}
+		if cfg.Quiz.ModeCycle != nil {
+			DefaultQuiz.ModeCycle = applyOverride(DefaultQuiz.ModeCycle, *cfg.Quiz.ModeCycle)
+		}
 	}
 	if cfg.TypingQuiz != nil {
 		if cfg.TypingQuiz.Submit != nil {
@@ -465,6 +476,9 @@ func ApplyDefaultOverrides(cfg KeymapConfig) {
 		}
 		if cfg.TypingQuiz.NextExample != nil {
 			DefaultTypingQuiz.NextExample = applyOverride(DefaultTypingQuiz.NextExample, *cfg.TypingQuiz.NextExample)
+		}
+		if cfg.TypingQuiz.ModeCycle != nil {
+			DefaultTypingQuiz.ModeCycle = applyOverride(DefaultTypingQuiz.ModeCycle, *cfg.TypingQuiz.ModeCycle)
 		}
 	}
 	if cfg.Decks != nil {

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"crds/internal/stats"
 	"crds/internal/storage"
 	"crds/internal/ui"
 	"crds/internal/ui/theme"
@@ -45,7 +46,7 @@ func (k MsgKind) String() string {
 type Dispatcher struct {
 	Decks    DeckProvider
 	Progress ProgressRecorder
-	Stats    StatsProvider
+	Stats    stats.Provider
 	State    *storage.StateStore
 	Sessions SessionManager
 	Typing   TypingRecorder
@@ -89,6 +90,12 @@ func LoadDeckCmd(d *Dispatcher, name string) tea.Cmd {
 	})
 }
 
+// DeckWithProgressMsg carries deck data plus per-card progress for sorting.
+type DeckWithProgressMsg struct {
+	Deck     ui.DeckData
+	Progress map[string]stats.EntryProgress
+}
+
 // LoadSelectedDecksCmd loads multiple decks and merges them into a single DeckData.
 func LoadSelectedDecksCmd(d *Dispatcher, names []string) tea.Cmd {
 	return Dispatch(d, func(d *Dispatcher) tea.Msg {
@@ -101,6 +108,25 @@ func LoadSelectedDecksCmd(d *Dispatcher, names []string) tea.Cmd {
 			decks = append(decks, deck)
 		}
 		merged := mergeDecks(decks)
+
+		// Load progress for smart sorting
+		if d.Stats != nil && len(names) > 0 {
+			allProgress := make(map[string]stats.EntryProgress)
+			for _, name := range names {
+				prog, err := d.Stats.EntryProgress(name)
+				if err != nil {
+					continue
+				}
+				for k, v := range prog {
+					allProgress[k] = v
+				}
+			}
+			return DataLoadedMsg{Kind: MsgKindDeck, Data: DeckWithProgressMsg{
+				Deck:     merged,
+				Progress: allProgress,
+			}}
+		}
+
 		return DataLoadedMsg{Kind: MsgKindDeck, Data: merged}
 	})
 }
@@ -206,8 +232,11 @@ func LoadAllDeckTagsCmd(d *Dispatcher) tea.Cmd {
 // FetchStatsCmd returns a command that fetches learning statistics.
 func FetchStatsCmd(d *Dispatcher) tea.Cmd {
 	return Dispatch(d, func(d *Dispatcher) tea.Msg {
-		stats := d.Stats.Stats()
-		return StatsLoadedMsg{Stats: stats}
+		s, err := d.Stats.Summary()
+		if err != nil {
+			return DataErrorMsg{Kind: MsgKindStats, Err: err}
+		}
+		return StatsLoadedMsg{Stats: s}
 	})
 }
 
@@ -242,5 +271,5 @@ type SaveErrorMsg struct {
 }
 
 type StatsLoadedMsg struct {
-	Stats ui.Stats
+	Stats stats.Summary
 }

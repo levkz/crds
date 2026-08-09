@@ -1,6 +1,9 @@
 package ui
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	"crds/internal/stats"
+	tea "github.com/charmbracelet/bubbletea"
+)
 
 type ScreenIndex int
 
@@ -47,11 +50,7 @@ type DeckData struct {
 	Cards []CardData
 }
 
-type Stats struct {
-	ReviewedToday int
-	Accuracy      float64
-	TotalCards    int
-}
+type Stats = stats.Summary
 
 type NavigateToDetailMsg struct {
 	Screen ScreenIndex

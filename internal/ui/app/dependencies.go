@@ -1,6 +1,7 @@
 package app
 
 import (
+	"crds/internal/stats"
 	"crds/internal/storage"
 	"crds/internal/ui"
 )
@@ -36,16 +37,11 @@ type TypingRecorder interface {
 	RecordAnswerFull(sessionID int64, deckID, entryID string, grade int, reverse bool, userInput, correctAnswer string, similarity float64) (int64, error)
 }
 
-// StatsProvider provides learning statistics.
-type StatsProvider interface {
-	Stats() ui.Stats
-}
-
 // Dependencies bundles all external services the UI needs.
 type Dependencies struct {
 	Decks    DeckProvider
 	Progress ProgressRecorder
-	Stats    StatsProvider
+	Stats    stats.Provider
 	State    *storage.StateStore
 	Tags     TagProvider
 }

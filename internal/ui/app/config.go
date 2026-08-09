@@ -1,6 +1,9 @@
 package app
 
-import cfg "crds/internal/config"
+import (
+	cfg "crds/internal/config"
+	"crds/internal/ui"
+)
 
 // Config holds UI-level preferences and settings.
 // Populated from defaults and optionally from a config file at startup.
@@ -8,12 +11,14 @@ type Config struct {
 	AnimationEnabled bool
 	DefaultQuizLimit int
 	ThemePath        string
+	QuizMode         ui.QuizMode
 }
 
 func DefaultConfig() Config {
 	return Config{
 		AnimationEnabled: false,
 		DefaultQuizLimit: 20,
+		QuizMode:         ui.QuizModeNormal,
 	}
 }
 
@@ -27,6 +32,9 @@ func (c Config) ApplyYAML(y *cfg.ConfigYAML) Config {
 	}
 	if y.DefaultQuizLimit != nil {
 		c.DefaultQuizLimit = *y.DefaultQuizLimit
+	}
+	if y.QuizMode != "" {
+		c.QuizMode = ui.ParseQuizMode(y.QuizMode)
 	}
 	return c
 }

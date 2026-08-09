@@ -63,13 +63,17 @@ func (m *SearchModel) OnLeave() tea.Cmd {
 	return nil
 }
 
-func (m *SearchModel) SetSearchData(cards []ui.CardData) {
-	m.cards = cards
-	m.query = ""
-	m.results = nil
-	m.cursor = 0
-	m.scrollOffset = 0
-	m.mode = searchInput
+func (m *SearchModel) SyncState(s ui.AppState) tea.Cmd {
+	if s.Deck == nil {
+		m.cards = nil
+	} else {
+		m.cards = s.Deck.Cards
+	}
+	if m.query != "" {
+		m.filterResults()
+		m.cursor = 0
+	}
+	return nil
 }
 
 func (m *SearchModel) topPadding() int {

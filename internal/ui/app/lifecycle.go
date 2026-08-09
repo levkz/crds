@@ -43,6 +43,10 @@ func (m Model) transitionTo(screen ui.ScreenIndex) (Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	}
 
+	if cmd := m.syncActiveScreen(); cmd != nil {
+		cmds = append(cmds, cmd)
+	}
+
 	return m, tea.Sequence(cmds...)
 }
 
@@ -59,11 +63,14 @@ func (m Model) pushTo(screen ui.ScreenIndex) (Model, tea.Cmd) {
 		s.SetSize(m.Width, m.Height)
 	}
 
+	var cmds []tea.Cmd
 	if cmd := m.enterCurrent(); cmd != nil {
-		return m, cmd
+		cmds = append(cmds, cmd)
 	}
-
-	return m, nil
+	if cmd := m.syncActiveScreen(); cmd != nil {
+		cmds = append(cmds, cmd)
+	}
+	return m, tea.Batch(cmds...)
 }
 
 // popToPrevious navigates back using Pop. The current screen is pushed to the
@@ -73,10 +80,14 @@ func (m Model) popToPrevious() (Model, tea.Cmd) {
 	if s, ok := m.Navigator.CurrentScreen(); ok {
 		s.SetSize(m.Width, m.Height)
 	}
+	var cmds []tea.Cmd
 	if cmd := m.enterCurrent(); cmd != nil {
-		return m, cmd
+		cmds = append(cmds, cmd)
 	}
-	return m, nil
+	if cmd := m.syncActiveScreen(); cmd != nil {
+		cmds = append(cmds, cmd)
+	}
+	return m, tea.Batch(cmds...)
 }
 
 func (m Model) leaveCurrent() tea.Cmd {

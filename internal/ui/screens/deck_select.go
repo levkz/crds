@@ -50,10 +50,11 @@ func NewDeckSelect() *DeckSelectModel {
 	}
 }
 
-func (m *DeckSelectModel) SetData(deckItems, selectedDecks, tagItems, selectedTags []string, deckTags map[string][]string) {
-	m.decks = newColumn(deckItems, selectedDecks)
-	m.tags = newColumn(tagItems, selectedTags)
-	m.deckTags = deckTags
+func (m *DeckSelectModel) SyncState(s ui.AppState) tea.Cmd {
+	m.decks = newColumn(s.AllDecks, s.SelectedDecks)
+	m.tags = newColumn(s.AllTags, s.SelectedTags)
+	m.deckTags = s.AllDeckTags
+	return nil
 }
 
 func (m *DeckSelectModel) SetSize(w, h int) {

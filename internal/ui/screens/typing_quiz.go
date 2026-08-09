@@ -2,12 +2,14 @@ package screens
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 
 	"crds/internal/fuzzy"
 	"crds/internal/model"
+	"crds/internal/stats"
 	"crds/internal/ui"
 	"crds/internal/ui/keymap"
 	"crds/internal/ui/layout"
@@ -15,19 +17,22 @@ import (
 )
 
 type TypingQuizModel struct {
-	cards        []ui.CardData
-	cardIndex    int
-	revealed     bool
-	input        string
-	cursor       int
-	grade        int
-	score        float64
-	deckName     string
-	inverse      bool
-	width        int
-	height       int
-	matcher      *fuzzy.FuzzyMatcher
-	examplesPage int
+	cards         []ui.CardData
+	originalCards []ui.CardData
+	cardProgress  map[string]stats.EntryProgress
+	mode          ui.QuizMode
+	cardIndex     int
+	revealed      bool
+	input         string
+	cursor        int
+	grade         int
+	score         float64
+	deckName      string
+	inverse       bool
+	width         int
+	height        int
+	matcher       *fuzzy.FuzzyMatcher
+	examplesPage  int
 }
 
 func NewTypingQuiz() *TypingQuizModel {
@@ -41,17 +46,47 @@ func (m *TypingQuizModel) SetSize(w, h int) {
 	m.height = h
 }
 
-func (m *TypingQuizModel) SetDeck(deck ui.DeckData) {
-	m.cards = deck.Cards
-	m.deckName = deck.Name
+func (m *TypingQuizModel) SyncState(s ui.AppState) tea.Cmd {
+	changed := false
+	if s.Deck != nil {
+		if m.deckName != s.Deck.Name || !reflect.DeepEqual(m.originalCards, s.Deck.Cards) {
+			m.originalCards = s.Deck.Cards
+			m.deckName = s.Deck.Name
+			m.inverse = false
+			m.examplesPage = 0
+			changed = true
+		}
+	}
+	if !reflect.DeepEqual(m.cardProgress, s.DeckProgress) {
+		m.cardProgress = s.DeckProgress
+		changed = true
+	}
+	if m.mode != s.QuizMode {
+		m.mode = s.QuizMode
+		changed = true
+	}
+	if changed {
+		m.applySort()
+	}
+	return nil
+}
+
+func (m *TypingQuizModel) SetModeFromKey() tea.Cmd {
+	m.mode = m.mode.Next()
+	m.applySort()
+	return func() tea.Msg {
+		return ui.SetQuizModeMsg{Mode: m.mode}
+	}
+}
+
+func (m *TypingQuizModel) applySort() {
+	m.cards = ui.SortCards(m.mode, m.originalCards, m.cardProgress)
 	m.cardIndex = 0
 	m.revealed = false
-	m.inverse = false
 	m.grade = 0
 	m.score = 0
 	m.input = ""
 	m.cursor = 0
-	m.examplesPage = 0
 }
 
 func (m *TypingQuizModel) Init() tea.Cmd { return nil }
@@ -101,13 +136,7 @@ func (m *TypingQuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 
 		case len(m.cards) > 0 && m.cardIndex >= len(m.cards):
 			if keymap.DefaultTypingQuiz.Submit.Match(msg) {
-				m.cardIndex = 0
-				m.revealed = false
-				m.grade = 0
-				m.score = 0
-				m.input = ""
-				m.cursor = 0
-				m.examplesPage = 0
+				m.applySort()
 				return m, nil
 			}
 			return m, nil
@@ -155,6 +184,9 @@ func (m *TypingQuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 				m.cursor = 0
 				m.examplesPage = 0
 
+			case keymap.DefaultTypingQuiz.ModeCycle.Match(msg):
+				return m, m.SetModeFromKey()
+
 			default:
 				m.handleInput(msg)
 				return m, nil
@@ -190,6 +222,9 @@ func (m *TypingQuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 						m.examplesPage++
 					}
 				}
+
+			case keymap.DefaultTypingQuiz.ModeCycle.Match(msg):
+				return m, m.SetModeFromKey()
 			}
 		}
 	}
@@ -370,7 +405,7 @@ func (m *TypingQuizModel) renderTopBody() string {
 }
 
 func (m *TypingQuizModel) renderFooter(card ui.CardData) string {
-	progress := fmt.Sprintf("card %d/%d", m.cardIndex+1, len(m.cards))
+	progress := fmt.Sprintf("card %d/%d · %s", m.cardIndex+1, len(m.cards), m.mode)
 
 	if m.revealed {
 		var shortcuts []string

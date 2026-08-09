@@ -2,34 +2,15 @@ package app
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+	"crds/internal/stats"
 	"crds/internal/ui"
 	"crds/internal/ui/events"
 	"crds/internal/ui/keymap"
 	"crds/internal/ui/theme"
 )
 
-type setDecker interface {
-	SetDeck(ui.DeckData)
-}
-
-type setSearchDataer interface {
-	SetSearchData([]ui.CardData)
-}
-
-type setStatter interface {
-	SetStats(ui.Stats)
-}
-
 type entrySetter interface {
 	SetEntry(ui.CardData)
-}
-
-type setDecksLister interface {
-	SetDecks(decks []string, selected []string)
-}
-
-type setDeckSelectionDataer interface {
-	SetData(deckItems, selectedDecks, tagItems, selectedTags []string, deckTags map[string][]string)
 }
 
 // dispatchEvent routes a message to its registered handler or the active screen.
@@ -127,12 +108,8 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 		return m, RecordAnswerCmd(m.Dispatcher, msg)
 
 	case StatsLoadedMsg:
-		if screen, ok := m.Navigator.Registry().Get(m.Navigator.Current); ok {
-			if setter, ok := screen.(setStatter); ok {
-				setter.SetStats(msg.Stats)
-			}
-		}
-		return m, nil
+		m.State.Stats = &msg.Stats
+		return m, m.stateChangedCmd()
 
 	case SavedMsg:
 		return m.WithNotification("Saved " + msg.Kind.String()), nil
@@ -142,7 +119,21 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 
 	case ConfigUpdatedMsg:
 		m.Config = msg.Config
-		return m, nil
+		m.State.QuizMode = msg.Config.QuizMode
+		return m, m.stateChangedCmd()
+
+	case ui.StateChangedMsg:
+		if m.Global.Overlay != NoOverlay {
+			return m, nil
+		}
+		return m, m.syncActiveScreen()
+
+	case ui.SetQuizModeMsg:
+		m.State.QuizMode = msg.Mode
+		return m, m.stateChangedCmd()
+
+	case ui.RefreshStatsMsg:
+		return m, FetchStatsCmd(m.Dispatcher)
 
 	case events.ThemeSwitchMsg:
 		th, err := theme.Switch(msg.Name)
@@ -151,7 +142,7 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 		}
 		ui.SetTheme(th)
 		cmd := func() tea.Msg {
-			return SaveStateCmd(m.Dispatcher, m.SelectedDecks)
+			return SaveStateCmd(m.Dispatcher, m.State.SelectedDecks)
 		}
 		return m.WithNotification("Switched to " + msg.Name + " theme"), cmd
 
@@ -166,7 +157,8 @@ func (m Model) dispatchEvent(msg tea.Msg) (Model, tea.Cmd) {
 	}
 }
 
-// handleDataLoaded stores loaded data and passes it to relevant screens.
+// handleDataLoaded stores loaded data in the global state snapshot and emits
+// a StateChangedMsg so screens react to it.
 func (m Model) handleDataLoaded(msg DataLoadedMsg) (Model, tea.Cmd) {
 	switch msg.Kind {
 	case MsgKindDeckList:
@@ -174,7 +166,7 @@ func (m Model) handleDataLoaded(msg DataLoadedMsg) (Model, tea.Cmd) {
 		if !ok {
 			return m, nil
 		}
-		m.AllDecks = names
+		m.State.AllDecks = names
 
 		// Load saved state
 		state, err := m.Dispatcher.State.Load()
@@ -193,27 +185,13 @@ func (m Model) handleDataLoaded(msg DataLoadedMsg) (Model, tea.Cmd) {
 				validSelected = append(validSelected, s)
 			}
 		}
-		m.SelectedDecks = validSelected
+		m.State.SelectedDecks = validSelected
+		m.State.SelectedTags = state.SelectedTags
 
 		// Restore theme from saved state
 		if state.Theme != "" {
 			if th, err := theme.Switch(state.Theme); err == nil {
 				ui.SetTheme(th)
-			}
-		}
-
-		// Pass deck list + selection + tags to DeckSelect screen
-		if ds, ok := m.Navigator.Registry().Get(ui.DecksScreen); ok {
-			if setter, ok := ds.(setDeckSelectionDataer); ok {
-				m.SelectedTags = state.SelectedTags
-				setter.SetData(names, validSelected, m.AllTags, m.SelectedTags, m.AllDeckTags)
-			}
-		}
-
-		// Also pass to old Decks screen for compatibility during transition
-		if decksScreen, ok := m.Navigator.Registry().Get(ui.DecksScreen); ok {
-			if setter, ok := decksScreen.(setDecksLister); ok {
-				setter.SetDecks(names, validSelected)
 			}
 		}
 
@@ -226,20 +204,12 @@ func (m Model) handleDataLoaded(msg DataLoadedMsg) (Model, tea.Cmd) {
 		if len(validSelected) > 0 {
 			cmds = append(cmds, LoadSelectedDecksCmd(m.Dispatcher, validSelected))
 		} else {
-			// Handle empty selection: pass empty deck to screens so they show "No cards loaded"
+			// Handle empty selection: empty deck so screens show "No cards loaded"
 			emptyDeck := ui.DeckData{}
-			m.CurrentDeck = &emptyDeck
-			if quiz, ok := m.Navigator.Registry().Get(ui.QuizScreen); ok {
-				if setter, ok := quiz.(setDecker); ok {
-					setter.SetDeck(emptyDeck)
-				}
-			}
-			if typingQuiz, ok := m.Navigator.Registry().Get(ui.TypingQuizScreen); ok {
-				if setter, ok := typingQuiz.(setDecker); ok {
-					setter.SetDeck(emptyDeck)
-				}
-			}
+			m.State.Deck = &emptyDeck
+			m.State.DeckProgress = nil
 		}
+		cmds = append(cmds, m.stateChangedCmd())
 		return m, tea.Batch(cmds...)
 
 	case MsgKindTags:
@@ -247,86 +217,41 @@ func (m Model) handleDataLoaded(msg DataLoadedMsg) (Model, tea.Cmd) {
 		if !ok {
 			return m, nil
 		}
-		m.AllTags = tags
+		m.State.AllTags = tags
 
 		// Filter saved selected tags to only available ones
-		m.SelectedTags = filterAvailable(m.SelectedTags, tags)
-
-		// Pass tags to DeckSelect screen
-		if ds, ok := m.Navigator.Registry().Get(ui.DecksScreen); ok {
-			if setter, ok := ds.(setDeckSelectionDataer); ok {
-				setter.SetData(m.AllDecks, m.SelectedDecks, tags, m.SelectedTags, m.AllDeckTags)
-			}
-		}
-		return m, nil
+		m.State.SelectedTags = filterAvailable(m.State.SelectedTags, tags)
+		return m, m.stateChangedCmd()
 
 	case MsgKindDeckTags:
 		dt, ok := msg.Data.(map[string][]string)
 		if !ok {
 			return m, nil
 		}
-		m.AllDeckTags = dt
-
-		// Pass deck tags to DeckSelect screen
-		if ds, ok := m.Navigator.Registry().Get(ui.DecksScreen); ok {
-			if setter, ok := ds.(setDeckSelectionDataer); ok {
-				setter.SetData(m.AllDecks, m.SelectedDecks, m.AllTags, m.SelectedTags, dt)
-			}
-		}
-		return m, nil
+		m.State.AllDeckTags = dt
+		return m, m.stateChangedCmd()
 
 	case MsgKindDeck:
 		deck, ok := msg.Data.(ui.DeckData)
+		var progress map[string]stats.EntryProgress
 		if !ok {
-			return m, nil
-		}
-		m.CurrentDeck = &deck
-
-		// Pass deck data to Quiz screens (always, so they're ready when user navigates there)
-		if quiz, ok := m.Navigator.Registry().Get(ui.QuizScreen); ok {
-			if setter, ok := quiz.(setDecker); ok {
-				setter.SetDeck(deck)
+			dwp, ok2 := msg.Data.(DeckWithProgressMsg)
+			if !ok2 {
+				return m, nil
 			}
+			deck = dwp.Deck
+			progress = dwp.Progress
 		}
-		if typingQuiz, ok := m.Navigator.Registry().Get(ui.TypingQuizScreen); ok {
-			if setter, ok := typingQuiz.(setDecker); ok {
-				setter.SetDeck(deck)
-			}
-		}
-
-		// Pass cards to Search screen
-		if search, ok := m.Navigator.Registry().Get(ui.SearchScreen); ok {
-			if setter, ok := search.(setSearchDataer); ok {
-				setter.SetSearchData(deck.Cards)
-			}
-		}
-
-		return m, nil
+		m.State.Deck = &deck
+		m.State.DeckProgress = progress
+		return m, m.stateChangedCmd()
 	}
 	return m, nil
 }
 
-func (m Model) handleDeckSelection(selected []string) (Model, tea.Cmd) {
-	m.SelectedDecks = selected
-	var cmds []tea.Cmd
-	cmds = append(cmds, func() tea.Msg {
-		return SaveStateCmd(m.Dispatcher, selected)
-	})
-	cmds = append(cmds, ResetSessionCmd(m.Dispatcher))
-	if len(selected) > 0 {
-		cmds = append(cmds, LoadSelectedDecksCmd(m.Dispatcher, selected))
-	} else {
-		m.CurrentDeck = nil
-		cmds = append(cmds, func() tea.Msg {
-			return DataLoadedMsg{Kind: MsgKindDeck, Data: ui.DeckData{}}
-		})
-	}
-	return m, tea.Batch(cmds...)
-}
-
 func (m Model) handleDeckSelectionWithTags(selected []string, selectedTags []string) (Model, tea.Cmd) {
-	m.SelectedDecks = selected
-	m.SelectedTags = selectedTags
+	m.State.SelectedDecks = selected
+	m.State.SelectedTags = selectedTags
 	var cmds []tea.Cmd
 	cmds = append(cmds, func() tea.Msg {
 		return SaveStateCmd(m.Dispatcher, selected, selectedTags...)
@@ -335,11 +260,12 @@ func (m Model) handleDeckSelectionWithTags(selected []string, selectedTags []str
 	if len(selected) > 0 {
 		cmds = append(cmds, LoadSelectedDecksCmd(m.Dispatcher, selected))
 	} else {
-		m.CurrentDeck = nil
+		m.State.Deck = nil
 		cmds = append(cmds, func() tea.Msg {
 			return DataLoadedMsg{Kind: MsgKindDeck, Data: ui.DeckData{}}
 		})
 	}
+	cmds = append(cmds, m.stateChangedCmd())
 	return m, tea.Batch(cmds...)
 }
 
@@ -426,4 +352,26 @@ func (m Model) forwardToScreen(msg tea.Msg) (Model, tea.Cmd) {
 	updated, cmd := screen.Update(msg)
 	m.Navigator.SetCurrentScreen(updated)
 	return m.dispatch(cmd)
+}
+
+// stateChangedCmd returns a command that notifies screens of the current
+// AppState snapshot so they can recompute derived state. It captures the
+// snapshot as of the moment the mutation happened.
+func (m Model) stateChangedCmd() tea.Cmd {
+	return func() tea.Msg {
+		return ui.StateChangedMsg{State: m.State}
+	}
+}
+
+// syncActiveScreen pushes the current AppState snapshot to the active screen
+// if it implements StateSyncer.
+func (m Model) syncActiveScreen() tea.Cmd {
+	screen, ok := m.Navigator.CurrentScreen()
+	if !ok {
+		return nil
+	}
+	if s, ok := screen.(ui.StateSyncer); ok {
+		return s.SyncState(m.State)
+	}
+	return nil
 }

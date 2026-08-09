@@ -2,11 +2,13 @@ package screens
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"crds/internal/stats"
 	"crds/internal/ui"
 	"crds/internal/ui/keymap"
 	"crds/internal/ui/layout"
@@ -14,14 +16,17 @@ import (
 )
 
 type QuizModel struct {
-	cards        []ui.CardData
-	cardIndex    int
-	revealed     bool
-	deckName     string
-	inverse      bool
-	examplesPage int
-	width        int
-	height       int
+	cards         []ui.CardData
+	originalCards []ui.CardData
+	cardProgress  map[string]stats.EntryProgress
+	mode          ui.QuizMode
+	cardIndex     int
+	revealed      bool
+	deckName      string
+	inverse       bool
+	examplesPage  int
+	width         int
+	height        int
 }
 
 func NewQuiz() *QuizModel {
@@ -33,13 +38,43 @@ func (m *QuizModel) SetSize(w, h int) {
 	m.height = h
 }
 
-func (m *QuizModel) SetDeck(deck ui.DeckData) {
-	m.cards = deck.Cards
-	m.deckName = deck.Name
+func (m *QuizModel) SyncState(s ui.AppState) tea.Cmd {
+	changed := false
+	if s.Deck != nil {
+		if m.deckName != s.Deck.Name || !reflect.DeepEqual(m.originalCards, s.Deck.Cards) {
+			m.originalCards = s.Deck.Cards
+			m.deckName = s.Deck.Name
+			m.inverse = false
+			m.examplesPage = 0
+			changed = true
+		}
+	}
+	if !reflect.DeepEqual(m.cardProgress, s.DeckProgress) {
+		m.cardProgress = s.DeckProgress
+		changed = true
+	}
+	if m.mode != s.QuizMode {
+		m.mode = s.QuizMode
+		changed = true
+	}
+	if changed {
+		m.applySort()
+	}
+	return nil
+}
+
+func (m *QuizModel) SetModeFromKey() tea.Cmd {
+	m.mode = m.mode.Next()
+	m.applySort()
+	return func() tea.Msg {
+		return ui.SetQuizModeMsg{Mode: m.mode}
+	}
+}
+
+func (m *QuizModel) applySort() {
+	m.cards = ui.SortCards(m.mode, m.originalCards, m.cardProgress)
 	m.cardIndex = 0
 	m.revealed = false
-	m.inverse = false
-	m.examplesPage = 0
 }
 
 func (m *QuizModel) Init() tea.Cmd { return nil }
@@ -93,8 +128,7 @@ func (m *QuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 
 		case len(m.cards) > 0 && m.cardIndex >= len(m.cards):
 			if keymap.DefaultQuiz.Reveal.Match(msg) {
-				m.cardIndex = 0
-				m.revealed = false
+				m.applySort()
 				return m, nil
 			}
 			return m, nil
@@ -108,6 +142,9 @@ func (m *QuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 				m.inverse = !m.inverse
 				m.revealed = false
 				m.examplesPage = 0
+
+			case keymap.DefaultQuiz.ModeCycle.Match(msg):
+				return m, m.SetModeFromKey()
 			}
 
 		default:
@@ -122,22 +159,25 @@ func (m *QuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 				return m.grade(ui.GradeEasy)
 
 			case keymap.DefaultQuiz.PrevExample.Match(msg):
-			topBodyLines := strings.Count(m.renderTopBody(), "\n") + 1
-			pp := quizExamplesPerPage(m.width, m.height, topBodyLines)
-			if pp > 0 && m.examplesPage > 0 {
-				m.examplesPage--
-			}
+				topBodyLines := strings.Count(m.renderTopBody(), "\n") + 1
+				pp := quizExamplesPerPage(m.width, m.height, topBodyLines)
+				if pp > 0 && m.examplesPage > 0 {
+					m.examplesPage--
+				}
 
-		case keymap.DefaultQuiz.NextExample.Match(msg):
-			card := m.cards[m.cardIndex]
-			topBodyLines := strings.Count(m.renderTopBody(), "\n") + 1
-			pp := quizExamplesPerPage(m.width, m.height, topBodyLines)
-			if pp > 0 {
+			case keymap.DefaultQuiz.NextExample.Match(msg):
+				card := m.cards[m.cardIndex]
+				topBodyLines := strings.Count(m.renderTopBody(), "\n") + 1
+				pp := quizExamplesPerPage(m.width, m.height, topBodyLines)
+				if pp > 0 {
 					maxPage := (len(card.Examples) + pp - 1) / pp
 					if m.examplesPage < maxPage-1 {
 						m.examplesPage++
 					}
 				}
+
+			case keymap.DefaultQuiz.ModeCycle.Match(msg):
+				return m, m.SetModeFromKey()
 			}
 		}
 	}
@@ -290,7 +330,7 @@ func (m *QuizModel) renderTopBody() string {
 }
 
 func (m *QuizModel) renderFooter(card ui.CardData) string {
-	progress := fmt.Sprintf("card %d/%d", m.cardIndex+1, len(m.cards))
+	progress := fmt.Sprintf("card %d/%d · %s", m.cardIndex+1, len(m.cards), m.mode)
 
 	if m.revealed {
 		var shortcuts []string

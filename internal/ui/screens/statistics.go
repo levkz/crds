@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"crds/internal/stats"
 	"crds/internal/ui"
 	components "crds/internal/ui/components/display"
 	"crds/internal/ui/keymap"
@@ -12,9 +13,9 @@ import (
 )
 
 type StatisticsModel struct {
-	stats *ui.Stats
-	width  int
-	height int
+	summary stats.Summary
+	width   int
+	height  int
 }
 
 func NewStatistics() *StatisticsModel {
@@ -28,8 +29,17 @@ func (m *StatisticsModel) SetSize(w, h int) {
 
 func (m StatisticsModel) Init() tea.Cmd { return nil }
 
-func (m *StatisticsModel) SetStats(stats ui.Stats) {
-	m.stats = &stats
+func (m *StatisticsModel) OnEnter() tea.Cmd {
+	return func() tea.Msg {
+		return ui.RefreshStatsMsg{}
+	}
+}
+
+func (m *StatisticsModel) SyncState(s ui.AppState) tea.Cmd {
+	if s.Stats != nil {
+		m.summary = *s.Stats
+	}
+	return nil
 }
 
 func (m *StatisticsModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
@@ -49,14 +59,14 @@ func (m StatisticsModel) View() string {
 		{"Mastered", "0"},
 	}
 
-	if m.stats != nil {
-		metrics[0].value = fmt.Sprintf("%d", m.stats.ReviewedToday)
-		if m.stats.ReviewedToday > 0 {
-			metrics[1].value = fmt.Sprintf("%.0f%%", m.stats.Accuracy)
+	if m.summary.TotalCards > 0 || m.summary.ReviewedToday > 0 {
+		metrics[0].value = fmt.Sprintf("%d", m.summary.ReviewedToday)
+		if m.summary.ReviewedToday > 0 {
+			metrics[1].value = fmt.Sprintf("%.0f%%", m.summary.Accuracy)
 		} else {
 			metrics[1].value = "—"
 		}
-		metrics[4].value = fmt.Sprintf("%d", m.stats.TotalCards)
+		metrics[4].value = fmt.Sprintf("%d", m.summary.TotalCards)
 	}
 
 	items := make([]string, len(metrics))

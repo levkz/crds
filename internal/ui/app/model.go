@@ -32,23 +32,18 @@ type Model struct {
 	Global GlobalState
 	Config Config
 
+	State ui.AppState
+
 	Navigator  *nav.Manager
 	Dispatcher *Dispatcher
 
 	Width  int
 	Height int
 
-	CurrentDeck    *ui.DeckData
-	AllDecks       []string
-	SelectedDecks []string
-	AllTags        []string
-	SelectedTags   []string
-	AllDeckTags    map[string][]string
-
-	AnswersRecorded       bool
-	PendingTarget         *ui.ScreenIndex
-	PendingDeckSelection  []string
-	PendingTagSelection   []string
+	AnswersRecorded      bool
+	PendingTarget        *ui.ScreenIndex
+	PendingDeckSelection []string
+	PendingTagSelection  []string
 }
 
 func (m Model) Init() tea.Cmd {

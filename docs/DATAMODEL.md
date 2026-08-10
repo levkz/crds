@@ -220,7 +220,12 @@ Migrations live in `internal/storage/migrations/` (goose):
 
 ### Sessions
 
-Tracks quiz sessions.
+Tracks quiz sessions. A session is created on the first answer and reused
+until it is reset — on a deck/tag selection change and on app shutdown
+(`ShutdownCmd`), so an abandoned (unfinished) session still persists its
+aggregates instead of staying open with zeros. `ResetSession` counts the
+session's reviews and writes `finished_at`, `reviewed`, `correct`,
+`incorrect`, and `duration_ms`.
 
 ```sql
 CREATE TABLE sessions (
@@ -236,7 +241,11 @@ CREATE TABLE sessions (
 
 ### Reviews
 
-Records individual answers during quiz sessions.
+Records individual answers during quiz sessions. `grade` uses the unified
+0-3 scale (`Again=0`, `Hard=1`, `Good=2`, `Easy=3`); a review counts as
+**correct when `grade >= 2`** (`GradeGood` or better) everywhere —
+`ResetSession`, `Store.Stats`, and every SQL `correct_reviews`/`incorrect_reviews`
+aggregate use the same threshold.
 
 ```sql
 CREATE TABLE reviews (

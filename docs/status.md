@@ -21,11 +21,11 @@ Ran `go test ./...` from the repo root. Results are stable and current:
 | `internal/mapping/` | 12 | Input mappings: suffix expansion at a cursor index, pairs listing, layer precedence, file loading |
 | `internal/stats/` | 5 | Stats aggregation, streak, word stats |
 | `internal/scheduler/` | 7 | SM-2 spaced-repetition algorithm |
-| `internal/storage/` | 86 | SQLite Store (goose + sqlc) |
+| `internal/storage/` | 88 | SQLite Store (goose + sqlc) |
 | `internal/cli/` | 26 | Kong command wiring |
 | `internal/ai/` | 54 | AI agent: providers, config, prompts, parsing |
 | `internal/ui/` | 7 | Quiz modes, card sorting |
-| `internal/ui/app/` | 3 | Config apply, deck merging |
+| `internal/ui/app/` | 5 | Config apply, deck merging, session finalize on shutdown |
 | `internal/ui/theme/` | 61 | Design system, 6 fixtures |
 | `internal/ui/styles/` | 14 | Semantic styles |
 | `internal/ui/layout/` | 10 | Layout primitives |
@@ -36,7 +36,7 @@ Ran `go test ./...` from the repo root. Results are stable and current:
 | `internal/ui/components/display/` | 5 | Graph bar chart |
 | `internal/ui/screens/` | 20 | Statistics logic, typing quiz input mappings (incl. parse toggle + legend) + grading |
 
-Total: **456 test functions**, all passing.
+Total: **460 test functions**, all passing.
 
 ---
 
@@ -64,14 +64,14 @@ Total: **456 test functions**, all passing.
 | `internal/ui/keymap/` | Centralized keybinding definitions with user overrides | 18 |
 | `internal/ui/layout/` | Layout primitives: Page, Column, Row, Grid, Stack, Spacer, Center, Align | 10 |
 | `internal/ui/renderer/` | Terminal rendering: width, ANSI, wrapping | 9 |
-| `internal/ui/app/` | Root Bubble Tea model, event dispatch, lifecycle, commands, `ui.AppState` sync | 5 |
-| `internal/ui/screens/` | Typing quiz applies per-language input mappings while typing (toggleable with `ctrl+p`, with an on-screen trigger legend); grading respects strict/approximate matching | 19 |
+| `internal/ui/app/` | Root Bubble Tea model, event dispatch, lifecycle (shutdown finalizes the active session), commands, `ui.AppState` sync | 5 |
+| `internal/ui/screens/` | Typing quiz applies per-language input mappings while typing (toggleable with `ctrl+p`, with an on-screen trigger legend); grading respects strict/approximate matching | 20 |
 
 ## Partially Implemented
 
 | Package | Status |
 |---|---|
-| `internal/storage/` | `Store` (SQLite) fully implemented: deck+entry CRUD, tags/`deck_tags`, `ListDeckTags` (deck-wide tag list), `AppendEntries` (batch append), reserve/backup, revert, profile export/import, sync. SM-2 scheduling persisted with every answer via `RecordAnswer`/`RecordAnswerFull`; due queue (`DueForSelection`) and due-today counts wired. Legacy `DeckStore` and `ProgressStore` remain but are not wired. |
+| `internal/storage/` | `Store` (SQLite) fully implemented: deck+entry CRUD, tags/`deck_tags`, `ListDeckTags` (deck-wide tag list), `AppendEntries` (batch append), reserve/backup, revert, profile export/import, sync. SM-2 scheduling persisted with every answer via `RecordAnswer`/`RecordAnswerFull`; due queue (`DueForSelection`) and due-today counts wired. Review stats treat `grade >= GradeGood` (2) as correct consistently, in SQL and Go. Sessions are finalized (reviewed/correct/incorrect/duration written) on deck-switch and on app shutdown, so abandoned sessions still persist their aggregates. Legacy `DeckStore` and `ProgressStore` remain but are not wired. |
 | `internal/app/` | Composition root with Store/State/SharedDir/DataDir, pre-wired before Kong dispatch. |
 | `internal/ui/screens/` | 9 screens implemented and functional: Home, Quiz, TypingQuiz, DeckSelect, Search, Statistics, Settings, Detail, Palette (dev screen). Statistics has words/selection tabs: per-word search with per-word stats, and a selection summary with a confidence-over-time graph. Due Today is wired for both the selection summary (count) and per-word detail (yes/no). |
 | `internal/ui/components/` | All 29 built; the 9 interactive components are not yet wired into screens. |

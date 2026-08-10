@@ -181,9 +181,9 @@ Add one or more tags to an entry. Tags are positional arguments, space-separated
 
 Remove specific tags from an entry.
 
-#### `crds deck tag list <deck> <id>`
+#### `crds deck tag list <deck> [<id>]`
 
-List all tags on an entry, sorted alphabetically.
+List all tags on an entry, sorted alphabetically. Omit the entry ID to list all tags used across the whole deck.
 
 ---
 
@@ -252,6 +252,47 @@ Import a profile from another device. Creates a pre-import backup of the current
 3. Reopens the restored DB
 4. Runs any pending migrations
 5. Syncs decks
+
+---
+
+### AI Agent
+
+#### `crds ai interpret [--deck <deck>] [-t <text>] [-f <file>] [--dry-run]`
+
+Convert unstructured text (words, phrases, or `term = translation` lines) into
+YAML entries. With `--deck`, the deck's language pair is used and sample
+entries seed the prompt. `--dry-run` prints the prompt instead of calling the
+API. Prints the proposed YAML without writing anything.
+
+#### `crds ai fill <deck> [-t <text>] [-f <file>] [--dry-run]`
+
+Complete partial YAML entries (e.g. just a `term` + translations) into full
+entries: 2–3 language-appropriate example sentences, a `notes` field, and tags
+chosen only from the deck's existing tag list. Deck languages and up to 3
+sample entries are sent as context. Prints the completed YAML; nothing is
+written.
+
+#### `crds ai add <deck> [-t <text>] [-f <file>]`
+
+Interpret words (or YAML) and fill them out in one step, then let you review
+before appending: `[a]ppend`, `[e]dit` (re-open in `$EDITOR`), or `[d]iscard`.
+Appends go through the full parser/validation chain via the storage
+`AppendEntries` and are synced with auto-generated IDs.
+
+**AI configuration.** The default provider is Pollinations.AI (keyless,
+model `openai`). Configure via `~/.config/crds/config.yaml`:
+
+```yaml
+ai:
+  provider: pollinations   # pollinations | ollama | openai | gemini | openrouter | groq | nvidia
+  model: openai            # e.g. llama3.2 for ollama
+  api_key: ""              # not needed for pollinations/ollama
+  base_url: ""             # default per provider
+```
+
+Environment variables override the file: `CRDS_AI_PROVIDER`, `CRDS_AI_MODEL`,
+`CRDS_AI_API_KEY`, `CRDS_AI_BASE_URL`. See `internal/ai/PLAN.md` for the full
+provider preset list.
 
 ---
 

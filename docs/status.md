@@ -21,7 +21,8 @@ Ran `go test ./...` from the repo root. Results are stable and current:
 | `internal/stats/` | 5 | Stats aggregation, streak, word stats |
 | `internal/scheduler/` | 7 | SM-2 spaced-repetition algorithm |
 | `internal/storage/` | 81 | SQLite Store (goose + sqlc) |
-| `internal/cli/` | 9 | Kong command wiring |
+| `internal/cli/` | 16 | Kong command wiring |
+| `internal/ai/` | 42 | AI agent: providers, config, prompts, parsing |
 | `internal/ui/` | 7 | Quiz modes, card sorting |
 | `internal/ui/theme/` | 61 | Design system, 6 fixtures |
 | `internal/ui/styles/` | 14 | Semantic styles |
@@ -33,7 +34,7 @@ Ran `go test ./...` from the repo root. Results are stable and current:
 | `internal/ui/components/display/` | 5 | Graph bar chart |
 | `internal/ui/screens/` | 11 | Statistics screen logic |
 
-Total: **344 test functions**, all passing.
+Total: **393 test functions**, all passing.
 
 ---
 
@@ -50,7 +51,8 @@ Total: **344 test functions**, all passing.
 | `internal/stats/` | Stats aggregation for statistics screen, word-level stats, streak from review history | 5 |
 | `internal/scheduler/` | SM-2 spaced-repetition algorithm: ease, interval, lapse penalty, grade→interval mapping | 7 |
 | `internal/editor/` | `$EDITOR`/nano/vim invocation with YAML buffer handling | — |
-| `internal/cli/` | Kong commands: quiz, stats, deck (list/import/export/delete/search/edit), term (add/rm/edit), tag (add/rm/list), state (reserve/revert/sync), profile (export/import) | 9 |
+| `internal/cli/` | Kong commands: quiz, stats, deck (list/import/export/delete/search/edit), term (add/rm/edit), tag (add/rm/list), state (reserve/revert/sync), profile (export/import), ai (interpret/fill/add) | 16 |
+| `internal/ai/` | Agent: 7 provider presets (pollinations, ollama, openai, gemini, openrouter, groq, nvidia), OpenAI-compatible client, prompts, YAML parsing, interpret/fill agents | 42 |
 | `internal/ui/theme/` | Design system: 18-field palette (15 colors + 3 semantic overrides), typography, icons, borders, spacing, 5 built-in themes, YAML loading, store | 61 |
 | `internal/ui/styles/` | Semantic style definitions | 14 |
 | `internal/ui/components/` | 29 components (20 display + 9 interactive) | — |
@@ -65,7 +67,7 @@ Total: **344 test functions**, all passing.
 
 | Package | Status |
 |---|---|
-| `internal/storage/` | `Store` (SQLite) fully implemented: deck+entry CRUD, tags/`deck_tags`, reserve/backup, revert, profile export/import, sync. SM-2 scheduling persisted with every answer via `RecordAnswer`/`RecordAnswerFull`; due queue (`DueForSelection`) and due-today counts wired. Legacy `DeckStore` and `ProgressStore` remain but are not wired. |
+| `internal/storage/` | `Store` (SQLite) fully implemented: deck+entry CRUD, tags/`deck_tags`, `ListDeckTags` (deck-wide tag list), `AppendEntries` (batch append), reserve/backup, revert, profile export/import, sync. SM-2 scheduling persisted with every answer via `RecordAnswer`/`RecordAnswerFull`; due queue (`DueForSelection`) and due-today counts wired. Legacy `DeckStore` and `ProgressStore` remain but are not wired. |
 | `internal/app/` | Composition root with Store/State/SharedDir/DataDir, pre-wired before Kong dispatch. |
 | `internal/ui/screens/` | 9 screens implemented and functional: Home, Quiz, TypingQuiz, DeckSelect, Search, Statistics, Settings, Detail, Palette (dev screen). Statistics has words/selection tabs: per-word search with per-word stats, and a selection summary with a confidence-over-time graph. Due Today is wired for both the selection summary (count) and per-word detail (yes/no). |
 | `internal/ui/components/` | All 29 built; the 9 interactive components are not yet wired into screens. |

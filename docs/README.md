@@ -99,6 +99,8 @@ Notes for changes. It contains **no status, test counts, known issues, or plans*
 | Document | Purpose |
 |---|---|
 | `internal/cli/CONTEXT.md` | Kong command wiring, store methods, editor flow |
+| `internal/ai/CONTEXT.md` | AI agent: providers, config resolution, agents, CLI wiring |
+| `internal/ai/PLAN.md` | Implementation plan for the AI agent feature (`crds ai`) |
 | `internal/ui/components/CONTEXT.md` | Component taxonomy, state model, API conventions |
 | `internal/ui/screens/CONTEXT.md` | Screen responsibilities, state sync, messages |
 | `internal/ui/keymap/CONTEXT.md` | Keybinding design, footer generation, overrides |

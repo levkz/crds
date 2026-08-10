@@ -64,6 +64,21 @@ Mostly shipped with the CLI. Remaining items carried forward below.
 - [ ] **`internal/quiz/`** — quiz session orchestration extracted from UI screens.
 - [ ] **`internal/search/`** — vocabulary search extracted from UI screens.
 
+## AI agent — `crds ai` (interpret / fill / add)
+
+Detailed plan and context: `internal/ai/PLAN.md`.
+
+- [x] `internal/ai/` package — OpenAI-compatible chat client, provider presets,
+      config resolution, interpret/fill prompts, YAML output parsing
+- [x] `ai:` config block (`provider`, `model`, `api_key`, `base_url`) + env
+      overrides (`CRDS_AI_*`); default provider: Pollinations.AI (keyless)
+- [x] CLI: `crds ai interpret [--deck <deck>]` — unstructured text → YAML entries
+- [x] CLI: `crds ai fill <deck>` — structured YAML → completed YAML
+- [x] CLI: `crds ai add <deck>` — interpret+fill with review, append to deck
+- [x] Storage: `AppendEntries` bulk append with auto-ID on sync
+- [x] CLI: `crds deck tag list <deck>` — list all tags in a deck (no term)
+- [x] Docs: README CLI reference, `internal/ai/CONTEXT.md`, status.md update
+
 ## UI wiring (interactive components)
 
 - [ ] Wire `SearchInputModel` into `screens/search.go`
@@ -161,7 +176,9 @@ Deferred until a concrete trigger appears:
 
 - [ ] Audio pronunciation
 - [ ] Images attached to vocabulary
-- [ ] AI-generated example sentences / grammar hints / auto-quizzes
+- [ ] AI-generated example sentences / grammar hints / auto-quizzes — example-
+      sentence generation ships with the AI agent (see "AI agent" section above);
+      grammar hints and auto-quizzes remain open
 - [ ] TUI dashboard — reviews due, streak, accuracy, recently learned
 - [ ] Instant fuzzy search
 - [ ] Tag taxonomy (food, travel, verbs, adjectives, A1–B2)

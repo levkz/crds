@@ -12,6 +12,22 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done.
 
 # Completed plans (archived)
 
+## Accent input mappings + matching mode
+
+- [x] `internal/mapping/` — input mappings (Babbel-style triggers): longest-suffix
+      expansion, rune-safe, single pass per keystroke
+- [x] Built-in French defaults; user files in `~/.config/crds/mappings/<lang>.yaml`;
+      per-deck `input_mappings` field; precedence deck > user > built-in
+- [x] Typing quiz applies the effective mapping as the user types
+- [x] `internal/fuzzy` strict/approximate modes — `matching_mode: strict|approximate`
+      in `~/.config/crds/config.yaml` (default `approximate`); accents stripped via
+      NFD + combining-mark removal
+- [x] Parse toggle (`ctrl+p`) in the typing quiz — toggles trigger expansion so a
+      literal `e/` can be typed; old text is never re-parsed when toggling back on,
+      while new text parses even mid-string (via `Mapping.ApplyAt` at the cursor)
+- [x] `mappings/*.yaml` included in profile export/import
+- [x] Docs: README, DECK_CREATION_GUIDE, status.md
+
 ## Scheduler: SM-2 spaced repetition
 
 - [x] `internal/scheduler/` — pure Go SM-2 algorithm (ease, interval, lapse
@@ -195,3 +211,10 @@ Candidates:
 - [ ] Difficulty / CEFR levels (A1–C2) on entries
 - [ ] Synonyms / antonyms / etymology
 - [ ] Grammar-topic references (links entries to grammar rules)
+
+## Input mappings & matching (follow-ups to the shipped feature)
+
+- [ ] Per-deck `matching_mode` override (deck wins over the user setting)
+- [ ] Built-in defaults for more languages (es, de, pt, pl, vi, ...)
+- [ ] Handle non-decomposing letters in approximate mode (`ß`→`ss`, `ø`→`o`, `å`→`a`, ...) as optional language-aware folds
+- [ ] On-screen hint showing the active mapping triggers for the current deck

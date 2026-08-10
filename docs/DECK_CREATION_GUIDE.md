@@ -43,6 +43,7 @@ entries:
 | `name` | yes | Human-readable name shown in the UI |
 | `language` | yes | Source language code (e.g. `fr`, `de`, `es`) |
 | `translation_language` | yes | Target language code (e.g. `en`) |
+| `input_mappings` | no | Optional map of typing triggers to characters (see below) |
 
 ---
 
@@ -143,6 +144,57 @@ Expands the term to `le livre` and `la livre` — both required variants because
 ```
 
 The term expands to `manger`, `mangez`, `mange`, `mangeons`, `mangent`. The auto-ID picks `mange` (the shortest).
+
+## Input Mappings (accent triggers)
+
+While typing answers in the Typing Quiz, trigger sequences expand into
+special characters, e.g. typing `e/` produces `é`. This is a
+Babbel-style compose convention so accented characters are easy to type on
+any keyboard.
+
+Mappings come from three layers, later layers winning for the same trigger:
+
+1. **Built-in defaults** per language (French ships with the binary).
+2. **User files** — `~/.config/crds/mappings/<lang>.yaml`, one YAML map per
+   language code.
+3. **Deck field** — `input_mappings` in the deck file below.
+
+```yaml
+id: french_a1
+name: French A1
+language: fr
+translation_language: en
+input_mappings:
+  'e/': 'é'
+  'e"': 'è'
+  'oe': 'œ'
+```
+
+- Keys are matched as the **longest suffix** of what you've typed, so `mange/`
+  becomes `mangé`. Expansion happens at the cursor as you type, so mid-string
+  triggers expand too (e.g. inserting `e/` in the middle of a word becomes `é`).
+  Text already in the input is never re-scanned.
+- `ctrl+p` **toggles parsing** in the typing quiz. With parsing off you can type a
+  literal trigger (e.g. a real `e/`); with parsing on, newly typed text expands
+  again, including mid-string. The footer shows `parse off` when it is disabled.
+  While parsing is on and the answer isn't submitted yet, the active triggers are
+  shown as a legend (e.g. `e/→é`) above the status bar.
+- Use single quotes in YAML when a key contains `"`.
+- Built-in French defaults include `e/`→`é`, `` e` ``→`è`, `e^`→`ê`, `a`→`à`,
+  `a^`→`â`, `c,`→`ç`, `i^`→`î`, `o^`→`ô`, `oe`→`œ` (ligature), `u^`→`û`,
+  and their diaeresis variants (`e"`→`ë`, `a"`→`ä`, `i"`→`ï`, `o"`→`ö`,
+  `u"`→`ü`, `y"`→`ÿ`).
+
+### Matching mode
+
+The user-level setting `matching_mode` (in `~/.config/crds/config.yaml`)
+controls how typed answers are graded:
+
+- `approximate` (default) — accents are ignored, so `cafe` matches `café` as an
+  exact answer.
+- `strict` — accents matter, so `cafe` does not match `café`.
+
+This is a user setting and applies to all decks; decks cannot override it.
 
 ---
 

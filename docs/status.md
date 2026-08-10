@@ -15,15 +15,17 @@ Ran `go test ./...` from the repo root. Results are stable and current:
 | Package | Tests | Notes |
 |---|---|---|
 | `internal/model/` | 3 | Domain types |
-| `internal/parser/` | 4 | 12 YAML fixtures in `testdata/` |
-| `internal/config/` | 12 | User configuration |
-| `internal/fuzzy/` | 6 | Levenshtein matching |
+| `internal/parser/` | 5 | 13 YAML fixtures in `testdata/` |
+| `internal/config/` | 17 | User configuration |
+| `internal/fuzzy/` | 12 | Levenshtein matching, accent stripping, strict/approximate modes |
+| `internal/mapping/` | 12 | Input mappings: suffix expansion at a cursor index, pairs listing, layer precedence, file loading |
 | `internal/stats/` | 5 | Stats aggregation, streak, word stats |
 | `internal/scheduler/` | 7 | SM-2 spaced-repetition algorithm |
-| `internal/storage/` | 81 | SQLite Store (goose + sqlc) |
+| `internal/storage/` | 86 | SQLite Store (goose + sqlc) |
 | `internal/cli/` | 26 | Kong command wiring |
 | `internal/ai/` | 54 | AI agent: providers, config, prompts, parsing |
 | `internal/ui/` | 7 | Quiz modes, card sorting |
+| `internal/ui/app/` | 3 | Config apply, deck merging |
 | `internal/ui/theme/` | 61 | Design system, 6 fixtures |
 | `internal/ui/styles/` | 14 | Semantic styles |
 | `internal/ui/layout/` | 10 | Layout primitives |
@@ -32,9 +34,9 @@ Ran `go test ./...` from the repo root. Results are stable and current:
 | `internal/ui/navigation/tests/` | 74 | Black-box navigation tests |
 | `internal/ui/app/tests/` | 8 | State-sync protocol, quiz-mode persistence |
 | `internal/ui/components/display/` | 5 | Graph bar chart |
-| `internal/ui/screens/` | 11 | Statistics screen logic |
+| `internal/ui/screens/` | 20 | Statistics logic, typing quiz input mappings (incl. parse toggle + legend) + grading |
 
-Total: **420 test functions**, all passing.
+Total: **456 test functions**, all passing.
 
 ---
 
@@ -45,9 +47,10 @@ Total: **420 test functions**, all passing.
 | Package | Description | Tests |
 |---|---|---|
 | `internal/model/` | Domain types: Deck, Entry, Progress, Review, Session | 3 |
-| `internal/parser/` | YAML parsing, validation, normalization, auto-ID generation | 4 (12 fixtures) |
-| `internal/config/` | User config from `~/.config/crds/`: `config.yaml`, `keymaps.yaml`, `themes/*.yaml` | 12 |
-| `internal/fuzzy/` | Levenshtein-based fuzzy matching for typed answers | 6 |
+| `internal/parser/` | YAML parsing, validation, normalization, auto-ID generation | 5 (13 fixtures) |
+| `internal/config/` | User config from `~/.config/crds/`: `config.yaml`, `keymaps.yaml`, `themes/*.yaml`, `mappings/*.yaml` | 17 |
+| `internal/fuzzy/` | Levenshtein-based fuzzy matching for typed answers, accent stripping, strict/approximate modes | 12 |
+| `internal/mapping/` | Input mappings (Babbel-style triggers): suffix expansion at a cursor index (`ApplyAt`), pairs listing, built-in/user/deck layer precedence, `~/.config/crds/mappings/<lang>.yaml` loading | 11 |
 | `internal/stats/` | Stats aggregation for statistics screen, word-level stats, streak from review history | 5 |
 | `internal/scheduler/` | SM-2 spaced-repetition algorithm: ease, interval, lapse penalty, grade→interval mapping | 7 |
 | `internal/editor/` | `$EDITOR`/nano/vim invocation with YAML buffer handling | — |
@@ -62,6 +65,7 @@ Total: **420 test functions**, all passing.
 | `internal/ui/layout/` | Layout primitives: Page, Column, Row, Grid, Stack, Spacer, Center, Align | 10 |
 | `internal/ui/renderer/` | Terminal rendering: width, ANSI, wrapping | 9 |
 | `internal/ui/app/` | Root Bubble Tea model, event dispatch, lifecycle, commands, `ui.AppState` sync | 5 |
+| `internal/ui/screens/` | Typing quiz applies per-language input mappings while typing (toggleable with `ctrl+p`, with an on-screen trigger legend); grading respects strict/approximate matching | 19 |
 
 ## Partially Implemented
 
@@ -77,8 +81,7 @@ Total: **420 test functions**, all passing.
 | Package | Status |
 |---|---|
 | `internal/quiz/` | Does not exist. Quiz logic lives in UI screens only. |
-| `internal/search/` | Does not exist. Search lives in UI screens only. |
-| `internal/ui/actions/` | Empty placeholder. |
+| `internal/search/` | Does not exist. Search lives in UI screens only. || `internal/ui/actions/` | Empty placeholder. |
 | `internal/ui/events/` | 4 basic event types defined; rest deferred. |
 | `internal/ui/animations/` | Empty placeholder. |
 | `internal/ui/debug/` | Empty placeholder. |
@@ -94,5 +97,6 @@ Total: **420 test functions**, all passing.
 - Quiz progress in the global `AppState` snapshot is refreshed after each answer, but a running quiz freezes its queue (session snapshot) to avoid reshuffling mid-session.
 - Due-mode reviews are drawn from the selection's review queue (unseen first, then due by date); the "Due Today" stat counts only due entries, so it can differ from the length of the due-mode queue when unseen cards are pending.
 - Interactive components are built but not yet wired into screens (`search.go`, `settings.go` still handle input inline).
+- Approximate matching strips combining diacritics only; letters that don't NFD-decompose (`ß`, `ø`, `ł`, `å`) are unaffected — use input mappings for those.
 - `internal/editor/` has no tests yet.
 - Legacy `ProgressStore` and `DeckStore` remain in the codebase but are not wired.

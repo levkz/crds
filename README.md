@@ -7,6 +7,7 @@ Vocabulary belongs in YAML for easy manipulation. User progress belongs in SQLit
 ## Features
 
 - **Two quiz modes** — Flashcard grading (Again/Hard/Good/Easy) and Typing with fuzzy-matched auto-grading via Levenshtein distance
+- **Accent input mappings** — Babbel-style triggers (`e/` → `é`) from per-language config files and per-deck fields, toggleable in the typing quiz; optional accent-insensitive matching
 - **Full TUI** — 9 screens with stack-based navigation, theme system, and terminal-wide background fill
 - **YAML decks** — Human-editable, version-controllable vocabulary files with auto-ID generation and variant expansion syntax
 - **SQLite persistence** — Reviews, sessions, progress, typing details (via `modernc.org/sqlite` + goose + sqlc)
@@ -235,6 +236,7 @@ Export your full profile for device migration. Packages the following into a sin
 - Config (`~/.config/crds/config.yaml`)
 - Keymaps (`~/.config/crds/keymaps.yaml`)
 - Custom themes (`~/.config/crds/themes/`)
+- Input mappings (`~/.config/crds/mappings/`)
 
 Auto-increments the archive name on filename collision.
 
@@ -397,15 +399,38 @@ Type the translation directly. The answer is auto-graded using Levenshtein dista
 
 On reveal, shows the correct answer alongside your input. Tags and examples are displayed. This mode does not use a grade menu — grading is automatic.
 
+### Accent Input Mappings & Matching Mode
+
+Accented characters can be typed with Babbel-style trigger combos, e.g. `e/` → `é`,
+`` e` `` → `è`. Mappings are resolved per deck from three layers (later wins):
+
+1. Built-in defaults (French ships with the binary)
+2. User files: `~/.config/crds/mappings/<lang>.yaml`
+3. Deck field: `input_mappings` (see [Deck Creation Guide](docs/DECK_CREATION_GUIDE.md))
+
+Triggers expand as you type at the cursor position. Press `ctrl+p` to toggle
+parsing — with it off you can type a literal `e/`, and turning it back on parses
+newly typed text (even mid-string) without re-scanning what's already in the input.
+While parsing is on and the answer isn't submitted yet, the active triggers are
+shown as a legend (e.g. `e/→é`) above the status bar.
+
+The matching mode in `~/.config/crds/config.yaml` controls how typed answers are graded:
+
+| Mode           | Behavior                                        |
+|----------------|-------------------------------------------------|
+| `approximate` (default) | Accents ignored — `cafe` matches `café` |
+| `strict`       | Accents matter — `cafe` does not match `café`    |
+
 ## Configuration
 
 Location: `~/.config/crds/`
 
 | File / Dir                | Purpose |
 |---------------------------|---------|
-| `config.yaml`             | Theme, animation enabled, default quiz limit |
+| `config.yaml`             | Theme, animation enabled, default quiz limit, matching mode |
 | `keymaps.yaml`            | Keybinding overrides applied via `keymap.ApplyDefaultOverrides()` |
 | `themes/*.yaml`           | Custom themes with named palette references or direct ANSI/hex values |
+| `mappings/*.yaml`         | Per-language input mappings (accent triggers) |
 
 ### Built-in Themes
 
@@ -421,6 +446,7 @@ Default, dark, light, tokyonight (hex values from [folke/tokyonight.nvim](https:
 | Selected decks state       | `~/.local/share/crds/state.yaml` |
 | Config directory           | `~/.config/crds/` |
 | Custom themes              | `~/.config/crds/themes/` |
+| Input mappings             | `~/.config/crds/mappings/` |
 
 ## Architecture
 

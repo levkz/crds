@@ -39,6 +39,7 @@ const termConventions = `Term and translation conventions (use CRDS variant synt
 // Structural tags are always allowed; theme tags come from the deck allowlist
 // (or a concise model-chosen theme tag when none is supplied).
 const tagRules = `- Structural tags are ALWAYS allowed and must be added when relevant: noun, verb, adjective, adverb, pronoun, conjunction, preposition; gender tags (masculin, feminin, and neutral — neutral only if the language has grammatical gender); and verb class where the language uses one (e.g. French 1st/2nd/3rd group, Spanish -ar/-er/-ir).
+- Proficiency: add exactly one CEFR level tag (A1, A2, B1, B2, C1, C2) estimating the term's difficulty.
 - Theme tags: choose ONLY from the allowed theme tags in the user message. If none are listed, add a concise theme tag that fits the entry (e.g. greetings, food, travel).`
 
 // InterpretMessages builds the system and user messages for the interpreter

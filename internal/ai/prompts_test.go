@@ -128,6 +128,19 @@ func TestInterpretFullMessages_StructuralTagsAlwaysAllowed(t *testing.T) {
 	}
 }
 
+func TestTagRules_ProficiencyLevel(t *testing.T) {
+	fullSys, _ := InterpretFullMessages("hola", DeckContext{}, "")
+	if !strings.Contains(fullSys, "add exactly one CEFR level tag") ||
+		!strings.Contains(fullSys, "A1, A2, B1, B2, C1, C2") {
+		t.Errorf("full prompt should require a proficiency tag, got:\n%s", fullSys)
+	}
+
+	fillSys, _ := FillMessages(nil, DeckContext{}, "")
+	if !strings.Contains(fillSys, "add exactly one CEFR level tag") {
+		t.Errorf("fill prompt should require a proficiency tag, got:\n%s", fillSys)
+	}
+}
+
 func TestFillMessages_StructuralTagsAlwaysAllowed(t *testing.T) {
 	system, _ := FillMessages(nil, DeckContext{}, "")
 	if !strings.Contains(system, "Structural tags are ALWAYS allowed") {

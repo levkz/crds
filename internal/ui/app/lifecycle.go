@@ -8,9 +8,15 @@ import (
 // ShutdownMsg is emitted when shutdown cleanup is complete
 type ShutdownMsg struct{}
 
-// ShutdownCmd returns a command that performs graceful cleanup and signals completion
+// ShutdownCmd returns a command that finalizes the active session, performs
+// graceful cleanup, and signals completion. Without this, sessions that are
+// abandoned mid-way (never reset via a deck switch) would stay open forever
+// and their aggregates would never be written.
 func (m Model) ShutdownCmd() tea.Cmd {
 	return func() tea.Msg {
+		if m.Dispatcher != nil && m.Dispatcher.Sessions != nil {
+			_ = m.Dispatcher.Sessions.ResetSession()
+		}
 		return ShutdownMsg{}
 	}
 }

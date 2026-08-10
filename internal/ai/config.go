@@ -25,7 +25,7 @@ var Presets = map[string]Preset{
 	"pollinations": {BaseURL: "https://text.pollinations.ai/openai", DefaultModel: "openai"},
 	"ollama":       {BaseURL: "http://localhost:11434/v1", DefaultModel: "llama3.2"},
 	"openai":       {BaseURL: "https://api.openai.com/v1", DefaultModel: "gpt-4o-mini", RequiresKey: true},
-	"gemini":       {BaseURL: "https://generativelanguage.googleapis.com/v1beta/openai/", DefaultModel: "gemini-2.5-flash", RequiresKey: true},
+	"gemini":       {BaseURL: "https://generativelanguage.googleapis.com/v1beta/openai/", DefaultModel: "gemini-3.5-flash-lite", RequiresKey: true},
 	"openrouter":   {BaseURL: "https://openrouter.ai/api/v1", DefaultModel: "meta-llama/llama-3.3-70b-instruct:free", RequiresKey: true},
 	"groq":         {BaseURL: "https://api.groq.com/openai/v1", DefaultModel: "llama-3.3-70b-versatile", RequiresKey: true},
 	"nvidia":       {BaseURL: "https://integrate.api.nvidia.com/v1", DefaultModel: "meta/llama-3.3-70b-instruct", RequiresKey: true},
@@ -86,3 +86,4 @@ func Resolve(cfg Config) (Config, error) {
 
 	return resolved, nil
 }
+

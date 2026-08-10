@@ -61,11 +61,22 @@ func ThemesDir() (string, error) {
 	return themesDir()
 }
 
+// AIConfig holds the `ai:` block. Provider presets and defaults are resolved
+// in `internal/ai` (Resolve); this struct only stores what the user wrote.
+// The API key is intentionally not echoed anywhere — treat it as a secret.
+type AIConfig struct {
+	Provider string `yaml:"provider,omitempty"`
+	Model    string `yaml:"model,omitempty"`
+	APIKey   string `yaml:"api_key,omitempty"`
+	BaseURL  string `yaml:"base_url,omitempty"`
+}
+
 type ConfigYAML struct {
-	Theme            string `yaml:"theme,omitempty"`
-	AnimationEnabled *bool  `yaml:"animation_enabled,omitempty"`
-	DefaultQuizLimit *int   `yaml:"default_quiz_limit,omitempty"`
-	QuizMode         string `yaml:"quiz_mode,omitempty"`
+	Theme            string   `yaml:"theme,omitempty"`
+	AnimationEnabled *bool    `yaml:"animation_enabled,omitempty"`
+	DefaultQuizLimit *int     `yaml:"default_quiz_limit,omitempty"`
+	QuizMode         string   `yaml:"quiz_mode,omitempty"`
+	AI               *AIConfig `yaml:"ai,omitempty"`
 }
 
 func LoadConfigYAML(path string) (*ConfigYAML, error) {
@@ -84,7 +95,20 @@ func LoadConfigYAML(path string) (*ConfigYAML, error) {
 }
 
 func writeDefaultConfig(path string) error {
-	data := []byte("# crds application config\n# theme: dark\n# animation_enabled: false\n# default_quiz_limit: 20\n")
+	data := []byte(`# crds application config
+# theme: dark
+# animation_enabled: false
+# default_quiz_limit: 20
+
+# AI agent (crds ai). Providers: pollinations (default, no key), ollama,
+# openai, gemini, openrouter, groq, nvidia. api_key is required for keyed
+# providers and is read from CRDS_AI_API_KEY when not set here.
+# ai:
+#   provider: pollinations
+#   model: ""
+#   api_key: ""
+#   base_url: ""
+`)
 	return os.WriteFile(path, data, 0644)
 }
 

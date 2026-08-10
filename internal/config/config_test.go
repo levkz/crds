@@ -63,6 +63,48 @@ func TestLoadConfigYAML(t *testing.T) {
 	}
 }
 
+func TestLoadConfigYAML_AIBlock(t *testing.T) {
+	data := []byte("ai:\n  provider: groq\n  model: llama-3.3-70b-versatile\n  api_key: sk-secret\n  base_url: https://example.com/v1\n")
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	if err := os.WriteFile(path, data, 0644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := LoadConfigYAML(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.AI == nil {
+		t.Fatal("expected ai block to be parsed")
+	}
+	if cfg.AI.Provider != "groq" {
+		t.Errorf("Provider = %q, want groq", cfg.AI.Provider)
+	}
+	if cfg.AI.Model != "llama-3.3-70b-versatile" {
+		t.Errorf("Model = %q", cfg.AI.Model)
+	}
+	if cfg.AI.APIKey != "sk-secret" {
+		t.Errorf("APIKey = %q", cfg.AI.APIKey)
+	}
+	if cfg.AI.BaseURL != "https://example.com/v1" {
+		t.Errorf("BaseURL = %q", cfg.AI.BaseURL)
+	}
+}
+
+func TestLoadConfigYAML_AIBlockAbsent(t *testing.T) {
+	data := []byte("theme: dark\n")
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	if err := os.WriteFile(path, data, 0644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := LoadConfigYAML(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.AI != nil {
+		t.Errorf("expected nil ai block, got %+v", cfg.AI)
+	}
+}
+
 func TestLoadConfigYAMLMissingFile(t *testing.T) {
 	cfg, err := LoadConfigYAML("/nonexistent/path.yaml")
 	if err != nil {

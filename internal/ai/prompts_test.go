@@ -62,8 +62,8 @@ func TestInterpretFullMessages_DemandsFourExamples(t *testing.T) {
 
 func TestInterpretFullMessages_TagsAllowlist(t *testing.T) {
 	_, user := InterpretFullMessages("hola", DeckContext{AllowedTags: []string{"greetings", "A1"}}, "")
-	if !strings.Contains(user, "allowed tags: greetings, A1") {
-		t.Errorf("user message should list allowed tags, got:\n%s", user)
+	if !strings.Contains(user, "allowed theme tags: greetings, A1") {
+		t.Errorf("user message should list allowed theme tags, got:\n%s", user)
 	}
 }
 
@@ -84,8 +84,8 @@ func TestFillMessages_IncludesAllowedTags(t *testing.T) {
 		AllowedTags:         []string{"food", "A1"},
 	}, "")
 
-	if !strings.Contains(user, "allowed tags: food, A1") {
-		t.Errorf("user message should list allowed tags, got:\n%s", user)
+	if !strings.Contains(user, "allowed theme tags: food, A1") {
+		t.Errorf("user message should list allowed theme tags, got:\n%s", user)
 	}
 	if !strings.Contains(user, "baguette") {
 		t.Errorf("user message should include the input entries")
@@ -106,8 +106,32 @@ func TestFillMessages_IncludesAllowedTags(t *testing.T) {
 
 func TestFillMessages_NoTags(t *testing.T) {
 	_, user := FillMessages(nil, DeckContext{AllowedTags: nil}, "")
-	if !strings.Contains(user, "do not add tags") {
-		t.Errorf("empty tag allowlist should instruct no tags, got:\n%s", user)
+	if !strings.Contains(user, "add structural tags and a concise theme tag") {
+		t.Errorf("empty tag allowlist should instruct structural + theme tags, got:\n%s", user)
+	}
+}
+
+func TestInterpretFullMessages_StructuralTagsAlwaysAllowed(t *testing.T) {
+	system, _ := InterpretFullMessages("hola", DeckContext{}, "")
+	for _, want := range []string{
+		"Structural tags are ALWAYS allowed",
+		"noun, verb, adjective, adverb",
+		"masculin, feminin, and neutral",
+		"if the language has grammatical gender",
+	} {
+		if !strings.Contains(system, want) {
+			t.Errorf("system message should contain %q, got:\n%s", want, system)
+		}
+	}
+	if !strings.Contains(system, "add a concise theme tag") {
+		t.Errorf("system message should allow a concise theme tag, got:\n%s", system)
+	}
+}
+
+func TestFillMessages_StructuralTagsAlwaysAllowed(t *testing.T) {
+	system, _ := FillMessages(nil, DeckContext{}, "")
+	if !strings.Contains(system, "Structural tags are ALWAYS allowed") {
+		t.Errorf("system message should allow structural tags, got:\n%s", system)
 	}
 }
 

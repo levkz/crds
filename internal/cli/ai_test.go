@@ -178,8 +178,27 @@ func TestAiInterpretCmd_Full(t *testing.T) {
 	if !strings.Contains(fake.system, "at least 4") {
 		t.Fatalf("full mode should use the full prompt, got:\n%s", fake.system)
 	}
+	if !strings.Contains(fake.user, "allowed theme tags: common") {
+		t.Fatalf("full mode with a deck should pass the deck tags as theme allowlist, got:\n%s", fake.user)
+	}
+	if !strings.Contains(fake.user, "structural tags are always allowed") {
+		t.Fatalf("full mode should remind the model structural tags are allowed, got:\n%s", fake.user)
+	}
 	if !strings.Contains(out, "Hola, como estas?") {
 		t.Fatalf("expected examples in full output, got:\n%s", out)
+	}
+}
+
+func TestAiInterpretCmd_FullNoDeckAllowsStructuralTags(t *testing.T) {
+	a := newTestApp(t)
+	fake := stubAIClient(t, "- term: hola\n  translations:\n    - text: hello\n")
+
+	cmd := &AiInterpretCmd{Text: "hola", Full: true, TranslateFrom: "es", TranslateTo: "en"}
+	if err := cmd.Run(a); err != nil {
+		t.Fatalf("AiInterpretCmd.Run: %v", err)
+	}
+	if !strings.Contains(fake.user, "allowed theme tags: none (add structural tags and a concise theme tag)") {
+		t.Fatalf("full mode without a deck should allow structural tags, got:\n%s", fake.user)
 	}
 }
 

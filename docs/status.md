@@ -21,8 +21,8 @@ Ran `go test ./...` from the repo root. Results are stable and current:
 | `internal/stats/` | 5 | Stats aggregation, streak, word stats |
 | `internal/scheduler/` | 7 | SM-2 spaced-repetition algorithm |
 | `internal/storage/` | 81 | SQLite Store (goose + sqlc) |
-| `internal/cli/` | 25 | Kong command wiring |
-| `internal/ai/` | 51 | AI agent: providers, config, prompts, parsing |
+| `internal/cli/` | 26 | Kong command wiring |
+| `internal/ai/` | 53 | AI agent: providers, config, prompts, parsing |
 | `internal/ui/` | 7 | Quiz modes, card sorting |
 | `internal/ui/theme/` | 61 | Design system, 6 fixtures |
 | `internal/ui/styles/` | 14 | Semantic styles |
@@ -34,7 +34,7 @@ Ran `go test ./...` from the repo root. Results are stable and current:
 | `internal/ui/components/display/` | 5 | Graph bar chart |
 | `internal/ui/screens/` | 11 | Statistics screen logic |
 
-Total: **416 test functions**, all passing.
+Total: **419 test functions**, all passing.
 
 ---
 
@@ -51,8 +51,8 @@ Total: **416 test functions**, all passing.
 | `internal/stats/` | Stats aggregation for statistics screen, word-level stats, streak from review history | 5 |
 | `internal/scheduler/` | SM-2 spaced-repetition algorithm: ease, interval, lapse penalty, grade→interval mapping | 7 |
 | `internal/editor/` | `$EDITOR`/nano/vim invocation with YAML buffer handling | — |
-| `internal/cli/` | Kong commands: quiz, stats, deck (list/import/export/delete/search/edit), term (add/rm/edit), tag (add/rm/list), state (reserve/revert/sync), profile (export/import), ai (interpret/fill/add, incl. `--full`/`--minimal`/`--msg`/`--translate-from`/`--translate-to`) | 25 |
-| `internal/ai/` | Agent: 7 provider presets (pollinations, ollama, openai, gemini, openrouter, groq, nvidia), OpenAI-compatible client, prompts (minimal/full interpret, fill, `--msg` passthrough), YAML parsing (examples validated for both languages), interpret/fill agents | 51 |
+| `internal/cli/` | Kong commands: quiz, stats, deck (list/import/export/delete/search/edit), term (add/rm/edit), tag (add/rm/list), state (reserve/revert/sync), profile (export/import), ai (interpret/fill/add, incl. `--full`/`--minimal`/`--msg`/`--translate-from`/`--translate-to`) | 26 |
+| `internal/ai/` | Agent: 7 provider presets (pollinations, ollama, openai, gemini, openrouter, groq, nvidia), OpenAI-compatible client, prompts (minimal/full interpret, fill, structural+theme `tagRules`, `--msg` passthrough), YAML parsing (examples validated for both languages), interpret/fill agents | 53 |
 | `internal/ui/theme/` | Design system: 18-field palette (15 colors + 3 semantic overrides), typography, icons, borders, spacing, 5 built-in themes, YAML loading, store | 61 |
 | `internal/ui/styles/` | Semantic style definitions | 14 |
 | `internal/ui/components/` | 29 components (20 display + 9 interactive) | — |

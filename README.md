@@ -266,7 +266,7 @@ entries seed the prompt. Prints the proposed YAML without writing anything.
 | Flag | Description |
 |------|-------------|
 | `--minimal` | Bare `term` + `translations` only (the default). |
-| `--full` | Full entries: at least 4 example uses (each a source-language sentence + target-language translation), a `notes` field, and tags from the deck's allowlist. |
+| `--full` | Full entries: at least 4 example uses (each a source-language sentence + target-language translation), a `notes` field, and tags. Structural tags (noun, verb, adjective, gender, ...) are always added; theme tags come from the deck's tag list when `--deck` is given, otherwise a concise theme tag is chosen (e.g. `greetings`). |
 | `-F, --translate-from <lang>` | Source language for terms/examples (overrides the deck). |
 | `-T, --translate-to <lang>` | Target language for translations (overrides the deck). |
 | `--msg <text>` | Pass an extra instruction to the model, e.g. `--msg "use formal register"`. |
@@ -278,10 +278,10 @@ entries seed the prompt. Prints the proposed YAML without writing anything.
 
 Complete partial YAML entries (e.g. just a `term` + translations) into full
 entries: at least 4 language-appropriate example sentences, a `notes` field,
-and tags chosen only from the deck's existing tag list. Deck languages and up
-to 3 sample entries are sent as context. `-F`/`-T` override the deck's
-language pair; `--msg` passes an extra instruction to the model. Prints the
-completed YAML; nothing is written.
+and tags. Structural tags (noun, verb, adjective, gender, ...) are always
+added; theme tags are chosen only from the deck's existing tag list.
+`-F`/`-T` override the deck's language pair; `--msg` passes an extra
+instruction to the model. Prints the completed YAML; nothing is written.
 
 #### `crds ai add <deck> [-t <text>] [-f <file>] [-F <from>] [-T <to>] [--msg <text>]`
 

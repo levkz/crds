@@ -20,6 +20,10 @@ and validates everything it returns before any append happens.
   - **Fill**: partial YAML entries → completed entries, constrained by deck context.
 - A shared `termConventions` block (CRDS variant notation) used by both the
   fill prompt and the full-effort interpret prompt.
+- A shared `tagRules` block: structural tags (noun, verb, adjective, gender,
+  verb class) are always allowed; theme tags come from the deck allowlist
+  (`allowed theme tags:`), or a concise model-chosen theme tag when no deck
+  is supplied.
 - An optional `msg` passthrough on every agent call: an extra instruction from
   `--msg` appended to the user prompt.
 - Language pair is filled from the deck, then overridden by `-F/--translate-from`

@@ -35,6 +35,12 @@ const termConventions = `Term and translation conventions (use CRDS variant synt
 - Adjectives with gender agreement: "série[ux/use]", "bavard(e/s/es)".
 - Match the notation style of the sample entries when provided.`
 
+// tagRules is shared by the fill agent and the full-effort interpreter.
+// Structural tags are always allowed; theme tags come from the deck allowlist
+// (or a concise model-chosen theme tag when none is supplied).
+const tagRules = `- Structural tags are ALWAYS allowed and must be added when relevant: noun, verb, adjective, adverb, pronoun, conjunction, preposition; gender tags (masculin, feminin, and neutral — neutral only if the language has grammatical gender); and verb class where the language uses one (e.g. French 1st/2nd/3rd group, Spanish -ar/-er/-ir).
+- Theme tags: choose ONLY from the allowed theme tags in the user message. If none are listed, add a concise theme tag that fits the entry (e.g. greetings, food, travel).`
+
 // InterpretMessages builds the system and user messages for the interpreter
 // agent: unstructured free text -> minimal structured YAML entries. msg is an
 // optional extra instruction passed through to the model.
@@ -79,11 +85,13 @@ Rules:
   translations: a list of { text: <translation> }
   examples: a list of at least 4 objects, each { text: <a complete, natural sentence in the SOURCE language>, translation: <its translation in the TARGET language> }. Both text and translation must be non-empty.
   notes: only when it adds useful learning context (gender, usage nuance, common error)
-  tags: only from the allowed list supplied in the user message; if the list is empty, add no tags
-- Choose tags ONLY from the allowed tag list supplied in the user message.
+  tags: a non-empty list — see the tag rules below
 - Do not set the id field.
 - Preserve the user's spelling and punctuation.
 - Output ONLY a YAML sequence of entries. No prose, no explanations, no markdown fences.
+
+Tag rules:
+` + tagRules + `
 
 Example of a correctly formed entry:
 - term: hola
@@ -108,11 +116,11 @@ Example of a correctly formed entry:
 		fmt.Fprintf(&b, "- target language: %s\n", dc.TranslationLanguage)
 	}
 	if len(dc.AllowedTags) > 0 {
-		b.WriteString("- allowed tags: ")
+		b.WriteString("- allowed theme tags: ")
 		b.WriteString(strings.Join(dc.AllowedTags, ", "))
-		b.WriteString("\n")
+		b.WriteString(" (structural tags are always allowed)\n")
 	} else {
-		b.WriteString("- allowed tags: none (do not add tags)\n")
+		b.WriteString("- allowed theme tags: none (add structural tags and a concise theme tag)\n")
 	}
 
 	if len(dc.Samples) > 0 {
@@ -143,9 +151,11 @@ Rules:
 - Never change an existing term's core words or meaning; you may improve its form using the conventions below.
 - Add at least 4 examples; each is { text: <a complete, natural sentence in the SOURCE language>, translation: <its translation in the TARGET language> }. Both text and translation must be non-empty. Examples must be natural and correct.
 - Add a notes field only when it adds useful learning context (gender, usage nuance, common error). Prefer noun gender and article information when relevant.
-- Choose tags ONLY from the allowed tag list supplied in the user message. If the list is empty, add no tags.
 - Do not set the id field.
 - Output ONLY a YAML sequence of entries matching the input order. No prose, no markdown fences.
+
+Tag rules:
+` + tagRules + `
 
 ` + termConventions
 
@@ -155,11 +165,11 @@ Rules:
 	fmt.Fprintf(&b, "- target language: %s\n", dc.TranslationLanguage)
 
 	if len(dc.AllowedTags) > 0 {
-		b.WriteString("- allowed tags: ")
+		b.WriteString("- allowed theme tags: ")
 		b.WriteString(strings.Join(dc.AllowedTags, ", "))
-		b.WriteString("\n\n")
+		b.WriteString(" (structural tags are always allowed)\n\n")
 	} else {
-		b.WriteString("- allowed tags: none (do not add tags)\n\n")
+		b.WriteString("- allowed theme tags: none (add structural tags and a concise theme tag)\n\n")
 	}
 
 	if len(dc.Samples) > 0 {

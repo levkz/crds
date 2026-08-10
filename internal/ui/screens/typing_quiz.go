@@ -8,11 +8,13 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"crds/internal/fuzzy"
+	"crds/internal/mapping"
 	"crds/internal/model"
 	"crds/internal/stats"
 	"crds/internal/ui"
 	"crds/internal/ui/keymap"
 	"crds/internal/ui/layout"
+	"crds/internal/ui/renderer"
 	"crds/internal/ui/styles"
 )
 
@@ -34,12 +36,19 @@ type TypingQuizModel struct {
 	width         int
 	height        int
 	matcher       *fuzzy.FuzzyMatcher
+	mappings      *mapping.Store
+	resolved      *mapping.Mapping
+	parseOn       bool
 	examplesPage  int
 }
 
-func NewTypingQuiz() *TypingQuizModel {
+func NewTypingQuiz(mode fuzzy.Mode, store *mapping.Store) *TypingQuizModel {
+	matcher := fuzzy.NewFuzzyMatcher(0)
+	matcher.Mode = mode
 	return &TypingQuizModel{
-		matcher: fuzzy.NewFuzzyMatcher(0),
+		matcher:  matcher,
+		mappings: store,
+		parseOn:  true,
 	}
 }
 
@@ -57,6 +66,7 @@ func (m *TypingQuizModel) SyncState(s ui.AppState) tea.Cmd {
 			m.inverse = false
 			m.examplesPage = 0
 			m.inProgress = false
+			m.resolved = m.mappings.Resolve(s.Deck.Language, s.Deck.InputMappings)
 			changed = true
 		}
 	}
@@ -199,6 +209,9 @@ func (m *TypingQuizModel) Update(msg tea.Msg) (ui.Screen, tea.Cmd) {
 			case keymap.DefaultTypingQuiz.ModeCycle.Match(msg):
 				return m, m.SetModeFromKey()
 
+			case keymap.DefaultTypingQuiz.ToggleParse.Match(msg):
+				m.parseOn = !m.parseOn
+
 			default:
 				m.handleInput(msg)
 				return m, nil
@@ -279,6 +292,9 @@ func (m *TypingQuizModel) handleInput(msg tea.KeyMsg) {
 			b.WriteString(string(runes[m.cursor:]))
 			m.input = b.String()
 			m.cursor++
+			if m.parseOn {
+				m.input, m.cursor = m.resolved.ApplyAt(m.input, m.cursor)
+			}
 		}
 	}
 }
@@ -355,17 +371,50 @@ func (m *TypingQuizModel) View() string {
 	}
 
 	bodyStr := b.String()
+	legendStr := m.renderMappingLegend()
 	footerStr := m.renderFooter(card)
 	bodyLines := strings.Count(bodyStr, "\n") + 1
 	footerLines := strings.Count(footerStr, "\n") + 1
-	totalContent := bodyLines + 1 + footerLines
+	legendLines := 0
+	if legendStr != "" {
+		legendLines = strings.Count(legendStr, "\n") + 1
+	}
+	totalContent := bodyLines + footerLines + 1
+	if legendStr != "" {
+		totalContent = bodyLines + legendLines + footerLines + ui.Theme.Spacing.Xxs + 1
+	}
 	if remaining := m.height - totalContent; remaining > 0 {
 		b.WriteString(strings.Repeat("\n", remaining))
 	}
 	b.WriteString("\n\n")
+	if legendStr != "" {
+		b.WriteString(legendStr)
+		b.WriteString("\n")
+		b.WriteString(strings.Repeat("\n", ui.Theme.Spacing.Xxs))
+	}
 	b.WriteString(footerStr)
 
 	return b.String()
+}
+
+// renderMappingLegend returns a muted, width-wrapped legend of the active
+// input-mapping triggers (e.g. "e/→é") shown above the footer while the user
+// is typing with parsing enabled. It is empty when parsing is off, the answer
+// has been submitted (revealed), or the deck has no effective mapping.
+func (m *TypingQuizModel) renderMappingLegend() string {
+	if m.revealed || !m.parseOn || m.resolved == nil || m.resolved.Len() == 0 {
+		return ""
+	}
+	pairs := m.resolved.Pairs()
+	parts := make([]string, 0, len(pairs))
+	for _, p := range pairs {
+		parts = append(parts, p.Trigger+"→"+p.Replacement)
+	}
+	lines := renderer.Wrap(strings.Join(parts, " · "), m.width)
+	for i, line := range lines {
+		lines[i] = layout.Center(styles.MutedText().Render(line), m.width)
+	}
+	return strings.Join(lines, "\n")
 }
 
 func (m *TypingQuizModel) renderInput() string {
@@ -422,6 +471,9 @@ func (m *TypingQuizModel) renderTopBody() string {
 
 func (m *TypingQuizModel) renderFooter(card ui.CardData) string {
 	progress := fmt.Sprintf("card %d/%d · %s", m.cardIndex+1, len(m.cards), m.mode)
+	if !m.parseOn {
+		progress += " · parse off"
+	}
 
 	if m.revealed {
 		var shortcuts []string

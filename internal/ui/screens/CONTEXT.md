@@ -234,19 +234,30 @@ PaletteScreen
 
 ### TypingQuizModel (`typing_quiz.go`)
 
-- **State**: `cardIndex`, `input`, `revealed`, `inProgress`, `cards`,
-  `originalCards`, `cardProgress`, `dueIDs`, `mode`, `inverse`
+- **State**: `cardIndex`, `input`, `cursor`, `revealed`, `inProgress`, `cards`,
+  `originalCards`, `cardProgress`, `dueIDs`, `mode`, `inverse`, `parseOn`,
+  `resolved` (effective input mapping for the current deck)
 - **Keys**: `enter` (submit answer), `ctrl+r` (reveal without grading),
-  `tab` (toggle inverse mode), `ctrl+t` (mode cycle)
+  `tab` (toggle inverse mode), `ctrl+t` (mode cycle), `ctrl+p` (toggle parsing)
+- **Construction**: `NewTypingQuiz(mode, store)` takes the fuzzy matching mode
+  (`fuzzy.Strict`/`Approximate`) and the `mapping.Store` (built-in + user files).
 - **Behavior**: Displays a term, user types the translation. Uses
-  `fuzzy.LevenshteinMatcher` to grade the typed answer. `ctrl+r` reveals the
-  correct answer (records `Again`, grade 1). Tab toggles inverse mode —
-  shows translations as the prompt and expects the term as the answer;
-  term variants use the same `()`/`[]` expansion syntax as translations.
+  `fuzzy.LevenshteinMatcher` to grade the typed answer. In `SyncState` the
+  effective mapping is resolved per deck (`store.Resolve(deck.Language,
+  deck.InputMappings)`); `handleInput` expands trigger suffixes at the cursor via
+  `mapping.ApplyAt` while parsing is on (e.g. `e/` → `é`). `ctrl+p` toggles
+  `parseOn`: with it off, literal triggers like `e/` can be typed; text already
+  in the input is never re-scanned, and turning it back on parses newly typed
+  text even mid-string. The footer shows `parse off` when parsing is disabled,
+  and while parsing is on the active triggers are shown as a legend
+  (e.g. `e/→é`) above the footer until the answer is submitted.
+  `ctrl+r` reveals the correct answer (records `Again`, grade 1). Tab toggles
+  inverse mode — shows translations as the prompt and expects the term as the
+  answer; term variants use the same `()`/`[]` expansion syntax as translations.
   When all cards are done, shows "Quiz complete!" with `[enter] restart`
   and `[esc] back` options. Receives deck, progress, due set, and mode via
   `SyncState`; in due mode it follows the review queue's order and freezes its
-  queue once in progress (session snapshot). Mode cycling (`m`) emits
+  queue once in progress (session snapshot). Mode cycling (`ctrl+t`) emits
   `ui.SetQuizModeMsg`.
 - **Renders**: Header + term (centered, vertically padded, at height/5) + correct-answer
   slot (always present; empty placeholder when unrevealed, "Correct: ..." text when revealed) +
@@ -341,6 +352,8 @@ if empty query — returns `true` when query cleared, `false` otherwise).
 - `github.com/charmbracelet/bubbletea` — `tea.Model`, `tea.Cmd`, `tea.Msg`
 - `crds/internal/ui` — `ui.Screen`, `ui.ScreenIndex`, `ui.NavigateToMsg`,
   `ui.Theme`
+- `crds/internal/fuzzy` — answer grading (Levenshtein, strict/approximate)
+- `crds/internal/mapping` — per-language input mappings
 - `crds/internal/ui/events` — `events.ThemeSwitchMsg`
 - `crds/internal/ui/components` — `Header`, `Footer`, `RenderCard`,
   `ProgressBar`, `RenderList`, `Text`

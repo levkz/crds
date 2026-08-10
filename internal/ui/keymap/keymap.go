@@ -82,10 +82,11 @@ type TypingQuiz struct {
 	PrevExample  Binding
 	NextExample  Binding
 	ModeCycle    Binding
+	ToggleParse  Binding
 }
 
 func (km TypingQuiz) Footer() string {
-	return BindingList{km.Submit, km.Reveal, km.Inverse, km.PrevExample, km.NextExample, km.ModeCycle}.Help()
+	return BindingList{km.Submit, km.Reveal, km.Inverse, km.PrevExample, km.NextExample, km.ModeCycle, km.ToggleParse}.Help()
 }
 
 func (km TypingQuiz) ExamplesFooter() string {
@@ -201,6 +202,7 @@ func (r Registry) Bindings() []NamedBinding {
 		{"TypingQuiz", "PrevExample", r.TypingQuiz.PrevExample},
 		{"TypingQuiz", "NextExample", r.TypingQuiz.NextExample},
 		{"TypingQuiz", "ModeCycle", r.TypingQuiz.ModeCycle},
+		{"TypingQuiz", "ToggleParse", r.TypingQuiz.ToggleParse},
 		{"Decks", "Toggle", r.Decks.Toggle},
 		{"Decks", "ToggleAll", r.Decks.ToggleAll},
 		{"DeckSelect", "Toggle", r.DeckSelect.Toggle},
@@ -259,6 +261,7 @@ var DefaultTypingQuiz = TypingQuiz{
 	PrevExample:  Binding{Keys: []string{"left", "["}, Help: "[ previous"},
 	NextExample:  Binding{Keys: []string{"right", "]"},Help: "] next"},
 	ModeCycle:    Binding{Keys: []string{"ctrl+t"},         Help: "ctrl+t mode"},
+	ToggleParse:  Binding{Keys: []string{"ctrl+p"},         Help: "ctrl+p parse"},
 }
 
 var DefaultDecks = Decks{
@@ -364,6 +367,7 @@ type KeymapConfig struct {
 		PrevExample  *BindingOverride `yaml:"prev_example,omitempty"`
 		NextExample  *BindingOverride `yaml:"next_example,omitempty"`
 		ModeCycle    *BindingOverride `yaml:"mode_cycle,omitempty"`
+		ToggleParse  *BindingOverride `yaml:"toggle_parse,omitempty"`
 	} `yaml:"typing_quiz,omitempty"`
 	Decks *struct {
 		Toggle    *BindingOverride `yaml:"toggle,omitempty"`
@@ -501,6 +505,9 @@ func ApplyDefaultOverrides(cfg KeymapConfig) {
 		}
 		if cfg.TypingQuiz.ModeCycle != nil {
 			DefaultTypingQuiz.ModeCycle = applyOverride(DefaultTypingQuiz.ModeCycle, *cfg.TypingQuiz.ModeCycle)
+		}
+		if cfg.TypingQuiz.ToggleParse != nil {
+			DefaultTypingQuiz.ToggleParse = applyOverride(DefaultTypingQuiz.ToggleParse, *cfg.TypingQuiz.ToggleParse)
 		}
 	}
 	if cfg.Decks != nil {

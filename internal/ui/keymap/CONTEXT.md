@@ -115,7 +115,7 @@ Joins each binding's `Help` field with ` · `, skipping empty ones.
 | `DefaultGlobal`   | `Quit` (`ctrl+c`), `Help` (`?`), `Back` (`esc`)         |
 | `DefaultList`     | `Up` (`up`/`k`), `Down` (`down`/`j`), `Select` (`enter`)|
 | `DefaultQuiz`     | `Reveal` (`enter`), `Again`/`Hard`/`Good`/`Easy` (`1`–`4`), `Inverse` (`tab`) |
-| `DefaultTypingQuiz` | `Submit` (`enter`), `Reveal` (`ctrl+r`), `Inverse` (`tab`) |
+| `DefaultTypingQuiz` | `Submit` (`enter`), `Reveal` (`ctrl+r`), `Inverse` (`tab`), `PrevExample` (`[`/`left`), `NextExample` (`]`/`right`), `ModeCycle` (`ctrl+t`), `ToggleParse` (`ctrl+p`) |
 | `DefaultDecks`    | embeds `List` + `Toggle` (`space`), `ToggleAll` (`a`)    |
 | `DefaultSearch`   | embeds `List` + `Open` (`enter`), `DeleteChar` (`backspace`) |
 
@@ -214,7 +214,8 @@ keymap.DefaultTypingQuiz.Footer()    // "enter submit · ctrl+r reveal · tab in
 keymap.DefaultDecks.Footer()         // "↑ navigate · ↓ navigate · space toggle · a toggle all · enter select"
 ```
 
-Screens compose them with ` · ` to build complete footers.
+Screens compose them with ` · ` to build complete footers. `ToggleParse` is a
+typing-quiz-only binding: `ctrl+p` switches accent-trigger expansion on and off.
 
 ---
 

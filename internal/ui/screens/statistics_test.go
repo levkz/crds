@@ -206,6 +206,31 @@ func TestStatisticsHandleBack(t *testing.T) {
 	}
 }
 
+func TestStatisticsMetricGridFitsWidth(t *testing.T) {
+	m := newTestStatistics()
+	m.SyncState(ui.AppState{SelectionStats: &stats.Summary{ReviewedToday: 3, Accuracy: 66.7, TotalCards: 5, Streak: 2, Mastered: 1}})
+
+	for _, width := range []int{76, 116, 236} {
+		out := m.renderMetricGrid(m.selectionMetrics(), width)
+		lines := strings.Split(out, "\n")
+		// Rows are joined horizontally with gap separators; take the widest
+		// rendered line (top border) and ensure it never exceeds the width,
+		// and stays close enough to it that the right margin matches the left.
+		var max int
+		for _, ln := range lines {
+			if w := len([]rune(ln)); w > max {
+				max = w
+			}
+		}
+		if max > width {
+			t.Errorf("width %d: grid is %d columns wide, want <= %d\n%s", width, max, width, out)
+		}
+		if max < width-2 {
+			t.Errorf("width %d: grid is only %d columns wide, want >= %d\n%s", width, max, width-2, out)
+		}
+	}
+}
+
 func TestStatisticsViewRenders(t *testing.T) {
 	m := newTestStatistics()
 	sel := stats.Summary{ReviewedToday: 3, Accuracy: 66.7, TotalCards: 5, Streak: 2, Mastered: 1}

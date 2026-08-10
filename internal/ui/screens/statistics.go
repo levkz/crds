@@ -427,7 +427,11 @@ func (m StatisticsModel) renderMetricGrid(cells []metricCell, width int) string 
 	}
 	cols := 3
 	gap := 2
-	cellW := (width - (cols-1)*gap) / cols
+	// Panel() renders at width+2 columns: lipgloss Width() includes the
+	// padding but the border adds 2 columns on top. Account for that frame
+	// so the joined row fits the content width and keeps an even margin.
+	panelFrame := 2
+	cellW := (width - (cols-1)*gap - cols*panelFrame) / cols
 	if cellW < 10 {
 		cellW = 10
 	}

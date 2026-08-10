@@ -15,6 +15,7 @@ type CLI struct {
 	Deck       DeckCmd                   `cmd:"" help:"Deck operations (import, export, search, delete, edit, term)."`
 	State      StateCmd                  `cmd:"" help:"State management (reserve, revert, sync)."`
 	Profile    ProfileCmd                `cmd:"" help:"Profile operations (export, import)."`
+	Ai         AiCmd                     `cmd:"" help:"AI agent (interpret, fill, add)."`
 	Completion kongcompletion.Completion `cmd:"" help:"Install shell completion."`
 }
 

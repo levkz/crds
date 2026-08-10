@@ -5,6 +5,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"crds/internal/config"
+	"crds/internal/mapping"
 	"crds/internal/ui"
 	"crds/internal/ui/keymap"
 	"crds/internal/ui/screens"
@@ -47,12 +48,21 @@ func New(deps Dependencies, cfg Config) Model {
 		}
 	}
 
+	// Load user input mappings from ~/.config/crds/mappings/
+	if mappingsDir, err := config.MappingsDir(); err == nil {
+		if store, err := mapping.LoadDir(mappingsDir); err == nil {
+			cfg.Mappings = store
+		} else {
+			log.Printf("warning: loading input mappings: %v", err)
+		}
+	}
+
 	n := nav.New(ui.HomeScreen)
 	reg := nav.NewRegistry()
 	reg.Register(ui.HomeScreen, screens.NewHome())
 	reg.Register(ui.QuizScreen, screens.NewQuiz())
 	reg.Register(ui.DecksScreen, screens.NewDeckSelect())
-	reg.Register(ui.TypingQuizScreen, screens.NewTypingQuiz())
+	reg.Register(ui.TypingQuizScreen, screens.NewTypingQuiz(cfg.MatchingMode, cfg.Mappings))
 	reg.Register(ui.SearchScreen, screens.NewSearch())
 	reg.Register(ui.StatisticsScreen, screens.NewStatistics())
 	reg.Register(ui.SettingsScreen, screens.NewSettings())

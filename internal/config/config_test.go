@@ -105,6 +105,50 @@ func TestLoadConfigYAML_AIBlockAbsent(t *testing.T) {
 	}
 }
 
+func TestLoadConfigYAML_MatchingMode(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	if err := os.WriteFile(path, []byte("matching_mode: strict\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := LoadConfigYAML(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.MatchingMode != "strict" {
+		t.Errorf("MatchingMode = %q, want strict", cfg.MatchingMode)
+	}
+}
+
+func TestLoadConfigYAML_MatchingModeAbsent(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	if err := os.WriteFile(path, []byte("theme: dark\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := LoadConfigYAML(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.MatchingMode != "" {
+		t.Errorf("MatchingMode = %q, want empty default", cfg.MatchingMode)
+	}
+}
+
+func TestMappingsDir(t *testing.T) {
+	p, err := MappingsDir()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !filepath.IsAbs(p) {
+		t.Errorf("MappingsDir() = %q, expected absolute", p)
+	}
+	if filepath.Base(p) != "mappings" {
+		t.Errorf("expected mappings dir, got %s", filepath.Base(p))
+	}
+	if fi, err := os.Stat(p); err != nil || !fi.IsDir() {
+		t.Errorf("MappingsDir() did not create a directory: %v", err)
+	}
+}
+
 func TestLoadConfigYAMLMissingFile(t *testing.T) {
 	cfg, err := LoadConfigYAML("/nonexistent/path.yaml")
 	if err != nil {

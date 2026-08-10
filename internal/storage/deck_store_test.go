@@ -74,6 +74,9 @@ func TestDeckStore_LoadDeck_Valid(t *testing.T) {
 name: French A1
 language: fr
 translation_language: en
+input_mappings:
+  'e/': 'é'
+  'oe': 'œ'
 
 entries:
   - id: fr_bonjour
@@ -99,6 +102,14 @@ entries:
 
 	if deck.Name != "French A1" {
 		t.Errorf("expected name 'French A1', got %q", deck.Name)
+	}
+
+	if deck.Language != "fr" {
+		t.Errorf("expected language 'fr', got %q", deck.Language)
+	}
+
+	if deck.InputMappings["e/"] != "é" || deck.InputMappings["oe"] != "œ" {
+		t.Errorf("expected input mappings to be carried into DeckData, got %v", deck.InputMappings)
 	}
 
 	if len(deck.Cards) != 1 {

@@ -47,8 +47,10 @@ type CardData struct {
 }
 
 type DeckData struct {
-	Name  string
-	Cards []CardData
+	Name          string
+	Language      string
+	InputMappings map[string]string
+	Cards         []CardData
 }
 
 type Stats = stats.Summary

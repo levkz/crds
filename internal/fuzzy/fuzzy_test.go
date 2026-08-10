@@ -163,3 +163,121 @@ func TestNewFuzzyMatcherNegativeThreshold(t *testing.T) {
 		t.Errorf("expected default threshold 0.7, got %v", fm.Threshold)
 	}
 }
+
+func TestStripAccents(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{"empty", "", ""},
+		{"no accents", "hello", "hello"},
+		{"french accents", "café crème déjà", "cafe creme deja"},
+		{"multiple on one letter", "cafèêé", "cafeee"},
+		{"umlauts", "für über grüße", "fur uber gruße"},
+		{"spanish", "mañana corazón", "manana corazon"},
+		{"portuguese", "coração você", "coracao voce"},
+		{"non-decomposing kept", "straße øre", "straße øre"},
+		{"mixed", "Élève naïf", "Eleve naif"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := StripAccents(tt.input); got != tt.want {
+				t.Errorf("StripAccents(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestParseMode(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want Mode
+	}{
+		{"empty defaults approximate", "", Approximate},
+		{"whitespace defaults approximate", "  ", Approximate},
+		{"strict", "strict", Strict},
+		{"strict uppercase", "STRICT", Strict},
+		{"strict padded", "  strict ", Strict},
+		{"approximate", "approximate", Approximate},
+		{"unknown defaults approximate", "bogus", Approximate},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ParseMode(tt.in); got != tt.want {
+				t.Errorf("ParseMode(%q) = %v, want %v", tt.in, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestModeString(t *testing.T) {
+	if Strict.String() != "strict" {
+		t.Errorf("Strict.String() = %q, want %q", Strict.String(), "strict")
+	}
+	if Approximate.String() != "approximate" {
+		t.Errorf("Approximate.String() = %q, want %q", Approximate.String(), "approximate")
+	}
+}
+
+func TestFuzzyMatcherApproximate(t *testing.T) {
+	fm := NewFuzzyMatcher(0.7)
+	fm.Mode = Approximate
+
+	t.Run("accented answer, plain input is exact", func(t *testing.T) {
+		if got := fm.Grade("cafe", []string{"café"}); got != Good {
+			t.Errorf("expected Good, got %d", got)
+		}
+	})
+
+	t.Run("accented input, plain answer is exact", func(t *testing.T) {
+		if got := fm.Grade("café", []string{"cafe"}); got != Good {
+			t.Errorf("expected Good, got %d", got)
+		}
+	})
+
+	t.Run("accented input, accented answer is exact", func(t *testing.T) {
+		if got := fm.Grade("café", []string{"café"}); got != Good {
+			t.Errorf("expected Good, got %d", got)
+		}
+	})
+
+	t.Run("accent still differentiates words", func(t *testing.T) {
+		if got := fm.Grade("maison", []string{"café"}); got != Again {
+			t.Errorf("expected Again, got %d", got)
+		}
+	})
+
+	t.Run("check matches plain input to accented answer", func(t *testing.T) {
+		score, matched := fm.Check("cafe", []string{"café"})
+		if !matched || score != 1.0 {
+			t.Errorf("expected matched=true score=1.0, got matched=%v score=%v", matched, score)
+		}
+	})
+}
+
+func TestFuzzyMatcherStrict(t *testing.T) {
+	fm := NewFuzzyMatcher(0.7)
+	fm.Mode = Strict
+
+	t.Run("plain input vs accented answer is not exact", func(t *testing.T) {
+		got := fm.Grade("cafe", []string{"café"})
+		if got == Good {
+			t.Errorf("expected not Good, got %d", got)
+		}
+	})
+
+	t.Run("accented input vs accented answer is exact", func(t *testing.T) {
+		if got := fm.Grade("café", []string{"café"}); got != Good {
+			t.Errorf("expected Good, got %d", got)
+		}
+	})
+}
+
+func TestNewFuzzyMatcherDefaultMode(t *testing.T) {
+	fm := NewFuzzyMatcher(0)
+	if fm.Mode != Approximate {
+		t.Errorf("expected default mode Approximate, got %v", fm.Mode)
+	}
+}

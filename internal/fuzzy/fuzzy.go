@@ -3,10 +3,58 @@ package fuzzy
 
 import (
 	"strings"
+	"unicode"
+
+	"golang.org/x/text/unicode/norm"
 )
+
+// Mode selects how typed answers are compared to correct answers.
+type Mode int
+
+const (
+	// Strict compares answers exactly (accents matter).
+	Strict Mode = iota
+	// Approximate strips accents from both sides before comparing, so
+	// "cafe" matches "café" exactly.
+	Approximate
+)
+
+// ParseMode parses a mode name. An empty string yields the default
+// (Approximate). Unknown names also fall back to the default.
+func ParseMode(s string) Mode {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "strict":
+		return Strict
+	default:
+		return Approximate
+	}
+}
+
+func (m Mode) String() string {
+	switch m {
+	case Strict:
+		return "strict"
+	default:
+		return "approximate"
+	}
+}
 
 func Normalize(text string) string {
 	return strings.Join(strings.Fields(strings.ToLower(text)), " ")
+}
+
+// StripAccents removes combining diacritical marks (Unicode category Mn) by
+// decomposing to NFD, dropping marks, and recomposing to NFC. Ligatures and
+// letters that do not NFD-decompose (e.g. ß, ø, ł, å) are left untouched.
+func StripAccents(text string) string {
+	var b strings.Builder
+	for _, r := range norm.NFD.String(text) {
+		if unicode.Is(unicode.Mn, r) {
+			continue
+		}
+		b.WriteRune(r)
+	}
+	return norm.NFC.String(b.String())
 }
 
 type Matcher interface {
@@ -64,6 +112,9 @@ const (
 type FuzzyMatcher struct {
 	Matcher
 	Threshold float64
+	// Mode selects accent handling. Approximate strips accents from both
+	// sides before comparing; Strict leaves them intact.
+	Mode Mode
 }
 
 func NewFuzzyMatcher(threshold float64) *FuzzyMatcher {
@@ -73,13 +124,22 @@ func NewFuzzyMatcher(threshold float64) *FuzzyMatcher {
 	return &FuzzyMatcher{
 		Matcher:   &LevenshteinMatcher{},
 		Threshold: threshold,
+		Mode:      Approximate,
 	}
 }
 
+func (fm *FuzzyMatcher) prepare(text string) string {
+	text = Normalize(text)
+	if fm.Mode == Approximate {
+		text = StripAccents(text)
+	}
+	return text
+}
+
 func (fm *FuzzyMatcher) Check(input string, correctAnswers []string) (bestScore float64, matched bool) {
-	input = Normalize(input)
+	input = fm.prepare(input)
 	for _, answer := range correctAnswers {
-		norm := Normalize(answer)
+		norm := fm.prepare(answer)
 		score := fm.Similarity(input, norm)
 		if score > bestScore {
 			bestScore = score
@@ -90,10 +150,10 @@ func (fm *FuzzyMatcher) Check(input string, correctAnswers []string) (bestScore 
 }
 
 func (fm *FuzzyMatcher) Grade(input string, correctAnswers []string) int {
-	input = Normalize(input)
+	input = fm.prepare(input)
 	bestScore := 0.0
 	for _, answer := range correctAnswers {
-		norm := Normalize(answer)
+		norm := fm.prepare(answer)
 		if input == norm {
 			return Good
 		}

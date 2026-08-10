@@ -2,6 +2,8 @@ package app
 
 import (
 	cfg "crds/internal/config"
+	"crds/internal/fuzzy"
+	"crds/internal/mapping"
 	"crds/internal/ui"
 )
 
@@ -12,6 +14,10 @@ type Config struct {
 	DefaultQuizLimit int
 	ThemePath        string
 	QuizMode         ui.QuizMode
+	// MatchingMode controls accent handling when grading typed answers.
+	MatchingMode fuzzy.Mode
+	// Mappings holds per-language input mappings (built-in + user files).
+	Mappings *mapping.Store
 }
 
 func DefaultConfig() Config {
@@ -19,6 +25,8 @@ func DefaultConfig() Config {
 		AnimationEnabled: false,
 		DefaultQuizLimit: 20,
 		QuizMode:         ui.QuizModeNormal,
+		MatchingMode:     fuzzy.Approximate,
+		Mappings:         mapping.NewStore(),
 	}
 }
 
@@ -35,6 +43,9 @@ func (c Config) ApplyYAML(y *cfg.ConfigYAML) Config {
 	}
 	if y.QuizMode != "" {
 		c.QuizMode = ui.ParseQuizMode(y.QuizMode)
+	}
+	if y.MatchingMode != "" {
+		c.MatchingMode = fuzzy.ParseMode(y.MatchingMode)
 	}
 	return c
 }

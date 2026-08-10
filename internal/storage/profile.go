@@ -21,7 +21,7 @@ import (
 
 // CreateProfile packs everything needed for device migration into a .tar.gz
 // archive: crds.db, state.yaml, decks/*.yaml, config.yaml, keymaps.yaml,
-// and themes/*.yaml from the config directory.
+// themes/*.yaml, and mappings/*.yaml from the config directory.
 //
 // The archive is written to outputDir with the base name crds-profile.tar.gz.
 // If that file already exists, -1, -2, etc. are tried. Pass a non-empty name
@@ -92,8 +92,8 @@ func (s *Store) createProfileArchive(sharedDir, configDir, profilePath string) e
 	return nil
 }
 
-// addConfigDirToTar adds config.yaml, keymaps.yaml, and themes/*.yaml from
-// configDir into the tar under a config/ prefix.
+// addConfigDirToTar adds config.yaml, keymaps.yaml, themes/*.yaml, and
+// mappings/*.yaml from configDir into the tar under a config/ prefix.
 func addConfigDirToTar(tw *tar.Writer, configDir string) error {
 	// config.yaml
 	if err := addFileWithTarName(tw, filepath.Join(configDir, "config.yaml"), "config/config.yaml"); err != nil {
@@ -118,6 +118,26 @@ func addConfigDirToTar(tw *tar.Writer, configDir string) error {
 		}
 		if strings.HasSuffix(e.Name(), ".yaml") || strings.HasSuffix(e.Name(), ".yml") {
 			if err := addFileWithTarName(tw, filepath.Join(themesDir, e.Name()), filepath.Join("config", "themes", e.Name())); err != nil {
+				return err
+			}
+		}
+	}
+
+	// mappings/*.yaml (per-language input mappings)
+	mappingsDir := filepath.Join(configDir, "mappings")
+	mentries, err := os.ReadDir(mappingsDir)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	for _, e := range mentries {
+		if e.IsDir() {
+			continue
+		}
+		if strings.HasSuffix(e.Name(), ".yaml") || strings.HasSuffix(e.Name(), ".yml") {
+			if err := addFileWithTarName(tw, filepath.Join(mappingsDir, e.Name()), filepath.Join("config", "mappings", e.Name())); err != nil {
 				return err
 			}
 		}

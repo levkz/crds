@@ -1,0 +1,14 @@
+id: french_a1
+name: French A1
+language: fr
+translation_language: en
+input_mappings:
+  'e/': 'é'
+  'e"': 'è'
+  'oe': 'œ'
+
+entries:
+  - id: fr_bonjour
+    term: bonjour
+    translations:
+      - text: hello

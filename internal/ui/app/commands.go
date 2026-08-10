@@ -134,6 +134,8 @@ func LoadSelectedDecksCmd(d *Dispatcher, names []string) tea.Cmd {
 }
 
 // mergeDecks combines multiple DeckData into one by concatenating cards.
+// Mappings union with later decks overriding; the language defaults come from
+// the first deck's language.
 func mergeDecks(decks []ui.DeckData) ui.DeckData {
 	if len(decks) == 0 {
 		return ui.DeckData{}
@@ -143,13 +145,28 @@ func mergeDecks(decks []ui.DeckData) ui.DeckData {
 	}
 	var nameParts []string
 	var allCards []ui.CardData
-	for _, d := range decks {
+	mappings := map[string]string{}
+	for i, d := range decks {
 		nameParts = append(nameParts, d.Name)
 		allCards = append(allCards, d.Cards...)
+		if i == 0 {
+			mappings = d.InputMappings
+		} else if len(d.InputMappings) > 0 {
+			merged := map[string]string{}
+			for k, v := range mappings {
+				merged[k] = v
+			}
+			for k, v := range d.InputMappings {
+				merged[k] = v
+			}
+			mappings = merged
+		}
 	}
 	return ui.DeckData{
-		Name:  strings.Join(nameParts, " + "),
-		Cards: allCards,
+		Name:          strings.Join(nameParts, " + "),
+		Language:      decks[0].Language,
+		InputMappings: mappings,
+		Cards:         allCards,
 	}
 }
 

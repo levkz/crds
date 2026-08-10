@@ -61,6 +61,21 @@ func ThemesDir() (string, error) {
 	return themesDir()
 }
 
+// MappingsDir returns the path to ~/.config/crds/mappings/, creating it if
+// needed. Each *.yaml file maps a language code (filename stem) to input
+// mappings.
+func MappingsDir() (string, error) {
+	dir, err := Dir()
+	if err != nil {
+		return "", err
+	}
+	p := filepath.Join(dir, "mappings")
+	if err := os.MkdirAll(p, 0755); err != nil {
+		return "", fmt.Errorf("creating %s: %w", p, err)
+	}
+	return p, nil
+}
+
 // AIConfig holds the `ai:` block. Provider presets and defaults are resolved
 // in `internal/ai` (Resolve); this struct only stores what the user wrote.
 // The API key is intentionally not echoed anywhere — treat it as a secret.
@@ -76,6 +91,7 @@ type ConfigYAML struct {
 	AnimationEnabled *bool    `yaml:"animation_enabled,omitempty"`
 	DefaultQuizLimit *int     `yaml:"default_quiz_limit,omitempty"`
 	QuizMode         string   `yaml:"quiz_mode,omitempty"`
+	MatchingMode     string   `yaml:"matching_mode,omitempty"`
 	AI               *AIConfig `yaml:"ai,omitempty"`
 }
 
@@ -100,6 +116,11 @@ func writeDefaultConfig(path string) error {
 # animation_enabled: false
 # default_quiz_limit: 20
 
+# How typed answers are graded in the typing quiz.
+#   strict      - accents matter (cafe != cafe)
+#   approximate - accents are ignored (cafe == cafe)
+# Default: approximate. Per-language input mappings live in ~/.config/crds/mappings/<lang>.yaml.
+# matching_mode: approximate
 # AI agent (crds ai). Providers: pollinations (default, no key), ollama,
 # openai, gemini, openrouter, groq, nvidia. api_key is required for keyed
 # providers and is read from CRDS_AI_API_KEY when not set here.
@@ -138,6 +159,10 @@ func EnsureDefaultFiles() error {
 	}
 
 	if _, err := ThemesDir(); err != nil {
+		return err
+	}
+
+	if _, err := MappingsDir(); err != nil {
 		return err
 	}
 

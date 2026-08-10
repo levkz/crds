@@ -55,7 +55,9 @@ func (s *DeckStore) LoadDeck(name string) (ui.DeckData, error) {
 	}
 
 	return ui.DeckData{
-		Name:  deck.Name,
-		Cards: cards,
+		Name:          deck.Name,
+		Language:      deck.Language,
+		InputMappings: deck.InputMappings,
+		Cards:         cards,
 	}, nil
 }

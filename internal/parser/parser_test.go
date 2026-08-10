@@ -61,6 +61,11 @@ func TestParseFile(t *testing.T) {
 			file:      "auto_ids.yaml",
 			wantError: false,
 		},
+		{
+			name:      "input mappings",
+			file:      "input_mappings.yaml",
+			wantError: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -137,6 +142,26 @@ func TestValidDeckContents(t *testing.T) {
 
 	if len(first.Tags) != 2 {
 		t.Errorf("expected 2 tags")
+	}
+}
+
+func TestInputMappings(t *testing.T) {
+	deck, err := ParseFile(filepath.Join("testdata", "input_mappings.yaml"))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if deck.InputMappings["e/"] != "é" {
+		t.Errorf("input_mappings['e/'] = %q, want %q", deck.InputMappings["e/"], "é")
+	}
+	if deck.InputMappings[`e"`] != "è" {
+		t.Errorf(`input_mappings['e"'] = %q, want %q`, deck.InputMappings[`e"`], "è")
+	}
+	if deck.InputMappings["oe"] != "œ" {
+		t.Errorf("input_mappings['oe'] = %q, want %q", deck.InputMappings["oe"], "œ")
+	}
+	if len(deck.InputMappings) != 3 {
+		t.Errorf("expected 3 input mappings, got %d", len(deck.InputMappings))
 	}
 }
 

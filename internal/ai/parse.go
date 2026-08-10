@@ -75,6 +75,14 @@ func validateEntry(entry *model.Entry) error {
 			return fmt.Errorf("ai: entry %q has an empty translation", entry.Term)
 		}
 	}
+	for _, ex := range entry.Examples {
+		if ex.Text == "" {
+			return fmt.Errorf("ai: entry %q has an example with an empty source sentence", entry.Term)
+		}
+		if ex.Translation == "" {
+			return fmt.Errorf("ai: entry %q has an example with an empty translation", entry.Term)
+		}
+	}
 	return nil
 }
 

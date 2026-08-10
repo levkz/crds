@@ -204,6 +204,61 @@ func TestAiInterpretCmd_MinimalAndFullConflict(t *testing.T) {
 	}
 }
 
+func TestAiInterpretCmd_TranslateFlags(t *testing.T) {
+	a := newTestApp(t)
+	fake := stubAIClient(t, fillReply)
+
+	cmd := &AiInterpretCmd{Text: "hola", TranslateFrom: "es", TranslateTo: "de"}
+	if err := cmd.Run(a); err != nil {
+		t.Fatalf("AiInterpretCmd.Run: %v", err)
+	}
+	if !strings.Contains(fake.user, "Source language: es") {
+		t.Fatalf("expected source language es, got:\n%s", fake.user)
+	}
+	if !strings.Contains(fake.user, "Target language for translations: de") {
+		t.Fatalf("expected target language de, got:\n%s", fake.user)
+	}
+}
+
+func TestAiInterpretCmd_FullTranslateDryRun(t *testing.T) {
+	a := newTestApp(t)
+	stubAIClient(t, "")
+
+	cmd := &AiInterpretCmd{Text: "hola", Full: true, TranslateFrom: "es", TranslateTo: "de", DryRun: true}
+	out := captureStdout(t, func() {
+		if err := cmd.Run(a); err != nil {
+			t.Fatalf("AiInterpretCmd.Run (full dry): %v", err)
+		}
+	})
+	if !strings.Contains(out, "source language: es") {
+		t.Fatalf("expected source language es, got:\n%s", out)
+	}
+	if !strings.Contains(out, "target language: de") {
+		t.Fatalf("expected target language de, got:\n%s", out)
+	}
+}
+
+func TestAiFillCmd_TranslateOverride(t *testing.T) {
+	a := newTestApp(t)
+	writeTestDeck(t, a.DataDir, "spanish")
+	syncDecks(t, a)
+	stubAIClient(t, "")
+
+	// Deck is en->fr; flags must override to fr->en.
+	cmd := &AiFillCmd{Deck: "spanish", Text: "term: hola\ntranslations:\n  - text: salutation", TranslateFrom: "fr", TranslateTo: "en", DryRun: true}
+	out := captureStdout(t, func() {
+		if err := cmd.Run(a); err != nil {
+			t.Fatalf("AiFillCmd.Run (dry): %v", err)
+		}
+	})
+	if !strings.Contains(out, "source language: fr") {
+		t.Fatalf("expected source language fr (override), got:\n%s", out)
+	}
+	if !strings.Contains(out, "target language: en") {
+		t.Fatalf("expected target language en (override), got:\n%s", out)
+	}
+}
+
 func TestAiFillCmd_Msg(t *testing.T) {
 	a := newTestApp(t)
 	writeTestDeck(t, a.DataDir, "spanish")

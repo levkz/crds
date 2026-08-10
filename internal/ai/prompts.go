@@ -77,13 +77,25 @@ Rules:
 - Each entry is a YAML mapping with:
   term: the word or phrase in the source language
   translations: a list of { text: <translation> }
-  examples: at least 4 natural and correct example sentences in the source language, each with a translation in the target language
+  examples: a list of at least 4 objects, each { text: <a complete, natural sentence in the SOURCE language>, translation: <its translation in the TARGET language> }. Both text and translation must be non-empty.
   notes: only when it adds useful learning context (gender, usage nuance, common error)
   tags: only from the allowed list supplied in the user message; if the list is empty, add no tags
 - Choose tags ONLY from the allowed tag list supplied in the user message.
 - Do not set the id field.
 - Preserve the user's spelling and punctuation.
 - Output ONLY a YAML sequence of entries. No prose, no explanations, no markdown fences.
+
+Example of a correctly formed entry:
+- term: hola
+  translations:
+    - text: hello
+  examples:
+    - text: Hola, como estas?
+      translation: Hello, how are you?
+    - text: Dijo hola desde la ventana.
+      translation: He said hello from the window.
+    - text: Un simple hola puede alegrar el dia.
+      translation: A simple hello can brighten the day.
 
 ` + termConventions
 
@@ -129,7 +141,7 @@ func FillMessages(entries []model.Entry, dc DeckContext, msg string) (string, st
 Rules:
 - Keep every field the user supplied; fix only clear typos.
 - Never change an existing term's core words or meaning; you may improve its form using the conventions below.
-- Add at least 4 example sentences in the source language, each with a translation in the target language. Examples must be natural and correct.
+- Add at least 4 examples; each is { text: <a complete, natural sentence in the SOURCE language>, translation: <its translation in the TARGET language> }. Both text and translation must be non-empty. Examples must be natural and correct.
 - Add a notes field only when it adds useful learning context (gender, usage nuance, common error). Prefer noun gender and article information when relevant.
 - Choose tags ONLY from the allowed tag list supplied in the user message. If the list is empty, add no tags.
 - Do not set the id field.

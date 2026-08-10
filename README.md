@@ -257,7 +257,7 @@ Import a profile from another device. Creates a pre-import backup of the current
 
 ### AI Agent
 
-#### `crds ai interpret [--deck <deck>] [-t <text>] [-f <file>] [--minimal|--full] [--msg <text>] [--dry-run]`
+#### `crds ai interpret [--deck <deck>] [-t <text>] [-f <file>] [--minimal|--full] [-F <from>] [-T <to>] [--msg <text>] [--dry-run]`
 
 Convert unstructured text (words, phrases, or `term = translation` lines) into
 YAML entries. With `--deck`, the deck's language pair is used and sample
@@ -266,27 +266,31 @@ entries seed the prompt. Prints the proposed YAML without writing anything.
 | Flag | Description |
 |------|-------------|
 | `--minimal` | Bare `term` + `translations` only (the default). |
-| `--full` | Full entries: at least 4 example uses (each with a target-language translation), a `notes` field, and tags from the deck's allowlist (omit `--deck` for languages/tags-free output). |
+| `--full` | Full entries: at least 4 example uses (each a source-language sentence + target-language translation), a `notes` field, and tags from the deck's allowlist. |
+| `-F, --translate-from <lang>` | Source language for terms/examples (overrides the deck). |
+| `-T, --translate-to <lang>` | Target language for translations (overrides the deck). |
 | `--msg <text>` | Pass an extra instruction to the model, e.g. `--msg "use formal register"`. |
 | `--dry-run` | Print the prompt instead of calling the API. |
 
 `--minimal` and `--full` are mutually exclusive.
 
-#### `crds ai fill <deck> [-t <text>] [-f <file>] [--msg <text>] [--dry-run]`
+#### `crds ai fill <deck> [-t <text>] [-f <file>] [-F <from>] [-T <to>] [--msg <text>] [--dry-run]`
 
 Complete partial YAML entries (e.g. just a `term` + translations) into full
 entries: at least 4 language-appropriate example sentences, a `notes` field,
 and tags chosen only from the deck's existing tag list. Deck languages and up
-to 3 sample entries are sent as context. `--msg` passes an extra instruction
-to the model. Prints the completed YAML; nothing is written.
+to 3 sample entries are sent as context. `-F`/`-T` override the deck's
+language pair; `--msg` passes an extra instruction to the model. Prints the
+completed YAML; nothing is written.
 
-#### `crds ai add <deck> [-t <text>] [-f <file>] [--msg <text>]`
+#### `crds ai add <deck> [-t <text>] [-f <file>] [-F <from>] [-T <to>] [--msg <text>]`
 
 Interpret words (or YAML) and fill them out in one step, then let you review
 before appending: `[a]ppend`, `[e]dit` (re-open in `$EDITOR`), or `[d]iscard`.
-`--msg` passes an extra instruction to the model in both steps. Appends go
-through the full parser/validation chain via the storage `AppendEntries` and
-are synced with auto-generated IDs.
+`-F`/`-T` override the deck's language pair; `--msg` passes an extra
+instruction to the model in both steps. Appends go through the full
+parser/validation chain via the storage `AppendEntries` and are synced with
+auto-generated IDs.
 
 **AI configuration.** The default provider is Pollinations.AI (keyless,
 model `openai`). Configure via `~/.config/crds/config.yaml`:

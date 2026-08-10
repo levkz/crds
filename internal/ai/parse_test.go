@@ -128,6 +128,20 @@ func TestParseEntries_ExampleStruct(t *testing.T) {
 	}
 }
 
+func TestParseEntries_ExampleEmptyText(t *testing.T) {
+	out := "- term: hola\n  translations:\n    - text: hello\n  examples:\n    - text: \"\"\n      translation: Hello.\n"
+	if _, err := ParseEntries(out); err == nil {
+		t.Fatal("expected error for example with empty source sentence")
+	}
+}
+
+func TestParseEntries_ExampleEmptyTranslation(t *testing.T) {
+	out := "- term: hola\n  translations:\n    - text: hello\n  examples:\n    - text: Hola.\n      translation: \"\"\n"
+	if _, err := ParseEntries(out); err == nil {
+		t.Fatal("expected error for example with empty translation")
+	}
+}
+
 func TestParseEntries_KindListFromEmptyModel(t *testing.T) {
 	// A model that echoes headers but nothing else must still error cleanly.
 	_, err := ParseEntries("entries:")

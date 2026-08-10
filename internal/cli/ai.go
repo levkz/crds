@@ -162,16 +162,30 @@ func pickSamples(entries []model.Entry, n int) []model.Entry {
 	return combined
 }
 
+// applyLanguageOverrides lets --translate-from/--translate-to take precedence
+// over the deck's language pair.
+func applyLanguageOverrides(from, to string, dc ai.DeckContext) ai.DeckContext {
+	if from != "" {
+		dc.Language = from
+	}
+	if to != "" {
+		dc.TranslationLanguage = to
+	}
+	return dc
+}
+
 // --- interpret ---
 
 type AiInterpretCmd struct {
-	Deck    string `help:"Deck for language context (optional)." completion-predictor:"deck"`
-	Text    string `short:"t" help:"Free-form words (inline)."`
-	File    string `short:"f" help:"Path to a text file (use - for stdin)."`
-	DryRun  bool   `help:"Print the prompt without calling the API."`
-	Minimal bool   `help:"Bare term + translations only (the default)."`
-	Full    bool   `help:"Full entries: at least 4 example uses, notes, and tags from the deck allowlist."`
-	Msg     string `help:"Extra instruction passed to the model."`
+	Deck          string `help:"Deck for language context (optional)." completion-predictor:"deck"`
+	Text          string `short:"t" help:"Free-form words (inline)."`
+	File          string `short:"f" help:"Path to a text file (use - for stdin)."`
+	TranslateFrom string `short:"F" help:"Source language for terms/examples (overrides the deck)."`
+	TranslateTo   string `short:"T" help:"Target language for translations (overrides the deck)."`
+	DryRun        bool   `help:"Print the prompt without calling the API."`
+	Minimal       bool   `help:"Bare term + translations only (the default)."`
+	Full          bool   `help:"Full entries: at least 4 example uses, notes, and tags from the deck allowlist."`
+	Msg           string `help:"Extra instruction passed to the model."`
 }
 
 func (c *AiInterpretCmd) Run(a *app.App) error {
@@ -192,6 +206,7 @@ func (c *AiInterpretCmd) Run(a *app.App) error {
 				return err
 			}
 		}
+		dc = applyLanguageOverrides(c.TranslateFrom, c.TranslateTo, dc)
 
 		if c.DryRun {
 			system, user := ai.InterpretFullMessages(raw, dc, c.Msg)
@@ -217,6 +232,12 @@ func (c *AiInterpretCmd) Run(a *app.App) error {
 		}
 		lc = ai.LanguageContext{Language: deck.Language, TranslationLanguage: deck.TranslationLanguage}
 	}
+	if c.TranslateFrom != "" {
+		lc.Language = c.TranslateFrom
+	}
+	if c.TranslateTo != "" {
+		lc.TranslationLanguage = c.TranslateTo
+	}
 
 	if c.DryRun {
 		system, user := ai.InterpretMessages(raw, lc, c.Msg)
@@ -237,11 +258,13 @@ func (c *AiInterpretCmd) Run(a *app.App) error {
 // --- fill ---
 
 type AiFillCmd struct {
-	Deck   string `arg:"" required:"" help:"Deck to fill for (languages + existing tags)." completion-predictor:"deck"`
-	Text   string `short:"t" help:"Partial YAML entries (inline)."`
-	File   string `short:"f" help:"Path to a YAML file (use - for stdin)."`
-	DryRun bool   `help:"Print the prompt without calling the API."`
-	Msg    string `help:"Extra instruction passed to the model."`
+	Deck          string `arg:"" required:"" help:"Deck to fill for (languages + existing tags)." completion-predictor:"deck"`
+	Text          string `short:"t" help:"Partial YAML entries (inline)."`
+	File          string `short:"f" help:"Path to a YAML file (use - for stdin)."`
+	TranslateFrom string `short:"F" help:"Source language for terms/examples (overrides the deck)."`
+	TranslateTo   string `short:"T" help:"Target language for translations (overrides the deck)."`
+	DryRun        bool   `help:"Print the prompt without calling the API."`
+	Msg           string `help:"Extra instruction passed to the model."`
 }
 
 func (c *AiFillCmd) Run(a *app.App) error {
@@ -258,6 +281,7 @@ func (c *AiFillCmd) Run(a *app.App) error {
 	if err != nil {
 		return err
 	}
+	ctx = applyLanguageOverrides(c.TranslateFrom, c.TranslateTo, ctx)
 
 	if c.DryRun {
 		system, user := ai.FillMessages(entries, ctx, c.Msg)
@@ -278,10 +302,12 @@ func (c *AiFillCmd) Run(a *app.App) error {
 // --- add ---
 
 type AiAddCmd struct {
-	Deck string `arg:"" required:"" help:"Deck to append entries to." completion-predictor:"deck"`
-	Text string `short:"t" help:"Words or YAML entries (inline)."`
-	File string `short:"f" help:"Path to an input file (use - for stdin)."`
-	Msg  string `help:"Extra instruction passed to the model."`
+	Deck          string `arg:"" required:"" help:"Deck to append entries to." completion-predictor:"deck"`
+	Text          string `short:"t" help:"Words or YAML entries (inline)."`
+	File          string `short:"f" help:"Path to an input file (use - for stdin)."`
+	TranslateFrom string `short:"F" help:"Source language for terms/examples (overrides the deck)."`
+	TranslateTo   string `short:"T" help:"Target language for translations (overrides the deck)."`
+	Msg           string `help:"Extra instruction passed to the model."`
 }
 
 func (c *AiAddCmd) Run(a *app.App) error {
@@ -325,6 +351,7 @@ func (c *AiAddCmd) Run(a *app.App) error {
 		AllowedTags:         tags,
 		Samples:             pickSamples(deck.Entries, 3),
 	}
+	fillCtx = applyLanguageOverrides(c.TranslateFrom, c.TranslateTo, fillCtx)
 
 	filled, err := ai.Fill(ctx, client, entries, fillCtx, c.Msg)
 	if err != nil {

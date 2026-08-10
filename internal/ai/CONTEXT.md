@@ -22,6 +22,9 @@ and validates everything it returns before any append happens.
   fill prompt and the full-effort interpret prompt.
 - An optional `msg` passthrough on every agent call: an extra instruction from
   `--msg` appended to the user prompt.
+- Language pair is filled from the deck, then overridden by `-F/--translate-from`
+  and `-T/--translate-to` (flags win), so the same prompts work with or
+  without a deck.
 
 ## Key files
 

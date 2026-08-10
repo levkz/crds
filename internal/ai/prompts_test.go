@@ -43,6 +43,15 @@ func TestInterpretFullMessages_DemandsFourExamples(t *testing.T) {
 	if !strings.Contains(system, "at least 4") {
 		t.Errorf("system message should demand at least 4 examples, got:\n%s", system)
 	}
+	if !strings.Contains(system, "text: <a complete, natural sentence in the SOURCE language>") {
+		t.Errorf("system message should spell out the example schema, got:\n%s", system)
+	}
+	if !strings.Contains(system, "Both text and translation must be non-empty") {
+		t.Errorf("system message should require both example fields, got:\n%s", system)
+	}
+	if !strings.Contains(system, "Hola, como estas?") {
+		t.Errorf("system message should include a correctly formed example, got:\n%s", system)
+	}
 	if !strings.Contains(system, "(une/la)") || !strings.Contains(system, "(to)") {
 		t.Errorf("system message should carry convention rules")
 	}
@@ -89,6 +98,9 @@ func TestFillMessages_IncludesAllowedTags(t *testing.T) {
 	}
 	if !strings.Contains(system, "at least 4") {
 		t.Errorf("system message should demand at least 4 examples, got:\n%s", system)
+	}
+	if !strings.Contains(system, "Both text and translation must be non-empty") {
+		t.Errorf("system message should require both example fields, got:\n%s", system)
 	}
 }
 

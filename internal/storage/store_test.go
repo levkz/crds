@@ -150,6 +150,7 @@ func TestStoreRecordAnswerFull(t *testing.T) {
 func TestStoreAnswerStats(t *testing.T) {
 	store := newTestStore(t)
 
+	// Grades 2 (Good) and 3 (Easy) count as correct; 0 (Again) and 1 (Hard) do not.
 	if err := store.RecordAnswer("", "entry_a", 3, false); err != nil {
 		t.Fatalf("RecordAnswer grade 3: %v", err)
 	}
@@ -159,8 +160,8 @@ func TestStoreAnswerStats(t *testing.T) {
 	if err := store.RecordAnswer("", "entry_c", 1, false); err != nil {
 		t.Fatalf("RecordAnswer grade 1: %v", err)
 	}
-	if err := store.RecordAnswer("", "entry_d", 4, false); err != nil {
-		t.Fatalf("RecordAnswer grade 4: %v", err)
+	if err := store.RecordAnswer("", "entry_d", 0, false); err != nil {
+		t.Fatalf("RecordAnswer grade 0: %v", err)
 	}
 
 	stats := store.Stats()
@@ -197,6 +198,40 @@ func TestStoreSessionReset(t *testing.T) {
 
 	if session1 == session2 {
 		t.Error("expected different session IDs after reset")
+	}
+}
+
+func TestStoreResetSessionWritesAggregates(t *testing.T) {
+	store := newTestStore(t)
+
+	// Grades: 3 and 2 count as correct, 1 and 0 as incorrect.
+	for _, g := range []int{3, 2, 1, 0} {
+		if err := store.RecordAnswer("deck", "entry", g, false); err != nil {
+			t.Fatalf("RecordAnswer(%d): %v", g, err)
+		}
+	}
+	sessionID := store.currentSession
+	if sessionID == 0 {
+		t.Fatal("expected an active session")
+	}
+
+	if err := store.ResetSession(); err != nil {
+		t.Fatalf("ResetSession: %v", err)
+	}
+
+	s, err := store.queries.GetSession(context.Background(), sessionID)
+	if err != nil {
+		t.Fatalf("GetSession: %v", err)
+	}
+	if s.Reviewed != 4 || s.Correct != 2 || s.Incorrect != 2 {
+		t.Errorf("session aggregates = reviewed=%d correct=%d incorrect=%d, want 4/2/2",
+			s.Reviewed, s.Correct, s.Incorrect)
+	}
+	if s.FinishedAt == nil {
+		t.Error("finished_at should be set after ResetSession")
+	}
+	if s.DurationMs < 0 {
+		t.Errorf("duration_ms = %d, want >= 0", s.DurationMs)
 	}
 }
 

@@ -111,6 +111,51 @@ func TestStoreSelectionSummary(t *testing.T) {
 	})
 }
 
+func TestStoreGradeGoodCountsAsCorrect(t *testing.T) {
+	store := newTestStore(t)
+
+	upsertDeck(t, store, "d1")
+	upsertEntry(t, store, "e1", "d1")
+
+	// Grade 2 (ui.GradeGood) is the correct threshold — it must count as a
+	// correct review, not only grade 3 (Easy).
+	insertReviewRaw(t, store, "d1", "e1", 2, "2026-08-01 10:00:00")
+	insertReviewRaw(t, store, "d1", "e1", 1, "2026-08-01 15:00:00")
+	insertReviewRaw(t, store, "d1", "e1", 2, todayAt("09:00:00"))
+
+	points, err := store.SelectionHistory([]string{"d1"}, nil)
+	if err != nil {
+		t.Fatalf("SelectionHistory: %v", err)
+	}
+	if len(points) != 2 {
+		t.Fatalf("len = %d, want 2 (one past day + today)", len(points))
+	}
+	for _, p := range points {
+		if p.Day == "2026-08-01" && (p.Correct != 1 || p.Incorrect != 1) {
+			t.Errorf("day %s: got correct=%d incorrect=%d, want 1/1", p.Day, p.Correct, p.Incorrect)
+		}
+		if p.Day != "2026-08-01" && p.Incorrect != 0 {
+			t.Errorf("day %s: today's grade-2 review should have 0 incorrect, got %d", p.Day, p.Incorrect)
+		}
+	}
+
+	ws, err := store.WordStats("e1")
+	if err != nil {
+		t.Fatalf("WordStats: %v", err)
+	}
+	if ws.Correct != 2 || ws.Incorrect != 1 {
+		t.Errorf("WordStats correct=%d incorrect=%d, want 2/1", ws.Correct, ws.Incorrect)
+	}
+
+	s, err := store.SelectionSummary([]string{"d1"}, nil)
+	if err != nil {
+		t.Fatalf("SelectionSummary: %v", err)
+	}
+	if s.ReviewedToday != 1 || s.Accuracy != 100 {
+		t.Errorf("summary ReviewedToday=%d Accuracy=%f, want 1/100", s.ReviewedToday, s.Accuracy)
+	}
+}
+
 func TestStoreSelectionSummaryByTag(t *testing.T) {
 	store := newTestStore(t)
 

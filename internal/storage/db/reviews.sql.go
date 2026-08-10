@@ -130,7 +130,7 @@ func (q *Queries) GetReviewsBySession(ctx context.Context, sessionID int64) ([]R
 const getTodayStats = `-- name: GetTodayStats :one
 SELECT
     CAST(COUNT(*) AS INTEGER) as total_reviews,
-    CAST(IFNULL(SUM(CASE WHEN grade >= 3 THEN 1 ELSE 0 END), 0) AS INTEGER) as correct_reviews
+    CAST(IFNULL(SUM(CASE WHEN grade >= 2 THEN 1 ELSE 0 END), 0) AS INTEGER) as correct_reviews
 FROM reviews
 WHERE reviewed_at >= datetime('now', 'start of day')
 `
@@ -150,7 +150,7 @@ func (q *Queries) GetTodayStats(ctx context.Context) (GetTodayStatsRow, error) {
 const getTodayStatsByDeck = `-- name: GetTodayStatsByDeck :one
 SELECT
     CAST(COUNT(*) AS INTEGER) as total_reviews,
-    CAST(IFNULL(SUM(CASE WHEN grade >= 3 THEN 1 ELSE 0 END), 0) AS INTEGER) as correct_reviews
+    CAST(IFNULL(SUM(CASE WHEN grade >= 2 THEN 1 ELSE 0 END), 0) AS INTEGER) as correct_reviews
 FROM reviews
 WHERE reviewed_at >= datetime('now', 'start of day')
   AND deck_id = ?
@@ -171,7 +171,7 @@ func (q *Queries) GetTodayStatsByDeck(ctx context.Context, deckID string) (GetTo
 const getTodayStatsByTag = `-- name: GetTodayStatsByTag :one
 SELECT
     CAST(COUNT(*) AS INTEGER) as total_reviews,
-    CAST(IFNULL(SUM(CASE WHEN grade >= 3 THEN 1 ELSE 0 END), 0) AS INTEGER) as correct_reviews
+    CAST(IFNULL(SUM(CASE WHEN grade >= 2 THEN 1 ELSE 0 END), 0) AS INTEGER) as correct_reviews
 FROM reviews r
 JOIN entry_tags et ON et.entry_id = r.entry_id
 WHERE reviewed_at >= datetime('now', 'start of day')
@@ -200,7 +200,7 @@ SELECT
     r.grade
 FROM reviews r
 JOIN typing_details td ON r.id = td.review_id
-WHERE r.deck_id = ? AND r.grade < 3
+WHERE r.deck_id = ? AND r.grade < 2
 ORDER BY td.similarity ASC
 LIMIT ?
 `

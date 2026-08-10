@@ -13,6 +13,7 @@ type Deck struct {
 	Name                string    `db:"name"`
 	Language            string    `db:"language"`
 	TranslationLanguage string    `db:"translation_language"`
+	InputMappings       string    `db:"input_mappings"`
 	CreatedAt           time.Time `db:"created_at"`
 	UpdatedAt           time.Time `db:"updated_at"`
 }

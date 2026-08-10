@@ -3,6 +3,8 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -40,6 +42,45 @@ func runMigrations(t *testing.T, conn *sql.DB) {
 	_ = goose.SetDialect("sqlite")
 	if err := goose.Up(conn, "migrations"); err != nil {
 		t.Fatalf("migrations: %v", err)
+	}
+}
+
+func TestStoreLoadDeckCarriesMetadata(t *testing.T) {
+	store := newTestStore(t)
+
+	dir := t.TempDir()
+	deckYAML := `id: french_a1
+name: French A1
+language: fr
+translation_language: en
+input_mappings:
+  'e/': 'é'
+  'oe': 'œ'
+entries:
+  - id: bonjour
+    term: bonjour
+    translations:
+      - text: hello
+`
+	if err := os.WriteFile(filepath.Join(dir, "french_a1.yaml"), []byte(deckYAML), 0o644); err != nil {
+		t.Fatalf("write deck: %v", err)
+	}
+	if err := store.SyncDecks(dir); err != nil {
+		t.Fatalf("SyncDecks: %v", err)
+	}
+
+	deck, err := store.LoadDeck("french_a1")
+	if err != nil {
+		t.Fatalf("LoadDeck: %v", err)
+	}
+	if deck.Language != "fr" {
+		t.Errorf("Language = %q, want fr", deck.Language)
+	}
+	if deck.InputMappings["e/"] != "é" || deck.InputMappings["oe"] != "œ" {
+		t.Errorf("InputMappings = %v, want e/->é and oe->œ", deck.InputMappings)
+	}
+	if len(deck.Cards) != 1 {
+		t.Fatalf("expected 1 card, got %d", len(deck.Cards))
 	}
 }
 

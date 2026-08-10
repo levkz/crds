@@ -10,7 +10,7 @@ import (
 )
 
 const getDeck = `-- name: GetDeck :one
-SELECT id, name, language, translation_language, created_at, updated_at FROM decks WHERE id = ?
+SELECT id, name, language, translation_language, input_mappings, created_at, updated_at FROM decks WHERE id = ?
 `
 
 func (q *Queries) GetDeck(ctx context.Context, id string) (Deck, error) {
@@ -21,6 +21,7 @@ func (q *Queries) GetDeck(ctx context.Context, id string) (Deck, error) {
 		&i.Name,
 		&i.Language,
 		&i.TranslationLanguage,
+		&i.InputMappings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -117,12 +118,13 @@ func (q *Queries) ListDecksWithStats(ctx context.Context) ([]ListDecksWithStatsR
 }
 
 const upsertDeck = `-- name: UpsertDeck :exec
-INSERT INTO decks (id, name, language, translation_language, updated_at)
-VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+INSERT INTO decks (id, name, language, translation_language, input_mappings, updated_at)
+VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     language = EXCLUDED.language,
     translation_language = EXCLUDED.translation_language,
+    input_mappings = EXCLUDED.input_mappings,
     updated_at = CURRENT_TIMESTAMP
 `
 
@@ -131,6 +133,7 @@ type UpsertDeckParams struct {
 	Name                string `db:"name"`
 	Language            string `db:"language"`
 	TranslationLanguage string `db:"translation_language"`
+	InputMappings       string `db:"input_mappings"`
 }
 
 func (q *Queries) UpsertDeck(ctx context.Context, arg UpsertDeckParams) error {
@@ -139,6 +142,7 @@ func (q *Queries) UpsertDeck(ctx context.Context, arg UpsertDeckParams) error {
 		arg.Name,
 		arg.Language,
 		arg.TranslationLanguage,
+		arg.InputMappings,
 	)
 	return err
 }

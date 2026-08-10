@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -71,11 +72,17 @@ func (s *Store) syncDeck(path string) error {
 
 	ctx := context.Background()
 
+	inputMappings, err := marshalMappings(deck.InputMappings)
+	if err != nil {
+		return fmt.Errorf("marshal input mappings: %w", err)
+	}
+
 	if err := s.queries.UpsertDeck(ctx, db.UpsertDeckParams{
 		ID:                  deck.ID,
 		Name:                deck.Name,
 		Language:            deck.Language,
 		TranslationLanguage: deck.TranslationLanguage,
+		InputMappings:       inputMappings,
 	}); err != nil {
 		return fmt.Errorf("upsert deck: %w", err)
 	}
@@ -249,9 +256,33 @@ func (s *Store) LoadDeck(id string) (ui.DeckData, error) {
 	}
 
 	return ui.DeckData{
-		Name:  d.Name,
-		Cards: cards,
+		Name:          d.Name,
+		Language:      d.Language,
+		InputMappings: unmarshalMappings(d.InputMappings),
+		Cards:         cards,
 	}, nil
+}
+
+func marshalMappings(m map[string]string) (string, error) {
+	if len(m) == 0 {
+		return "", nil
+	}
+	b, err := json.Marshal(m)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
+
+func unmarshalMappings(s string) map[string]string {
+	if s == "" {
+		return nil
+	}
+	var m map[string]string
+	if err := json.Unmarshal([]byte(s), &m); err != nil {
+		return nil
+	}
+	return m
 }
 
 func (s *Store) buildCard(ctx context.Context, entry db.Entry) ui.CardData {

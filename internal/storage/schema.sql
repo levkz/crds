@@ -48,6 +48,7 @@ CREATE TABLE decks (
     name TEXT NOT NULL,
     language TEXT NOT NULL,
     translation_language TEXT NOT NULL,
+    input_mappings TEXT NOT NULL DEFAULT '',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

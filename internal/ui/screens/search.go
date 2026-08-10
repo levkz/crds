@@ -21,10 +21,12 @@ const (
 )
 
 type searchEntry struct {
-	ID    string
-	front string
-	back  []string
-	notes string
+	ID       string
+	front    string
+	back     []string
+	notes    string
+	tags     []string
+	examples []ui.ExampleData
 }
 
 type SearchModel struct {
@@ -158,10 +160,12 @@ func (m *SearchModel) updateResults(msg tea.KeyMsg) (ui.Screen, tea.Cmd) {
 				return ui.NavigateToDetailMsg{
 					Screen: ui.DetailScreen,
 					Entry: ui.CardData{
-						ID:    entry.ID,
-						Front: entry.front,
-						Back:  entry.back,
-						Notes: entry.notes,
+						ID:       entry.ID,
+						Front:    entry.front,
+						Back:     entry.back,
+						Notes:    entry.notes,
+						Tags:     entry.tags,
+						Examples: entry.examples,
 					},
 				}
 			}

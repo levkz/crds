@@ -18,20 +18,24 @@ func filterCards(cards []ui.CardData, query string) []searchEntry {
 	for _, card := range cards {
 		if strings.Contains(strings.ToLower(card.Front), q) {
 			results = append(results, searchEntry{
-				ID:    card.ID,
-				front: card.Front,
-				back:  card.Back,
-				notes: card.Notes,
+				ID:       card.ID,
+				front:    card.Front,
+				back:     card.Back,
+				notes:    card.Notes,
+				tags:     card.Tags,
+				examples: card.Examples,
 			})
 			continue
 		}
 		for _, t := range card.Back {
 			if strings.Contains(strings.ToLower(t), q) {
 				results = append(results, searchEntry{
-					ID:    card.ID,
-					front: card.Front,
-					back:  card.Back,
-					notes: card.Notes,
+					ID:       card.ID,
+					front:    card.Front,
+					back:     card.Back,
+					notes:    card.Notes,
+					tags:     card.Tags,
+					examples: card.Examples,
 				})
 				break
 			}

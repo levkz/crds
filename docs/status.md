@@ -34,9 +34,9 @@ Ran `go test ./...` from the repo root. Results are stable and current:
 | `internal/ui/navigation/tests/` | 74 | Black-box navigation tests |
 | `internal/ui/app/tests/` | 8 | State-sync protocol, quiz-mode persistence |
 | `internal/ui/components/display/` | 5 | Graph bar chart |
-| `internal/ui/screens/` | 21 | Statistics logic (metric grid fits content width), typing quiz input mappings (incl. parse toggle + legend) + grading |
+| `internal/ui/screens/` | 24 | Statistics logic (metric grid fits content width), search detail (tags + examples carried through to Detail), typing quiz input mappings (incl. parse toggle + legend) + grading |
 
-Total: **461 test functions**, all passing.
+Total: **464 test functions**, all passing.
 
 ---
 
@@ -65,7 +65,7 @@ Total: **461 test functions**, all passing.
 | `internal/ui/layout/` | Layout primitives: Page, Column, Row, Grid, Stack, Spacer, Center, Align | 10 |
 | `internal/ui/renderer/` | Terminal rendering: width, ANSI, wrapping | 9 |
 | `internal/ui/app/` | Root Bubble Tea model, event dispatch, lifecycle (shutdown finalizes the active session), commands, `ui.AppState` sync | 5 |
-| `internal/ui/screens/` | Typing quiz applies per-language input mappings while typing (toggleable with `ctrl+p`, with an on-screen trigger legend); grading respects strict/approximate matching. Statistics metric panels account for the border frame so the grid fits the content width. | 21 |
+| `internal/ui/screens/` | Typing quiz applies per-language input mappings while typing (toggleable with `ctrl+p`, with an on-screen trigger legend); grading respects strict/approximate matching. Statistics metric panels account for the border frame so the grid fits the content width. Search/Detail carry each card's tags and examples into the quiz-style bottom section. | 24 |
 
 ## Partially Implemented
 

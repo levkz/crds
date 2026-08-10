@@ -287,7 +287,8 @@ CREATE TABLE progress (
 
 ### Decks and entries (cache)
 
-YAML decks are synced into a cache: `decks` (metadata), `entries`, and child
+YAML decks are synced into a cache: `decks` (metadata — including `language`
+and the `input_mappings` trigger map serialized as JSON), `entries`, and child
 `translations`, `examples`, `entry_tags`. The cache is rebuilt on sync; YAML
 files remain the source of truth.
 

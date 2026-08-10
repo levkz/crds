@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"crds/internal/app"
+	"crds/internal/config"
 	"crds/internal/storage"
 )
 
@@ -30,7 +31,12 @@ func (c *RevertCmd) Run(a *app.App) error {
 		return fmt.Errorf("specify --file or --latest")
 	}
 
-	if err := a.Store.RevertReserve(a.SharedDir, path); err != nil {
+	configDir, err := config.Dir()
+	if err != nil {
+		return fmt.Errorf("revert: config dir: %w", err)
+	}
+
+	if err := a.Store.RevertReserve(a.SharedDir, configDir, path); err != nil {
 		return fmt.Errorf("revert: %w", err)
 	}
 	fmt.Printf("Reverted from %q.\n", path)

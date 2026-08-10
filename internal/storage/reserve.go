@@ -14,13 +14,14 @@ import (
 	"time"
 )
 
-// CreateReserve creates a compressed backup of the database, state file, and
-// all deck YAML files into ~/.local/share/crds/reserve-copies/.
+// CreateReserve creates a compressed backup of the database, state file, all
+// deck YAML files, and the config directory (config.yaml, keymaps.yaml,
+// themes/*.yaml, mappings/*.yaml) into ~/.local/share/crds/reserve-copies/.
 //
 // The backup file is named crds-rsv-{increment}-{ddMMyyyy}-{mmss}.tar.gz.
 // Increment is auto-derived from existing backups.
-func (s *Store) CreateReserve(sharedDir string) error {
-	_, err := s.CreateReserveTo(sharedDir, "", "")
+func (s *Store) CreateReserve(sharedDir, configDir string) error {
+	_, err := s.CreateReserveTo(sharedDir, configDir, "", "")
 	return err
 }
 
@@ -28,7 +29,7 @@ func (s *Store) CreateReserve(sharedDir string) error {
 // sharedDir/reserve-copies/. name defaults to an auto-generated filename.
 // If name does not end in .tar.gz the extension is appended.
 // Returns the full path of the created archive.
-func (s *Store) CreateReserveTo(sharedDir, outputDir, name string) (string, error) {
+func (s *Store) CreateReserveTo(sharedDir, configDir, outputDir, name string) (string, error) {
 	if outputDir == "" {
 		outputDir = filepath.Join(sharedDir, "reserve-copies")
 	}
@@ -48,15 +49,17 @@ func (s *Store) CreateReserveTo(sharedDir, outputDir, name string) (string, erro
 	}
 
 	reservePath := filepath.Join(outputDir, name)
-	if err := s.createReserveArchive(sharedDir, reservePath); err != nil {
+	if err := s.createReserveArchive(sharedDir, configDir, reservePath); err != nil {
 		return "", err
 	}
 	return reservePath, nil
 }
 
 // createReserveArchive checkpoints the WAL and writes a compressed tar archive
-// at reservePath containing state.yaml, crds.db, and decks/*.yaml.
-func (s *Store) createReserveArchive(sharedDir, reservePath string) error {
+// at reservePath containing state.yaml, crds.db, decks/*.yaml, and (when
+// configDir is set) the config subtree: config.yaml, keymaps.yaml,
+// themes/*.yaml, mappings/*.yaml under a config/ prefix.
+func (s *Store) createReserveArchive(sharedDir, configDir, reservePath string) error {
 	ctx := context.Background()
 	if _, err := s.conn.ExecContext(ctx, "PRAGMA wal_checkpoint(TRUNCATE)"); err != nil {
 		return fmt.Errorf("reserve: checkpoint: %w", err)
@@ -86,6 +89,12 @@ func (s *Store) createReserveArchive(sharedDir, reservePath string) error {
 
 	if err := addDeckDirToTar(tw, sharedDir); err != nil {
 		return fmt.Errorf("reserve: add decks: %w", err)
+	}
+
+	if configDir != "" {
+		if err := addConfigDirToTar(tw, configDir); err != nil {
+			return fmt.Errorf("reserve: add config: %w", err)
+		}
 	}
 
 	return nil

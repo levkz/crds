@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -19,13 +20,13 @@ import (
 
 // RevertReserve restores application state from a reserve copy archive. It
 // first creates an automatic pre-revert backup, closes the current database
-// connection, extracts the archive over the shared directory, re-opens the
-// database, runs any pending migrations on the restored DB, and re-syncs
-// YAML decks.
+// connection, extracts the archive (sharedDir files go to sharedDir, config/
+// subtree files go to configDir), re-opens the database, runs any pending
+// migrations on the restored DB, and re-syncs YAML decks.
 //
 // The caller should verify the archive was created by CreateReserve (tar.gz
 // containing at least crds.db).
-func (s *Store) RevertReserve(sharedDir, reservePath string) error {
+func (s *Store) RevertReserve(sharedDir, configDir, reservePath string) error {
 	if err := validateReserveArchive(reservePath); err != nil {
 		return fmt.Errorf("revert: invalid archive: %w", err)
 	}
@@ -41,7 +42,7 @@ func (s *Store) RevertReserve(sharedDir, reservePath string) error {
 		return fmt.Errorf("revert: extract: %w", err)
 	}
 
-	if err := s.CreateReserve(sharedDir); err != nil {
+	if err := s.CreateReserve(sharedDir, configDir); err != nil {
 		return fmt.Errorf("revert: pre-backup: %w", err)
 	}
 
@@ -51,7 +52,15 @@ func (s *Store) RevertReserve(sharedDir, reservePath string) error {
 
 	for _, relPath := range extracted {
 		src := filepath.Join(tmpDir, filepath.FromSlash(relPath))
-		dst := filepath.Join(sharedDir, filepath.FromSlash(relPath))
+
+		var dst string
+		switch {
+		case strings.HasPrefix(relPath, "config/"):
+			sub := strings.TrimPrefix(relPath, "config/")
+			dst = filepath.Join(configDir, filepath.FromSlash(sub))
+		default:
+			dst = filepath.Join(sharedDir, filepath.FromSlash(relPath))
+		}
 
 		if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
 			return fmt.Errorf("revert: mkdir %s: %w", filepath.Dir(dst), err)

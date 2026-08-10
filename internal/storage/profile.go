@@ -106,11 +106,12 @@ func addConfigDirToTar(tw *tar.Writer, configDir string) error {
 	// themes/*.yaml
 	themesDir := filepath.Join(configDir, "themes")
 	entries, err := os.ReadDir(themesDir)
-	if os.IsNotExist(err) {
-		return nil
-	}
 	if err != nil {
-		return err
+		if os.IsNotExist(err) {
+			entries = nil
+		} else {
+			return err
+		}
 	}
 	for _, e := range entries {
 		if e.IsDir() {
@@ -200,7 +201,7 @@ func (s *Store) ImportProfile(sharedDir, configDir, profilePath string) error {
 		return fmt.Errorf("profile-import: extract: %w", err)
 	}
 
-	if err := s.CreateReserve(sharedDir); err != nil {
+	if err := s.CreateReserve(sharedDir, configDir); err != nil {
 		return fmt.Errorf("profile-import: pre-backup: %w", err)
 	}
 

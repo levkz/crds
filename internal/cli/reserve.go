@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"crds/internal/app"
+	"crds/internal/config"
 )
 
 type ReserveCmd struct {
@@ -12,7 +13,12 @@ type ReserveCmd struct {
 }
 
 func (c *ReserveCmd) Run(a *app.App) error {
-	path, err := a.Store.CreateReserveTo(a.SharedDir, c.Output, c.Name)
+	configDir, err := config.Dir()
+	if err != nil {
+		return fmt.Errorf("reserve: config dir: %w", err)
+	}
+
+	path, err := a.Store.CreateReserveTo(a.SharedDir, configDir, c.Output, c.Name)
 	if err != nil {
 		return fmt.Errorf("reserve: %w", err)
 	}

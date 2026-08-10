@@ -134,6 +134,107 @@ func TestAiFillCmd_Run_DryRun(t *testing.T) {
 	}
 }
 
+const emptyFieldsReply = `- id: ""
+  term: hola
+  translations:
+    - text: hello
+  examples: []
+  tags: []
+  notes: ""
+`
+
+func TestAiInterpretCmd_MinimalRender(t *testing.T) {
+	a := newTestApp(t)
+	stubAIClient(t, emptyFieldsReply)
+
+	cmd := &AiInterpretCmd{Text: "hola"}
+	out := captureStdout(t, func() {
+		if err := cmd.Run(a); err != nil {
+			t.Fatalf("AiInterpretCmd.Run: %v", err)
+		}
+	})
+	for _, unexp := range []string{"id:", "examples:", "tags:", "notes:"} {
+		if strings.Contains(out, unexp) {
+			t.Fatalf("minimal output should not contain %q, got:\n%s", unexp, out)
+		}
+	}
+	if !strings.Contains(out, "term: hola") || !strings.Contains(out, "text: hello") {
+		t.Fatalf("expected term + translations in output, got:\n%s", out)
+	}
+}
+
+func TestAiInterpretCmd_Full(t *testing.T) {
+	a := newTestApp(t)
+	writeTestDeck(t, a.DataDir, "spanish")
+	syncDecks(t, a)
+	fake := stubAIClient(t, "- term: hola\n  translations:\n    - text: hello\n  examples:\n    - text: Hola, como estas?\n      translation: Hello, how are you?\n  tags:\n    - common\n")
+
+	cmd := &AiInterpretCmd{Deck: "spanish", Text: "hola", Full: true}
+	out := captureStdout(t, func() {
+		if err := cmd.Run(a); err != nil {
+			t.Fatalf("AiInterpretCmd.Run (full): %v", err)
+		}
+	})
+	if !strings.Contains(fake.system, "at least 4") {
+		t.Fatalf("full mode should use the full prompt, got:\n%s", fake.system)
+	}
+	if !strings.Contains(out, "Hola, como estas?") {
+		t.Fatalf("expected examples in full output, got:\n%s", out)
+	}
+}
+
+func TestAiInterpretCmd_Msg(t *testing.T) {
+	a := newTestApp(t)
+	fake := stubAIClient(t, fillReply)
+
+	cmd := &AiInterpretCmd{Text: "hola", Msg: "use formal register"}
+	if err := cmd.Run(a); err != nil {
+		t.Fatalf("AiInterpretCmd.Run: %v", err)
+	}
+	if !strings.Contains(fake.user, "use formal register") {
+		t.Fatalf("extra instruction should be sent to the model, got:\n%s", fake.user)
+	}
+}
+
+func TestAiInterpretCmd_MinimalAndFullConflict(t *testing.T) {
+	a := newTestApp(t)
+	cmd := &AiInterpretCmd{Text: "hola", Minimal: true, Full: true}
+	if err := cmd.Run(a); err == nil {
+		t.Fatal("expected error when both --minimal and --full are set")
+	}
+}
+
+func TestAiFillCmd_Msg(t *testing.T) {
+	a := newTestApp(t)
+	writeTestDeck(t, a.DataDir, "spanish")
+	syncDecks(t, a)
+	fake := stubAIClient(t, fillReply)
+
+	cmd := &AiFillCmd{Deck: "spanish", Text: "term: hola\ntranslations:\n  - text: salutation", Msg: "add IPA"}
+	if err := cmd.Run(a); err != nil {
+		t.Fatalf("AiFillCmd.Run: %v", err)
+	}
+	if !strings.Contains(fake.user, "add IPA") {
+		t.Fatalf("extra instruction should be sent to the model, got:\n%s", fake.user)
+	}
+}
+
+func TestAiAddCmd_Msg(t *testing.T) {
+	a := newTestApp(t)
+	writeTestDeck(t, a.DataDir, "swedish")
+	syncDecks(t, a)
+	fake := stubAIClient(t, fillReply)
+	feedStdin(t, "d\n")
+
+	cmd := &AiAddCmd{Deck: "swedish", Text: "hej wait", Msg: "avoid casual slang"}
+	if err := cmd.Run(a); err != nil {
+		t.Fatalf("AiAddCmd.Run: %v", err)
+	}
+	if !strings.Contains(fake.user, "avoid casual slang") {
+		t.Fatalf("extra instruction should be sent to the model (last call), got:\n%s", fake.user)
+	}
+}
+
 func TestAiAddCmd_Run_Append(t *testing.T) {
 	a := newTestApp(t)
 	writeTestDeck(t, a.DataDir, "polish")

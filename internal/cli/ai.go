@@ -92,9 +92,31 @@ func readInput(text, file string, editorTemplate string) (string, error) {
 	}
 }
 
-// printEntries renders entries as YAML to stdout.
+// entryView renders only populated fields so output is clean regardless of
+// what the model returned. model.Entry lacks omitempty tags.
+type entryView struct {
+	ID           string              `yaml:"id,omitempty"`
+	Term         string              `yaml:"term"`
+	Translations []model.Translation `yaml:"translations"`
+	Examples     []model.Example     `yaml:"examples,omitempty"`
+	Tags         []string            `yaml:"tags,omitempty"`
+	Notes        string              `yaml:"notes,omitempty"`
+}
+
+// printEntries renders entries as YAML to stdout, omitting empty fields.
 func printEntries(entries []model.Entry) error {
-	data, err := yaml.Marshal(entries)
+	views := make([]entryView, len(entries))
+	for i, e := range entries {
+		views[i] = entryView{
+			ID:           e.ID,
+			Term:         e.Term,
+			Translations: e.Translations,
+			Examples:     e.Examples,
+			Tags:         e.Tags,
+			Notes:        e.Notes,
+		}
+	}
+	data, err := yaml.Marshal(views)
 	if err != nil {
 		return fmt.Errorf("render entries: %w", err)
 	}
@@ -143,16 +165,48 @@ func pickSamples(entries []model.Entry, n int) []model.Entry {
 // --- interpret ---
 
 type AiInterpretCmd struct {
-	Deck   string `help:"Deck for language context (optional)." completion-predictor:"deck"`
-	Text   string `short:"t" help:"Free-form words (inline)."`
-	File   string `short:"f" help:"Path to a text file (use - for stdin)."`
-	DryRun bool   `help:"Print the prompt without calling the API."`
+	Deck    string `help:"Deck for language context (optional)." completion-predictor:"deck"`
+	Text    string `short:"t" help:"Free-form words (inline)."`
+	File    string `short:"f" help:"Path to a text file (use - for stdin)."`
+	DryRun  bool   `help:"Print the prompt without calling the API."`
+	Minimal bool   `help:"Bare term + translations only (the default)."`
+	Full    bool   `help:"Full entries: at least 4 example uses, notes, and tags from the deck allowlist."`
+	Msg     string `help:"Extra instruction passed to the model."`
 }
 
 func (c *AiInterpretCmd) Run(a *app.App) error {
+	if c.Minimal && c.Full {
+		return fmt.Errorf("--minimal and --full are mutually exclusive")
+	}
+
 	raw, err := readInput(c.Text, c.File, "# Enter words, one per line.\n")
 	if err != nil {
 		return err
+	}
+
+	if c.Full {
+		var dc ai.DeckContext
+		if c.Deck != "" {
+			dc, err = deckContextForFill(a, c.Deck)
+			if err != nil {
+				return err
+			}
+		}
+
+		if c.DryRun {
+			system, user := ai.InterpretFullMessages(raw, dc, c.Msg)
+			return printPrompt(system, user)
+		}
+
+		client, err := resolveAIClient()
+		if err != nil {
+			return err
+		}
+		entries, err := ai.InterpretFull(context.Background(), client, raw, dc, c.Msg)
+		if err != nil {
+			return err
+		}
+		return printEntries(entries)
 	}
 
 	var lc ai.LanguageContext
@@ -165,7 +219,7 @@ func (c *AiInterpretCmd) Run(a *app.App) error {
 	}
 
 	if c.DryRun {
-		system, user := ai.InterpretMessages(raw, lc)
+		system, user := ai.InterpretMessages(raw, lc, c.Msg)
 		return printPrompt(system, user)
 	}
 
@@ -173,7 +227,7 @@ func (c *AiInterpretCmd) Run(a *app.App) error {
 	if err != nil {
 		return err
 	}
-	entries, err := ai.Interpret(context.Background(), client, raw, lc)
+	entries, err := ai.Interpret(context.Background(), client, raw, lc, c.Msg)
 	if err != nil {
 		return err
 	}
@@ -187,6 +241,7 @@ type AiFillCmd struct {
 	Text   string `short:"t" help:"Partial YAML entries (inline)."`
 	File   string `short:"f" help:"Path to a YAML file (use - for stdin)."`
 	DryRun bool   `help:"Print the prompt without calling the API."`
+	Msg    string `help:"Extra instruction passed to the model."`
 }
 
 func (c *AiFillCmd) Run(a *app.App) error {
@@ -205,7 +260,7 @@ func (c *AiFillCmd) Run(a *app.App) error {
 	}
 
 	if c.DryRun {
-		system, user := ai.FillMessages(entries, ctx)
+		system, user := ai.FillMessages(entries, ctx, c.Msg)
 		return printPrompt(system, user)
 	}
 
@@ -213,7 +268,7 @@ func (c *AiFillCmd) Run(a *app.App) error {
 	if err != nil {
 		return err
 	}
-	filled, err := ai.Fill(context.Background(), client, entries, ctx)
+	filled, err := ai.Fill(context.Background(), client, entries, ctx, c.Msg)
 	if err != nil {
 		return err
 	}
@@ -226,6 +281,7 @@ type AiAddCmd struct {
 	Deck string `arg:"" required:"" help:"Deck to append entries to." completion-predictor:"deck"`
 	Text string `short:"t" help:"Words or YAML entries (inline)."`
 	File string `short:"f" help:"Path to an input file (use - for stdin)."`
+	Msg  string `help:"Extra instruction passed to the model."`
 }
 
 func (c *AiAddCmd) Run(a *app.App) error {
@@ -253,7 +309,7 @@ func (c *AiAddCmd) Run(a *app.App) error {
 		}
 	} else {
 		lc := ai.LanguageContext{Language: deck.Language, TranslationLanguage: deck.TranslationLanguage}
-		entries, err = ai.Interpret(ctx, client, raw, lc)
+		entries, err = ai.Interpret(ctx, client, raw, lc, c.Msg)
 		if err != nil {
 			return err
 		}
@@ -270,7 +326,7 @@ func (c *AiAddCmd) Run(a *app.App) error {
 		Samples:             pickSamples(deck.Entries, 3),
 	}
 
-	filled, err := ai.Fill(ctx, client, entries, fillCtx)
+	filled, err := ai.Fill(ctx, client, entries, fillCtx, c.Msg)
 	if err != nil {
 		return err
 	}

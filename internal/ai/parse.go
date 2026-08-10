@@ -57,6 +57,12 @@ func validateEntry(entry *model.Entry) error {
 	for j := range entry.Tags {
 		entry.Tags[j] = strings.TrimSpace(entry.Tags[j])
 	}
+	if len(entry.Examples) == 0 {
+		entry.Examples = nil
+	}
+	if len(entry.Tags) == 0 {
+		entry.Tags = nil
+	}
 
 	if entry.Term == "" {
 		return fmt.Errorf("ai: entry has an empty term")

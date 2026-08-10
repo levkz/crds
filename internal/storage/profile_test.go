@@ -41,6 +41,13 @@ func TestCreateProfile_RoundTrip(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(themesDir, "mytheme.yaml"), []byte("palette:\n  blue: '#89b4fa'\n"), 0644); err != nil {
 		t.Fatalf("write theme: %v", err)
 	}
+	mappingsDir := filepath.Join(configDir, "mappings")
+	if err := os.MkdirAll(mappingsDir, 0755); err != nil {
+		t.Fatalf("mkdir mappings: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(mappingsDir, "fr.yaml"), []byte("e/: é\n"), 0644); err != nil {
+		t.Fatalf("write mappings/fr.yaml: %v", err)
+	}
 
 	outputDir := t.TempDir()
 
@@ -67,6 +74,10 @@ func TestCreateProfile_RoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read original theme: %v", err)
 	}
+	origMappingData, err := os.ReadFile(filepath.Join(mappingsDir, "fr.yaml"))
+	if err != nil {
+		t.Fatalf("read original mapping: %v", err)
+	}
 
 	// Destroy originals
 	if err := os.Remove(filepath.Join(sharedDir, "state.yaml")); err != nil {
@@ -83,6 +94,9 @@ func TestCreateProfile_RoundTrip(t *testing.T) {
 	}
 	if err := os.RemoveAll(themesDir); err != nil {
 		t.Fatalf("remove themes: %v", err)
+	}
+	if err := os.RemoveAll(mappingsDir); err != nil {
+		t.Fatalf("remove mappings: %v", err)
 	}
 
 	// Create fresh config dir for import (import creates files/dirs as needed)
@@ -133,6 +147,15 @@ func TestCreateProfile_RoundTrip(t *testing.T) {
 	}
 	if string(restoredThemeData) != string(origThemeData) {
 		t.Errorf("restored theme content differs")
+	}
+
+	// Verify mapping restored
+	restoredMappingData, err := os.ReadFile(filepath.Join(configDir, "mappings", "fr.yaml"))
+	if err != nil {
+		t.Fatalf("read restored mapping: %v", err)
+	}
+	if string(restoredMappingData) != string(origMappingData) {
+		t.Errorf("restored mapping content differs: got %q, want %q", restoredMappingData, origMappingData)
 	}
 
 	// Verify DB is usable

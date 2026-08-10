@@ -10,6 +10,7 @@ import (
 // TestRevertReserve verifies a full backup→modify→revert cycle.
 func TestRevertReserve(t *testing.T) {
 	sharedDir := t.TempDir()
+	configDir := t.TempDir()
 	store := newFileStore(t, sharedDir)
 
 	// Set up initial state: state.yaml + a deck
@@ -26,6 +27,9 @@ func TestRevertReserve(t *testing.T) {
 		t.Fatalf("SyncDecks: %v", err)
 	}
 
+	// A config mapping file that must survive the revert.
+	writeMappings(t, configDir)
+
 	// Record some progress
 	if err := store.RecordAnswer("test_deck", "entry_1", 3, false); err != nil {
 		t.Fatalf("RecordAnswer: %v", err)
@@ -35,7 +39,7 @@ func TestRevertReserve(t *testing.T) {
 	}
 
 	// Create a backup
-	if err := store.CreateReserve(sharedDir); err != nil {
+	if err := store.CreateReserve(sharedDir, configDir); err != nil {
 		t.Fatalf("CreateReserve: %v", err)
 	}
 
@@ -46,7 +50,7 @@ func TestRevertReserve(t *testing.T) {
 	}
 	reservePath := filepath.Join(reserveDir, entries[0].Name())
 
-	// Now modify the state: add more reviews, change state.yaml, add a deck entry
+	// Now modify the state: add more reviews, change state.yaml, overwrite the mapping
 	if err := store.RecordAnswer("test_deck", "entry_2", 1, false); err != nil {
 		t.Fatalf("RecordAnswer: %v", err)
 	}
@@ -63,8 +67,12 @@ func TestRevertReserve(t *testing.T) {
 		t.Fatalf("rewrite state.yaml: %v", err)
 	}
 
+	if err := os.WriteFile(filepath.Join(configDir, "mappings", "fr.yaml"), []byte("oe: œ\n"), 0644); err != nil {
+		t.Fatalf("overwrite mapping: %v", err)
+	}
+
 	// Revert
-	if err := store.RevertReserve(sharedDir, reservePath); err != nil {
+	if err := store.RevertReserve(sharedDir, configDir, reservePath); err != nil {
 		t.Fatalf("RevertReserve: %v", err)
 	}
 
@@ -80,6 +88,15 @@ func TestRevertReserve(t *testing.T) {
 	// Verify the deck YAML still exists
 	if _, err := os.Stat(filepath.Join(decksDir, "test_deck.yaml")); os.IsNotExist(err) {
 		t.Errorf("deck YAML missing after revert")
+	}
+
+	// Verify the mapping file was restored to the backup's content
+	mappingData, err := os.ReadFile(filepath.Join(configDir, "mappings", "fr.yaml"))
+	if err != nil {
+		t.Fatalf("read restored mapping: %v", err)
+	}
+	if string(mappingData) != "e/: é\n" {
+		t.Errorf("mapping content after revert = %q, want %q", mappingData, "e/: é\n")
 	}
 
 	// Verify the DB was restored (stats should be at 2 reviews, not 4)
@@ -98,6 +115,7 @@ func TestRevertReserve(t *testing.T) {
 // TestRevertReserve_InvalidArchive verifies rejection of archives without crds.db.
 func TestRevertReserve_InvalidArchive(t *testing.T) {
 	sharedDir := t.TempDir()
+	configDir := t.TempDir()
 	store := newFileStore(t, sharedDir)
 
 	// Create a dummy tar.gz without crds.db
@@ -107,7 +125,7 @@ func TestRevertReserve_InvalidArchive(t *testing.T) {
 		t.Fatalf("write: %v", err)
 	}
 
-	err := store.RevertReserve(sharedDir, badPath)
+	err := store.RevertReserve(sharedDir, configDir, badPath)
 	if err == nil {
 		t.Fatal("expected error for invalid archive")
 	}
@@ -116,6 +134,7 @@ func TestRevertReserve_InvalidArchive(t *testing.T) {
 // TestRevertReserve_StoreUsableAfterRevert verifies the store works after revert.
 func TestRevertReserve_StoreUsableAfterRevert(t *testing.T) {
 	sharedDir := t.TempDir()
+	configDir := t.TempDir()
 	store := newFileStore(t, sharedDir)
 
 	// Set up minimal state
@@ -123,7 +142,7 @@ func TestRevertReserve_StoreUsableAfterRevert(t *testing.T) {
 		t.Fatalf("write state.yaml: %v", err)
 	}
 
-	if err := store.CreateReserve(sharedDir); err != nil {
+	if err := store.CreateReserve(sharedDir, configDir); err != nil {
 		t.Fatalf("CreateReserve: %v", err)
 	}
 
@@ -131,7 +150,7 @@ func TestRevertReserve_StoreUsableAfterRevert(t *testing.T) {
 	entries, _ := os.ReadDir(reserveDir)
 	reservePath := filepath.Join(reserveDir, entries[0].Name())
 
-	if err := store.RevertReserve(sharedDir, reservePath); err != nil {
+	if err := store.RevertReserve(sharedDir, configDir, reservePath); err != nil {
 		t.Fatalf("RevertReserve: %v", err)
 	}
 
@@ -147,9 +166,10 @@ func TestRevertReserve_StoreUsableAfterRevert(t *testing.T) {
 // TestRevertReserve_MissingArchive verifies clean error for nonexistent file.
 func TestRevertReserve_MissingArchive(t *testing.T) {
 	sharedDir := t.TempDir()
+	configDir := t.TempDir()
 	store := newFileStore(t, sharedDir)
 
-	err := store.RevertReserve(sharedDir, "/nonexistent/path.tar.gz")
+	err := store.RevertReserve(sharedDir, configDir, "/nonexistent/path.tar.gz")
 	if err == nil {
 		t.Fatal("expected error for nonexistent archive")
 	}

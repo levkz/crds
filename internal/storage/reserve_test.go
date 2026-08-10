@@ -23,8 +23,21 @@ func newFileStore(t *testing.T, dir string) *Store {
 	return store
 }
 
+// writeMappings creates a mappings/fr.yaml file in the given config dir.
+func writeMappings(t *testing.T, configDir string) {
+	t.Helper()
+	mappingsDir := filepath.Join(configDir, "mappings")
+	if err := os.MkdirAll(mappingsDir, 0755); err != nil {
+		t.Fatalf("mkdir mappings: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(mappingsDir, "fr.yaml"), []byte("e/: é\n"), 0644); err != nil {
+		t.Fatalf("write mappings/fr.yaml: %v", err)
+	}
+}
+
 func TestCreateReserve(t *testing.T) {
 	sharedDir := t.TempDir()
+	configDir := t.TempDir()
 	store := newFileStore(t, sharedDir)
 
 	ctx := context.Background()
@@ -44,6 +57,9 @@ func TestCreateReserve(t *testing.T) {
 		t.Fatalf("SyncDecks: %v", err)
 	}
 
+	// Write a config mapping file
+	writeMappings(t, configDir)
+
 	// Record some progress and reviews
 	due := timeOnly("2026-07-26 12:00:00")
 	if err := store.queries.UpsertProgress(ctx, db.UpsertProgressParams{
@@ -62,7 +78,7 @@ func TestCreateReserve(t *testing.T) {
 		t.Fatalf("RecordAnswer: %v", err)
 	}
 
-	if err := store.CreateReserve(sharedDir); err != nil {
+	if err := store.CreateReserve(sharedDir, configDir); err != nil {
 		t.Fatalf("CreateReserve: %v", err)
 	}
 
@@ -108,7 +124,7 @@ func TestCreateReserve(t *testing.T) {
 		found[hdr.Name] = true
 	}
 
-	for _, name := range []string{"state.yaml", "crds.db", "decks/test_deck.yaml"} {
+	for _, name := range []string{"state.yaml", "crds.db", "decks/test_deck.yaml", "config/mappings/fr.yaml"} {
 		if !found[name] {
 			t.Errorf("missing from archive: %s", name)
 		}
@@ -117,18 +133,19 @@ func TestCreateReserve(t *testing.T) {
 
 func TestCreateReserve_Increment(t *testing.T) {
 	sharedDir := t.TempDir()
+	configDir := t.TempDir()
 	store := newFileStore(t, sharedDir)
 
 	if err := os.WriteFile(filepath.Join(sharedDir, "state.yaml"), []byte("{}\n"), 0644); err != nil {
 		t.Fatalf("write state.yaml: %v", err)
 	}
 
-	if err := store.CreateReserve(sharedDir); err != nil {
+	if err := store.CreateReserve(sharedDir, configDir); err != nil {
 		t.Fatalf("first CreateReserve: %v", err)
 	}
 
 	time.Sleep(2 * time.Second)
-	if err := store.CreateReserve(sharedDir); err != nil {
+	if err := store.CreateReserve(sharedDir, configDir); err != nil {
 		t.Fatalf("second CreateReserve: %v", err)
 	}
 
@@ -161,11 +178,12 @@ func TestCreateReserve_Increment(t *testing.T) {
 
 func TestCreateReserve_MissingFiles(t *testing.T) {
 	sharedDir := t.TempDir()
+	configDir := t.TempDir()
 	store := newFileStore(t, sharedDir)
 
 	// No state.yaml, no decks, but a DB exists from newFileStore.
 	// Should not error — missing files are skipped silently.
-	if err := store.CreateReserve(sharedDir); err != nil {
+	if err := store.CreateReserve(sharedDir, configDir); err != nil {
 		t.Fatalf("CreateReserve: %v", err)
 	}
 
@@ -178,6 +196,7 @@ func TestCreateReserve_MissingFiles(t *testing.T) {
 
 func TestCreateReserve_ExtractRoundTrip(t *testing.T) {
 	sharedDir := t.TempDir()
+	configDir := t.TempDir()
 	store := newFileStore(t, sharedDir)
 
 	if err := os.WriteFile(filepath.Join(sharedDir, "state.yaml"), []byte("theme: light\n"), 0644); err != nil {
@@ -193,7 +212,9 @@ func TestCreateReserve_ExtractRoundTrip(t *testing.T) {
 		t.Fatalf("SyncDecks: %v", err)
 	}
 
-	if err := store.CreateReserve(sharedDir); err != nil {
+	writeMappings(t, configDir)
+
+	if err := store.CreateReserve(sharedDir, configDir); err != nil {
 		t.Fatalf("CreateReserve: %v", err)
 	}
 
@@ -251,7 +272,7 @@ func TestCreateReserve_ExtractRoundTrip(t *testing.T) {
 		}
 	}
 
-	for _, name := range []string{"state.yaml", "crds.db", "decks/test_deck.yaml"} {
+	for _, name := range []string{"state.yaml", "crds.db", "decks/test_deck.yaml", "config/mappings/fr.yaml"} {
 		full := filepath.Join(extractDir, filepath.FromSlash(name))
 		if _, err := os.Stat(full); os.IsNotExist(err) {
 			t.Errorf("extracted file missing: %s", name)
@@ -266,5 +287,10 @@ func TestCreateReserve_ExtractRoundTrip(t *testing.T) {
 	deckData, _ := os.ReadFile(filepath.Join(extractDir, "decks", "test_deck.yaml"))
 	if !strings.Contains(string(deckData), "bonjour") {
 		t.Errorf("deck content wrong: %s", deckData)
+	}
+
+	mappingData, _ := os.ReadFile(filepath.Join(extractDir, "config", "mappings", "fr.yaml"))
+	if !strings.Contains(string(mappingData), "é") {
+		t.Errorf("mapping content wrong: %s", mappingData)
 	}
 }

@@ -729,6 +729,127 @@ func TestAddEntry_DuplicateID(t *testing.T) {
 	}
 }
 
+func TestAppendEntries(t *testing.T) {
+	store := newTestStore(t)
+
+	deckDir := setupSyncedDeck(t, store)
+
+	newEntries := []model.Entry{
+		{
+			Term: "merci",
+			Translations: []model.Translation{
+				{Text: "thank you"},
+			},
+		},
+		{
+			Term: "d'accord",
+			Translations: []model.Translation{
+				{Text: "okay"},
+			},
+			Tags: []string{"greeting"},
+		},
+	}
+
+	if err := store.AppendEntries("test_deck", newEntries, deckDir); err != nil {
+		t.Fatalf("AppendEntries: %v", err)
+	}
+
+	// Verify both entries present in YAML with auto-assigned IDs.
+	parsed, err := parser.ParseFile(filepath.Join(deckDir, "test_deck.yaml"))
+	if err != nil {
+		t.Fatalf("parse YAML: %v", err)
+	}
+	if len(parsed.Entries) != 4 {
+		t.Fatalf("expected 4 entries, got %d", len(parsed.Entries))
+	}
+
+	var merci, daccord *model.Entry
+	for i := range parsed.Entries {
+		switch parsed.Entries[i].Term {
+		case "merci":
+			merci = &parsed.Entries[i]
+		case "d'accord":
+			daccord = &parsed.Entries[i]
+		}
+	}
+	if merci == nil {
+		t.Fatal("merci entry missing")
+	}
+	if merci.ID == "" {
+		t.Error("merci should have an auto-assigned id")
+	}
+	if daccord == nil {
+		t.Fatal("d'accord entry missing")
+	}
+	if len(daccord.Tags) != 1 || daccord.Tags[0] != "greeting" {
+		t.Errorf("d'accord tags = %v", daccord.Tags)
+	}
+
+	// Verify synced to DB.
+	entries, err := store.queries.ListEntriesByDeck(context.Background(), "test_deck")
+	if err != nil {
+		t.Fatalf("ListEntriesByDeck: %v", err)
+	}
+	if len(entries) != 4 {
+		t.Fatalf("expected 4 entries in DB, got %d", len(entries))
+	}
+}
+
+func TestAppendEntries_DuplicateIDRejected(t *testing.T) {
+	store := newTestStore(t)
+
+	deckDir := setupSyncedDeck(t, store)
+
+	dup := []model.Entry{{
+		ID:   "entry_1",
+		Term: "already",
+		Translations: []model.Translation{
+			{Text: "exists"},
+		},
+	}}
+
+	err := store.AppendEntries("test_deck", dup, deckDir)
+	if err == nil {
+		t.Fatal("expected error for duplicate ID")
+	}
+	if !strings.Contains(err.Error(), "already exists") {
+		t.Errorf("expected 'already exists' error, got: %v", err)
+	}
+}
+
+func TestAppendEntries_DuplicateTermRejected(t *testing.T) {
+	store := newTestStore(t)
+
+	deckDir := setupSyncedDeck(t, store)
+
+	dup := []model.Entry{{
+		Term: "bonjour",
+		Translations: []model.Translation{
+			{Text: "hello"},
+		},
+	}}
+
+	err := store.AppendEntries("test_deck", dup, deckDir)
+	if err == nil {
+		t.Fatal("expected error for duplicate term")
+	}
+	if !strings.Contains(err.Error(), "duplicate term") {
+		t.Errorf("expected duplicate-term error, got: %v", err)
+	}
+}
+
+func TestAppendEntries_DeckNotFound(t *testing.T) {
+	store := newTestStore(t)
+
+	err := store.AppendEntries("nonexistent", []model.Entry{{
+		Term: "x",
+		Translations: []model.Translation{{Text: "y"}},
+	}}, t.TempDir())
+	if err == nil {
+		t.Fatal("expected error for nonexistent deck")
+	}
+}
+
 func TestUpdateEntry(t *testing.T) {
 	store := newTestStore(t)
 

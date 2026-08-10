@@ -959,6 +959,43 @@ func (s *Store) AddEntry(deckID string, entry model.Entry, deckDir string) error
 	return nil
 }
 
+// AppendEntries appends one or more entries to a deck's YAML file in a single
+// parse > append > write > sync pass. Empty entry IDs are auto-assigned during
+// sync; duplicate IDs and duplicate terms are rejected via the parser.
+func (s *Store) AppendEntries(deckID string, entries []model.Entry, deckDir string) error {
+	yamlPath := filepath.Join(deckDir, deckID+".yaml")
+
+	deck, err := parser.ParseFile(yamlPath)
+	if err != nil {
+		return fmt.Errorf("append-entries: parse %s: %w", yamlPath, err)
+	}
+
+	existing := make(map[string]bool, len(deck.Entries))
+	for _, e := range deck.Entries {
+		existing[e.ID] = true
+	}
+	for _, e := range entries {
+		if e.ID != "" && existing[e.ID] {
+			return fmt.Errorf("append-entries: entry %q already exists in deck %q", e.ID, deckID)
+		}
+	}
+
+	deck.Entries = append(deck.Entries, entries...)
+
+	data, err := yaml.Marshal(deck)
+	if err != nil {
+		return fmt.Errorf("append-entries: marshal: %w", err)
+	}
+	if err := os.WriteFile(yamlPath, data, 0644); err != nil {
+		return fmt.Errorf("append-entries: write: %w", err)
+	}
+
+	if err := s.syncDeck(yamlPath); err != nil {
+		return fmt.Errorf("append-entries: sync: %w", err)
+	}
+	return nil
+}
+
 // UpdateEntry replaces an existing entry's fields (same ID) in the YAML file
 // and syncs to the DB. The entry ID must match the existing entry's ID.
 func (s *Store) UpdateEntry(deckID, entryID string, entry model.Entry, deckDir string) error {

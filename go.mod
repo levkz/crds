@@ -6,6 +6,7 @@ require (
 	github.com/alecthomas/kong v1.16.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
+	github.com/ergochat/readline v0.1.3
 	github.com/jotaen/kong-completion v0.0.14
 	github.com/mattn/go-isatty v0.0.21
 	github.com/mattn/go-runewidth v0.0.16

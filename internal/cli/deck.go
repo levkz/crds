@@ -1,6 +1,7 @@
 package cli
 
 type DeckCmd struct {
+	Create CreateCmd   `cmd:"" help:"Create a new empty deck."`
 	List   ListCmd     `cmd:"" help:"List all decks with entry counts."`
 	Import ImportCmd   `cmd:"" help:"Import a deck from a YAML file."`
 	Export ExportCmd   `cmd:"" help:"Export a deck to a YAML file."`

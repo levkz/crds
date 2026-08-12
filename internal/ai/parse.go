@@ -1,6 +1,7 @@
 package ai
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -84,6 +85,56 @@ func validateEntry(entry *model.Entry) error {
 		}
 	}
 	return nil
+}
+
+// SuggestResult is the parsed deck-suggestion reply. Deck holds a matched
+// existing deck id; when empty, Proposed carries a new-deck proposal (nil when
+// the model had nothing sensible to propose).
+type SuggestResult struct {
+	Deck     string
+	Proposed *DeckProposal
+}
+
+// DeckProposal is a model-proposed new deck (name + language pair).
+type DeckProposal struct {
+	Name                string `json:"name"`
+	Language            string `json:"from"`
+	TranslationLanguage string `json:"to"`
+}
+
+// suggestionReply mirrors the strict JSON contract demanded by the prompt.
+type suggestionReply struct {
+	Deck     string       `json:"deck"`
+	Proposed *DeckProposal `json:"proposed"`
+}
+
+// ParseSuggestion converts a model reply into a SuggestResult. A deck id that
+// is not among knownIDs is treated as no match (the model must not invent
+// ids). A malformed reply yields an empty result, never an error: a wrong
+// deck guess is a UX prompt, not a data-write risk.
+func ParseSuggestion(output string, knownIDs []string) SuggestResult {
+	var reply suggestionReply
+	if err := json.Unmarshal([]byte(extractYAML(output)), &reply); err != nil {
+		return SuggestResult{}
+	}
+	if reply.Deck != "" {
+		for _, id := range knownIDs {
+			if id == reply.Deck {
+				return SuggestResult{Deck: reply.Deck}
+			}
+		}
+		return SuggestResult{}
+	}
+	if reply.Proposed != nil {
+		reply.Proposed.Name = strings.TrimSpace(reply.Proposed.Name)
+		reply.Proposed.Language = strings.TrimSpace(reply.Proposed.Language)
+		reply.Proposed.TranslationLanguage = strings.TrimSpace(reply.Proposed.TranslationLanguage)
+		if reply.Proposed.Name == "" {
+			return SuggestResult{}
+		}
+		return SuggestResult{Proposed: reply.Proposed}
+	}
+	return SuggestResult{}
 }
 
 // extractYAML strips a ``` ... ``` fence if the reply contains one.

@@ -196,6 +196,49 @@ Tag rules:
 	return system, b.String()
 }
 
+// DeckInfo is the deck metadata shown to the deck-suggestion agent: who the
+// incoming entries might belong to, and a fallback proposal when no deck fits.
+type DeckInfo struct {
+	ID                  string
+	Name                string
+	Language            string
+	TranslationLanguage string
+}
+
+// SuggestDeckMessages builds the system and user messages for the deck
+// suggestion agent: a list of existing decks + the raw input -> a matching
+// deck id, or none/proposal. msg is an optional extra instruction.
+func SuggestDeckMessages(decks []DeckInfo, raw string, msg string) (string, string) {
+	system := `You match a vocabulary list to one of a user's flashcard decks.
+
+Given a list of decks (each with id, name, source language and translation language) and some raw vocabulary input (words, phrases, or YAML entries):
+
+- Pick the single existing deck the input most clearly belongs to — matching the input's language(s) against the deck's language pair, and the input's theme against the deck's name.
+- If no existing deck clearly fits, propose a new deck instead.
+
+Reply with ONLY a JSON object, no prose, no markdown fences:
+- Existing deck: {"deck": "<existing deck id>"}
+- No fit but propose a new deck: {"deck": null, "proposed": {"name": "<name>", "from": "<source language>", "to": "<translation language>"}}
+- No fit and nothing sensible to propose: {"deck": null, "proposed": null}
+
+The deck id must be exactly one of the listed ids. Do not invent ids.`
+
+	var b strings.Builder
+	b.WriteString("Existing decks:\n")
+	if len(decks) == 0 {
+		b.WriteString("(none)\n")
+	}
+	for _, d := range decks {
+		fmt.Fprintf(&b, "- id: %s | name: %s | language: %s -> %s\n", d.ID, d.Name, d.Language, d.TranslationLanguage)
+	}
+
+	b.WriteString("\nRaw input:\n")
+	b.WriteString(raw)
+	appendMsg(&b, msg)
+
+	return system, b.String()
+}
+
 // appendMsg appends the user's extra instruction to a user prompt when set.
 func appendMsg(b *strings.Builder, msg string) {
 	if msg != "" {

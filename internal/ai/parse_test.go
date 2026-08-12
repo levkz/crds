@@ -142,6 +142,60 @@ func TestParseEntries_ExampleEmptyTranslation(t *testing.T) {
 	}
 }
 
+func TestParseSuggestion_Match(t *testing.T) {
+	res := ParseSuggestion(`{"deck": "spanish"}`, []string{"spanish", "french_a1"})
+	if res.Deck != "spanish" || res.Proposed != nil {
+		t.Fatalf("result = %+v, want deck spanish", res)
+	}
+}
+
+func TestParseSuggestion_UnknownID(t *testing.T) {
+	res := ParseSuggestion(`{"deck": "not_a_deck"}`, []string{"spanish"})
+	if res.Deck != "" || res.Proposed != nil {
+		t.Fatalf("result = %+v, want no match", res)
+	}
+}
+
+func TestParseSuggestion_WrappedJSON(t *testing.T) {
+	res := ParseSuggestion("```json\n{\"deck\": \"spanish\"}\n```", []string{"spanish"})
+	if res.Deck != "spanish" {
+		t.Fatalf("result = %+v, want wrapped json tolerated", res)
+	}
+}
+
+func TestParseSuggestion_Proposal(t *testing.T) {
+	res := ParseSuggestion(`{"deck": null, "proposed": {"name": "French Basics", "from": "fr", "to": "en"}}`, nil)
+	if res.Deck != "" || res.Proposed == nil {
+		t.Fatalf("result = %+v, want a proposal", res)
+	}
+	if res.Proposed.Name != "French Basics" || res.Proposed.Language != "fr" || res.Proposed.TranslationLanguage != "en" {
+		t.Fatalf("proposal = %+v", res.Proposed)
+	}
+}
+
+func TestParseSuggestion_ProposalEmptyName(t *testing.T) {
+	res := ParseSuggestion(`{"deck": null, "proposed": {"name": "", "from": "fr", "to": "en"}}`, nil)
+	if res.Deck != "" || res.Proposed != nil {
+		t.Fatalf("result = %+v, want no proposal with empty name", res)
+	}
+}
+
+func TestParseSuggestion_EmptyProposal(t *testing.T) {
+	res := ParseSuggestion(`{"deck": null, "proposed": null}`, nil)
+	if res.Deck != "" || res.Proposed != nil {
+		t.Fatalf("result = %+v, want empty result", res)
+	}
+}
+
+func TestParseSuggestion_Garbage(t *testing.T) {
+	for _, out := range []string{"", "not json", "I think the spanish deck fits best."} {
+		res := ParseSuggestion(out, []string{"spanish"})
+		if res.Deck != "" || res.Proposed != nil {
+			t.Fatalf("garbage %q: result = %+v, want empty result", out, res)
+		}
+	}
+}
+
 func TestParseEntries_KindListFromEmptyModel(t *testing.T) {
 	// A model that echoes headers but nothing else must still error cleanly.
 	_, err := ParseEntries("entries:")

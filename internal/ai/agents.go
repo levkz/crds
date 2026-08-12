@@ -38,6 +38,23 @@ func Fill(ctx context.Context, c Client, entries []model.Entry, dc DeckContext, 
 	return ParseEntries(reply)
 }
 
+// SuggestDeck runs the deck-suggestion agent: existing decks + raw input ->
+// a matching deck id (or a new-deck proposal). Malformed replies degrade to an
+// empty result (no match) instead of an error; only transport failures
+// propagate.
+func SuggestDeck(ctx context.Context, c Client, decks []DeckInfo, raw, msg string) (SuggestResult, error) {
+	knownIDs := make([]string, len(decks))
+	for i, d := range decks {
+		knownIDs[i] = d.ID
+	}
+	system, user := SuggestDeckMessages(decks, raw, msg)
+	reply, err := c.Complete(ctx, system, user)
+	if err != nil {
+		return SuggestResult{}, err
+	}
+	return ParseSuggestion(reply, knownIDs), nil
+}
+
 // IsStructuredInput reports whether the text looks like YAML entries already
 // rather than free-form words. Used by `crds ai add` to pick a path.
 func IsStructuredInput(input string) bool {

@@ -181,3 +181,41 @@ func TestFillMessages_IncludesMsg(t *testing.T) {
 		t.Errorf("extra instruction should be appended, got:\n%s", user)
 	}
 }
+
+func TestSuggestDeckMessages_ListsDecks(t *testing.T) {
+	decks := []DeckInfo{
+		{ID: "spanish", Name: "Spanish Basics", Language: "es", TranslationLanguage: "en"},
+		{ID: "french_a1", Name: "French A1", Language: "fr", TranslationLanguage: "en"},
+	}
+	system, user := SuggestDeckMessages(decks, "hola\ncómo estás", "")
+
+	if !strings.Contains(user, "id: spanish | name: Spanish Basics | language: es -> en") {
+		t.Errorf("user message should list each deck with metadata, got:\n%s", user)
+	}
+	if !strings.Contains(user, "french_a1") {
+		t.Errorf("user message should list every deck, got:\n%s", user)
+	}
+	if !strings.Contains(user, "hola") || !strings.Contains(user, "cómo estás") {
+		t.Errorf("user message should include raw input")
+	}
+	if !strings.Contains(system, `"deck": null`) || !strings.Contains(system, "proposed") {
+		t.Errorf("system message should spell out the JSON output contract, got:\n%s", system)
+	}
+	if !strings.Contains(system, "Do not invent ids") {
+		t.Errorf("system message should forbid invented ids, got:\n%s", system)
+	}
+}
+
+func TestSuggestDeckMessages_NoDecks(t *testing.T) {
+	_, user := SuggestDeckMessages(nil, "hola", "")
+	if !strings.Contains(user, "(none)") {
+		t.Errorf("empty deck list should be spelled out, got:\n%s", user)
+	}
+}
+
+func TestSuggestDeckMessages_IncludesMsg(t *testing.T) {
+	_, user := SuggestDeckMessages(nil, "hola", "focus on food vocabulary")
+	if !strings.Contains(user, "focus on food vocabulary") {
+		t.Errorf("extra instruction should be appended, got:\n%s", user)
+	}
+}

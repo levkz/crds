@@ -78,6 +78,76 @@ func TestInterpret_ClientError(t *testing.T) {
 	}
 }
 
+func TestSuggestDeck_ReturnsMatch(t *testing.T) {
+	fake := &fakeClient{reply: `{"deck": "spanish"}`}
+	decks := []DeckInfo{
+		{ID: "spanish", Name: "Spanish Basics", Language: "es", TranslationLanguage: "en"},
+		{ID: "french_a1", Name: "French A1", Language: "fr", TranslationLanguage: "en"},
+	}
+
+	res, err := SuggestDeck(context.Background(), fake, decks, "hola\ncómo estás", "")
+	if err != nil {
+		t.Fatalf("SuggestDeck: %v", err)
+	}
+	if res.Deck != "spanish" || res.Proposed != nil {
+		t.Fatalf("result = %+v, want deck spanish", res)
+	}
+	if !strings.Contains(fake.user, "spanish") || !strings.Contains(fake.user, "es") {
+		t.Errorf("client should receive the deck list, got:\n%s", fake.user)
+	}
+	if !strings.Contains(fake.user, "hola") {
+		t.Errorf("client should receive the raw input")
+	}
+}
+
+func TestSuggestDeck_UnknownIDIgnored(t *testing.T) {
+	fake := &fakeClient{reply: `{"deck": "hallucinated"}`}
+	decks := []DeckInfo{{ID: "spanish", Name: "Spanish", Language: "es", TranslationLanguage: "en"}}
+
+	res, err := SuggestDeck(context.Background(), fake, decks, "hola", "")
+	if err != nil {
+		t.Fatalf("SuggestDeck: %v", err)
+	}
+	if res.Deck != "" {
+		t.Fatalf("result = %+v, want no deck", res)
+	}
+}
+
+func TestSuggestDeck_ReturnsProposal(t *testing.T) {
+	fake := &fakeClient{reply: `{"deck": null, "proposed": {"name": "French Basics", "from": "fr", "to": "en"}}`}
+
+	res, err := SuggestDeck(context.Background(), fake, nil, "bonjour", "")
+	if err != nil {
+		t.Fatalf("SuggestDeck: %v", err)
+	}
+	if res.Deck != "" || res.Proposed == nil {
+		t.Fatalf("result = %+v, want a proposal", res)
+	}
+	if res.Proposed.Name != "French Basics" || res.Proposed.Language != "fr" || res.Proposed.TranslationLanguage != "en" {
+		t.Fatalf("proposal = %+v", res.Proposed)
+	}
+}
+
+func TestSuggestDeck_GarbageDegradesToNoMatch(t *testing.T) {
+	fake := &fakeClient{reply: "definitely not json"}
+	decks := []DeckInfo{{ID: "spanish", Name: "Spanish", Language: "es", TranslationLanguage: "en"}}
+
+	res, err := SuggestDeck(context.Background(), fake, decks, "hola", "")
+	if err != nil {
+		t.Fatalf("SuggestDeck: %v", err)
+	}
+	if res.Deck != "" || res.Proposed != nil {
+		t.Fatalf("result = %+v, want empty result", res)
+	}
+}
+
+func TestSuggestDeck_ClientError(t *testing.T) {
+	fake := &fakeClient{err: errors.New("boom")}
+	if _, err := SuggestDeck(context.Background(), fake, nil, "hola", ""); err == nil {
+		t.Fatal("expected error propagation")
+	}
+}
+
 func TestInterpret_ParseError(t *testing.T) {
 	fake := &fakeClient{reply: "not yaml at all"}
 	if _, err := Interpret(context.Background(), fake, "x", LanguageContext{}, ""); err == nil {

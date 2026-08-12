@@ -1,5 +1,14 @@
 # CRDS — Terminal Flashcard Application
 
+```
+                                      ██████╗██████╗ ██████╗ ███████╗
+                                     ██╔════╝██╔══██╗██╔══██╗██╔════╝
+                                     ██║     ██████╔╝██║  ██║███████╗
+                                     ██║     ██╔══██╗██║  ██║╚════██║
+                                     ╚██████╗██║  ██║██████╔╝███████║
+                                      ╚═════╝╚═╝  ╚═╝╚═════╝ ╚══════╝
+```
+
 Keyboard-first vocabulary learning with flashcards and typing quizzes, entirely in your terminal.
 
 Vocabulary belongs in YAML for easy manipulation. User progress belongs in SQLite.
@@ -23,16 +32,16 @@ Go 1.25+
 
 ### Commands
 
-| Action        | Command            |
-|---------------|--------------------|
-| Build         | `make build`       |
-| Install       | `make install`     |
-| Run           | `make run`         |
-| Test all      | `make test`        |
-| Test single   | `go test ./internal/parser/` |
-| Lint          | `make lint`        |
-| Tidy          | `make tidy`        |
-| Legacy build  | `make legacy`      |
+| Action       | Command                      |
+| ------------ | ---------------------------- |
+| Build        | `make build`                 |
+| Install      | `make install`               |
+| Run          | `make run`                   |
+| Test all     | `make test`                  |
+| Test single  | `go test ./internal/parser/` |
+| Lint         | `make lint`                  |
+| Tidy         | `make tidy`                  |
+| Legacy build | `make legacy`                |
 
 ## Quick Start
 
@@ -57,10 +66,10 @@ Synces all YAML decks from `~/.local/share/crds/decks/` to the SQLite cache, the
 
 Start a flashcard quiz. Optionally pre-select a single deck by name.
 
-| Flag         | Description |
-|--------------|-------------|
-| `--limit N`  | Maximum number of cards (default 20, not yet wired in TUI) |
-| `--reverse`  | Reverse quiz direction (not yet wired in TUI) |
+| Flag        | Description                                                |
+| ----------- | ---------------------------------------------------------- |
+| `--limit N` | Maximum number of cards (default 20, not yet wired in TUI) |
+| `--reverse` | Reverse quiz direction (not yet wired in TUI)              |
 
 #### `crds stats [--deck <deck>]`
 
@@ -74,11 +83,11 @@ Display today's learning statistics: reviewed count and accuracy percentage. Wit
 
 Create a new empty deck as `<name>.yaml` with the minimum YAML: `id`, `name`, and both language fields, no entries.
 
-| Flag         | Description |
-|--------------|-------------|
-| `-F <lang>`  | Source language for terms (e.g. `fr`) — required |
-| `-T <lang>`  | Target language for translations (e.g. `en`) — required |
-| `--edit`     | Open the new deck in `$EDITOR` after creating it (same flow as `crds deck edit <name>`) |
+| Flag        | Description                                                                             |
+| ----------- | --------------------------------------------------------------------------------------- |
+| `-F <lang>` | Source language for terms (e.g. `fr`) — required                                        |
+| `-T <lang>` | Target language for translations (e.g. `en`) — required                                 |
+| `--edit`    | Open the new deck in `$EDITOR` after creating it (same flow as `crds deck edit <name>`) |
 
 The deck is synced to the SQLite cache immediately, so it appears in `crds deck list` and the TUI. The name argument is used for both the deck `id` and `name:`.
 
@@ -90,9 +99,9 @@ List all decks with entry counts, language, and translation language. Outputs a 
 
 Import a deck from a YAML file (or directory of `.yaml` files).
 
-| Flag         | Description |
-|--------------|-------------|
-| `--replace`  | Delete any existing deck with the same name before importing |
+| Flag        | Description                                                  |
+| ----------- | ------------------------------------------------------------ |
+| `--replace` | Delete any existing deck with the same name before importing |
 
 When `<path>` is a directory, iterates all `.yaml` files and imports each one, skipping non-YAML files and subdirectories.
 
@@ -100,18 +109,18 @@ When `<path>` is a directory, iterates all `.yaml` files and imports each one, s
 
 Export a deck to a YAML file (preserves original comments from the source file).
 
-| Flag            | Description |
-|-----------------|-------------|
-| `--all`         | Export every deck |
-| `-o <path>`     | Destination path (or directory with `--all`). Default: `<deck>.yaml` or current directory |
+| Flag        | Description                                                                               |
+| ----------- | ----------------------------------------------------------------------------------------- |
+| `--all`     | Export every deck                                                                         |
+| `-o <path>` | Destination path (or directory with `--all`). Default: `<deck>.yaml` or current directory |
 
 #### `crds deck delete <deck> [-f]`
 
 Delete a deck from both the filesystem YAML and the SQLite cache. Cascades to remove progress, reviews, and session records.
 
-| Flag  | Description |
-|-------|-------------|
-| `-f`  | Skip confirmation prompt |
+| Flag | Description              |
+| ---- | ------------------------ |
+| `-f` | Skip confirmation prompt |
 
 Prompts `Delete deck "name"? [y/N]` unless `-f` is passed.
 
@@ -119,13 +128,14 @@ Prompts `Delete deck "name"? [y/N]` unless `-f` is passed.
 
 Search for entries across all decks. Results are grouped by deck, sorted by term, and show tags, translations, and notes.
 
-| Flag            | Description |
-|-----------------|-------------|
-| `--deck <d>`    | Limit search to specific deck(s), repeatable |
-| `--tags <t>`    | Filter by tags (AND logic), repeatable |
-| `--color <mode>`| Highlight matches: `auto` (default, TTY only), `always`, `never`. Respects `GREP_COLORS` / `GREP_COLOR` env vars |
+| Flag             | Description                                                                                                      |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `--deck <d>`     | Limit search to specific deck(s), repeatable                                                                     |
+| `--tags <t>`     | Filter by tags (AND logic), repeatable                                                                           |
+| `--color <mode>` | Highlight matches: `auto` (default, TTY only), `always`, `never`. Respects `GREP_COLORS` / `GREP_COLOR` env vars |
 
 Output format:
+
 ```
 === Deck Name (deck_id) — 2 match(es) ===
   term [tag1,tag2]  → translation1, translation2
@@ -156,11 +166,11 @@ Open the deck's full YAML file in `$EDITOR` (fallback: nano → vim → vi). Aft
 
 Add a new term to a deck. Three input modes, tried in order:
 
-| Mode      | Trigger      | Behaviour |
-|-----------|-------------|-----------|
-| File      | `-f <path>` | Parse YAML entry from file (use `-f -` for stdin) |
-| Inline    | `-t <term>` | Use `--translations` (comma-separated), `--examples` (comma-separated), and `--tags` (repeatable) |
-| Editor    | (no flags)  | Open `$EDITOR` with a blank YAML entry template |
+| Mode   | Trigger     | Behaviour                                                                                         |
+| ------ | ----------- | ------------------------------------------------------------------------------------------------- |
+| File   | `-f <path>` | Parse YAML entry from file (use `-f -` for stdin)                                                 |
+| Inline | `-t <term>` | Use `--translations` (comma-separated), `--examples` (comma-separated), and `--tags` (repeatable) |
+| Editor | (no flags)  | Open `$EDITOR` with a blank YAML entry template                                                   |
 
 Appends the entry to the deck's YAML file and syncs to SQLite.
 
@@ -168,19 +178,19 @@ Appends the entry to the deck's YAML file and syncs to SQLite.
 
 Edit an existing term. Three input modes:
 
-| Mode      | Trigger      | Behaviour |
-|-----------|-------------|-----------|
-| File      | `-f <path>` | Replace full entry from YAML (preserves original ID) |
-| Inline    | `-t <term>` | Replace term text only, in-place |
-| Editor    | (no flags)  | Open `$EDITOR` with current entry pre-filled as YAML |
+| Mode   | Trigger     | Behaviour                                            |
+| ------ | ----------- | ---------------------------------------------------- |
+| File   | `-f <path>` | Replace full entry from YAML (preserves original ID) |
+| Inline | `-t <term>` | Replace term text only, in-place                     |
+| Editor | (no flags)  | Open `$EDITOR` with current entry pre-filled as YAML |
 
 #### `crds deck term rm <deck> <id> [-f]`
 
 Remove a term from its deck. Deletes from YAML file, syncs SQLite, and cleans up progress and review history.
 
-| Flag  | Description |
-|-------|-------------|
-| `-f`  | Skip confirmation prompt |
+| Flag | Description              |
+| ---- | ------------------------ |
+| `-f` | Skip confirmation prompt |
 
 ---
 
@@ -206,9 +216,9 @@ List all tags on an entry, sorted alphabetically. Omit the entry ID to list all 
 
 Create a backup/reserve copy. Archives the SQLite database, `state.yaml`, and all deck YAML files into a `.tar.gz` archive.
 
-| Flag        | Description |
-|-------------|-------------|
-| `-o <dir>`  | Output directory (default: `~/.local/share/crds/reserve-copies/`) |
+| Flag        | Description                                                               |
+| ----------- | ------------------------------------------------------------------------- |
+| `-o <dir>`  | Output directory (default: `~/.local/share/crds/reserve-copies/`)         |
 | `-n <name>` | Archive name (`.tar.gz` auto-appended). Default: auto-generated timestamp |
 
 Returns the full path to the created archive.
@@ -217,9 +227,9 @@ Returns the full path to the created archive.
 
 Restore from a reserve copy. Automatically creates a pre-revert backup before restoring.
 
-| Flag           | Description |
-|----------------|-------------|
-| `--latest`     | Use the most recent reserve in the default directory |
+| Flag           | Description                                                  |
+| -------------- | ------------------------------------------------------------ |
+| `--latest`     | Use the most recent reserve in the default directory         |
 | `-f <archive>` | Path to a specific reserve archive (supports tab completion) |
 
 Closes and reopens the database connection during restore, and runs any pending migrations on the restored DB.
@@ -228,9 +238,9 @@ Closes and reopens the database connection during restore, and runs any pending 
 
 Re-sync all YAML deck files to the SQLite cache. Compares file mtimes and only processes changed files.
 
-| Flag  | Description |
-|-------|-------------|
-| `-w`  | Write auto-generated entry IDs back into YAML files |
+| Flag | Description                                         |
+| ---- | --------------------------------------------------- |
+| `-w` | Write auto-generated entry IDs back into YAML files |
 
 This is called automatically on TUI startup (`crds` or `crds quiz`), but can be run explicitly when needed.
 
@@ -252,9 +262,9 @@ Export your full profile for device migration. Packages the following into a sin
 
 Auto-increments the archive name on filename collision.
 
-| Flag        | Description |
-|-------------|-------------|
-| `-o <dir>`  | Output directory (default: current directory) |
+| Flag        | Description                                                     |
+| ----------- | --------------------------------------------------------------- |
+| `-o <dir>`  | Output directory (default: current directory)                   |
 | `-n <name>` | Archive name (`.tar.gz` auto-appended). Default: `crds-profile` |
 
 #### `crds profile import <file>`
@@ -277,14 +287,14 @@ Convert unstructured text (words, phrases, or `term = translation` lines) into
 YAML entries. With `--deck`, the deck's language pair is used and sample
 entries seed the prompt. Prints the proposed YAML without writing anything.
 
-| Flag | Description |
-|------|-------------|
-| `--minimal` | Bare `term` + `translations` only (the default). |
-| `--full` | Full entries: at least 4 example uses (each a source-language sentence + target-language translation), a `notes` field, and tags. Structural tags (noun, verb, adjective, gender, ...) and a CEFR proficiency tag (A1–C2) are always added; theme tags come from the deck's tag list when `--deck` is given, otherwise a concise theme tag is chosen (e.g. `greetings`). |
-| `-F, --translate-from <lang>` | Source language for terms/examples (overrides the deck). |
-| `-T, --translate-to <lang>` | Target language for translations (overrides the deck). |
-| `--msg <text>` | Pass an extra instruction to the model, e.g. `--msg "use formal register"`. |
-| `--dry-run` | Print the prompt instead of calling the API. |
+| Flag                          | Description                                                                                                                                                                                                                                                                                                                                                              |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--minimal`                   | Bare `term` + `translations` only (the default).                                                                                                                                                                                                                                                                                                                         |
+| `--full`                      | Full entries: at least 4 example uses (each a source-language sentence + target-language translation), a `notes` field, and tags. Structural tags (noun, verb, adjective, gender, ...) and a CEFR proficiency tag (A1–C2) are always added; theme tags come from the deck's tag list when `--deck` is given, otherwise a concise theme tag is chosen (e.g. `greetings`). |
+| `-F, --translate-from <lang>` | Source language for terms/examples (overrides the deck).                                                                                                                                                                                                                                                                                                                 |
+| `-T, --translate-to <lang>`   | Target language for translations (overrides the deck).                                                                                                                                                                                                                                                                                                                   |
+| `--msg <text>`                | Pass an extra instruction to the model, e.g. `--msg "use formal register"`.                                                                                                                                                                                                                                                                                              |
+| `--dry-run`                   | Print the prompt instead of calling the API.                                                                                                                                                                                                                                                                                                                             |
 
 `--minimal` and `--full` are mutually exclusive.
 
@@ -312,10 +322,10 @@ model `openai`). Configure via `~/.config/crds/config.yaml`:
 
 ```yaml
 ai:
-  provider: pollinations   # pollinations | ollama | openai | gemini | openrouter | groq | nvidia
-  model: openai            # e.g. llama3.2 for ollama
-  api_key: ""              # not needed for pollinations/ollama
-  base_url: ""             # default per provider
+  provider: pollinations # pollinations | ollama | openai | gemini | openrouter | groq | nvidia
+  model: openai # e.g. llama3.2 for ollama
+  api_key: "" # not needed for pollinations/ollama
+  base_url: "" # default per provider
 ```
 
 Environment variables override the file: `CRDS_AI_PROVIDER`, `CRDS_AI_MODEL`,
@@ -379,9 +389,9 @@ entries:
 Variant syntax example (expands to 5 conjugations, auto-ID picks shortest):
 
 ```yaml
-  - term: mang[er/ez/e/ons/ent]
-    translations:
-      - text: eat
+- term: mang[er/ez/e/ons/ent]
+  translations:
+    - text: eat
 ```
 
 ## Quiz Modes
@@ -390,12 +400,12 @@ Variant syntax example (expands to 5 conjugations, auto-ID picks shortest):
 
 See the term, press a key to reveal the answer. Grade your recall on a 4-point scale:
 
-| Grade  | Key | Meaning       |
-|--------|-----|---------------|
-| Again  | `a` | Didn't recall |
-| Hard   | `h` | Recalled with difficulty |
-| Good   | `g` | Recalled correctly |
-| Easy   | `e` | Recalled instantly |
+| Grade | Key | Meaning                  |
+| ----- | --- | ------------------------ |
+| Again | `a` | Didn't recall            |
+| Hard  | `h` | Recalled with difficulty |
+| Good  | `g` | Recalled correctly       |
+| Easy  | `e` | Recalled instantly       |
 
 Answer side displays tags, usage examples (single or two-column layout with pagination), and notes. Progress is recorded to SQLite on each answer.
 
@@ -403,11 +413,11 @@ Answer side displays tags, usage examples (single or two-column layout with pagi
 
 Type the translation directly. The answer is auto-graded using Levenshtein distance:
 
-| Score                | Grade    |
-|----------------------|----------|
-| Exact match          | Good (2) |
-| Similarity ≥ 0.7     | Hard (1) |
-| Below threshold      | Again (0) |
+| Score            | Grade     |
+| ---------------- | --------- |
+| Exact match      | Good (2)  |
+| Similarity ≥ 0.7 | Hard (1)  |
+| Below threshold  | Again (0) |
 
 On reveal, shows the correct answer alongside your input. Tags and examples are displayed. This mode does not use a grade menu — grading is automatic.
 
@@ -428,21 +438,21 @@ shown as a legend (e.g. `e/→é`) above the status bar.
 
 The matching mode in `~/.config/crds/config.yaml` controls how typed answers are graded:
 
-| Mode           | Behavior                                        |
-|----------------|-------------------------------------------------|
-| `approximate` (default) | Accents ignored — `cafe` matches `café` |
-| `strict`       | Accents matter — `cafe` does not match `café`    |
+| Mode                    | Behavior                                      |
+| ----------------------- | --------------------------------------------- |
+| `approximate` (default) | Accents ignored — `cafe` matches `café`       |
+| `strict`                | Accents matter — `cafe` does not match `café` |
 
 ## Configuration
 
 Location: `~/.config/crds/`
 
-| File / Dir                | Purpose |
-|---------------------------|---------|
-| `config.yaml`             | Theme, animation enabled, default quiz limit, matching mode |
-| `keymaps.yaml`            | Keybinding overrides applied via `keymap.ApplyDefaultOverrides()` |
-| `themes/*.yaml`           | Custom themes with named palette references or direct ANSI/hex values |
-| `mappings/*.yaml`         | Per-language input mappings (accent triggers) |
+| File / Dir        | Purpose                                                               |
+| ----------------- | --------------------------------------------------------------------- |
+| `config.yaml`     | Theme, animation enabled, default quiz limit, matching mode           |
+| `keymaps.yaml`    | Keybinding overrides applied via `keymap.ApplyDefaultOverrides()`     |
+| `themes/*.yaml`   | Custom themes with named palette references or direct ANSI/hex values |
+| `mappings/*.yaml` | Per-language input mappings (accent triggers)                         |
 
 ### Built-in Themes
 
@@ -450,15 +460,15 @@ Default, dark, light, tokyonight (hex values from [folke/tokyonight.nvim](https:
 
 ## Data Locations
 
-| What                       | Path |
-|----------------------------|------|
-| Deck YAML files            | `~/.local/share/crds/decks/` |
-| SQLite database            | `~/.local/share/crds/crds.db` |
-| Reserve backups            | `~/.local/share/crds/reserve-copies/` |
-| Selected decks state       | `~/.local/share/crds/state.yaml` |
-| Config directory           | `~/.config/crds/` |
-| Custom themes              | `~/.config/crds/themes/` |
-| Input mappings             | `~/.config/crds/mappings/` |
+| What                 | Path                                  |
+| -------------------- | ------------------------------------- |
+| Deck YAML files      | `~/.local/share/crds/decks/`          |
+| SQLite database      | `~/.local/share/crds/crds.db`         |
+| Reserve backups      | `~/.local/share/crds/reserve-copies/` |
+| Selected decks state | `~/.local/share/crds/state.yaml`      |
+| Config directory     | `~/.config/crds/`                     |
+| Custom themes        | `~/.config/crds/themes/`              |
+| Input mappings       | `~/.config/crds/mappings/`            |
 
 ## Architecture
 

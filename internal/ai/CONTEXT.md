@@ -14,10 +14,11 @@ and validates everything it returns before any append happens.
 - Provider presets and config resolution (env > `config.yaml` `ai:` block > preset).
 - An OpenAI-compatible chat client (`POST /v1/chat/completions`) with a single
   `Complete(ctx, system, user)` call.
-- Prompt construction for the three agent modes:
+- Prompt construction for the four agent modes:
   - **Interpret (minimal)**: unstructured text (words, phrases, `term = translation`) → bare YAML entries.
   - **Interpret (full)**: same input → complete entries (≥4 example uses, notes, deck-constrained tags) in one call.
   - **Fill**: partial YAML entries → completed entries, constrained by deck context.
+  - **SuggestDeck**: existing deck list + raw input → a matching deck id, or a new-deck proposal (used by `ai add`/`ai fill` when the deck argument is omitted).
 - A shared `termConventions` block (CRDS variant notation) used by both the
   fill prompt and the full-effort interpret prompt.
 - A shared `tagRules` block: structural tags (noun, verb, adjective, gender,
@@ -36,9 +37,9 @@ and validates everything it returns before any append happens.
 |---|---|
 | `config.go` | `Config` struct, 7 provider presets, `Resolve()` precedence |
 | `client.go` | `Client` struct + `NewClient`, raw HTTP POST, error wrapping |
-| `prompts.go` | `InterpretMessages`, `InterpretFullMessages`, `FillMessages`, deck-context block, `termConventions` |
-| `agents.go` | `Interpret`, `InterpretFull`, `Fill`, `IsStructuredInput`, `LanguageContext`, `DeckContext` |
-| `parse.go` | `ParseEntries` — YAML→`[]model.Entry` with validation |
+| `prompts.go` | `InterpretMessages`, `InterpretFullMessages`, `FillMessages`, `SuggestDeckMessages`, deck-context block, `termConventions` |
+| `agents.go` | `Interpret`, `InterpretFull`, `Fill`, `SuggestDeck`, `IsStructuredInput`, `LanguageContext`, `DeckContext` |
+| `parse.go` | `ParseEntries` — YAML→`[]model.Entry` with validation; `ParseSuggestion` — deck-suggestion JSON with id validation |
 | `PLAN.md` | Implementation plan (needed if modified, keep in sync with roadmap) |
 
 ## Dependencies

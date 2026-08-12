@@ -93,7 +93,12 @@ Detailed plan and context: `internal/ai/PLAN.md`.
 - [x] CLI: `crds ai add <deck>` — interpret+fill with review, append to deck
 - [x] Storage: `AppendEntries` bulk append with auto-ID on sync
 - [x] CLI: `crds deck tag list <deck>` — list all tags in a deck (no term)
+- [x] Deck resolution: `ai add`/`ai fill` with an omitted deck guess the target
+      via a model agent (`SuggestDeck`), confirm the guess (`[y/N]`), and on
+      decline offer create-with-proposed-name / manual name / pick-existing
+      (readline tab-completion); `--dry-run` requires `<deck>`
 - [x] Docs: README CLI reference, `internal/ai/CONTEXT.md`, status.md update
+- [ ] `--no-confirm` flag to resolve a guessed deck without a prompt (non-TTY)
 
 ## UI wiring (interactive components)
 

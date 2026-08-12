@@ -236,7 +236,23 @@ Used via `completion-predictor:"deck"` / `completion-predictor:"reserve"` / `com
 3. **Implement Run**: parse args, call store methods, print or edit.
 4. **Add `completion-predictor:"deck"`** for any deck-name argument, `completion-predictor:"term"` for entry IDs.
 5. **If using the editor**: import `crds/internal/editor` and call `editor.Edit` or `editor.EditEntry`.
-6. **Tests**: unit-test the Run logic if it contains non-trivial branching; otherwise test the store methods directly.
+ 6. **Tests**: unit-test the Run logic if it contains non-trivial branching; otherwise test the store methods directly.
+
+## Interactive prompts (`prompt.go`, `deck_resolve.go`)
+
+The AI deck flow adds interactive line input:
+
+- `promptReadLine(prompt, completions)` is the shared seam (replaceable in
+  tests). Real behaviour: `ergochat/readline` with tab-completion over
+  `completions` when stdin is a TTY, else a plain buffered scan. Non-TTY reads
+  share one `bufio.Reader` keyed to the current `os.Stdin`, so consecutive
+  prompts (and `reviewAndAppend`) never lose input to buffering.
+- `promptYesNo(prompt)` loops on `y/n` (empty = yes).
+- `resolveDeck(a, client, raw, msg, from, to)` resolves an omitted deck for
+  `ai add`/`ai fill`: asks the `ai.SuggestDeck` agent, confirms a match, and on
+  decline offers create-with-proposed-name / manual name / pick-existing
+  (`selectDeckID`, accepts number, id, or name; tab completes ids). Returns
+  `errAborted` when the user cancels — callers return nil for that sentinel.
 
 ### Example command template
 

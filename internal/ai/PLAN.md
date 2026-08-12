@@ -174,6 +174,26 @@ A wrong reply is a hard error with a clear message, never a silently corrupted
 deck. `crds ai add` writes only after the existing parse/validate chain in
 `Store.AppendEntries` succeeds.
 
+### Deck-suggestion agent
+
+`crds ai add` and `crds ai fill` accept an omitted deck: the CLI resolves it
+through a fourth `SuggestDeck` agent in `agents.go`:
+
+- **Prompt** (`SuggestDeckMessages` in `prompts.go`): passes the existing deck
+  list (id, name, `language -> translation_language`) plus the raw input and
+  demands a strict JSON reply:
+  - `{"deck": "<id>"}` when one existing deck clearly fits, or
+  - `{"deck": null, "proposed": {"name": ..., "from": ..., "to": ...}}` when
+    none fits but a new deck is sensible.
+- **Parsing** (`ParseSuggestion` in `parse.go`): a deck id not present in the
+  given list is ignored (the model must never invent ids); a malformed reply
+  degrades to "no match", never an error — a wrong guess is a UX prompt, not a
+  data-write risk. Only transport failures propagate from the agent.
+- **CLI flow** (`internal/cli/deck_resolve.go`): a suggested deck is confirmed
+  with the user (`[y/N]`); on decline (or no match) the user can create a deck
+  with the proposed name, type a new name, pick an existing deck (readline
+  tab-completion over deck ids), or abort.
+
 ---
 
 ## Storage changes

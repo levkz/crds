@@ -298,7 +298,7 @@ entries seed the prompt. Prints the proposed YAML without writing anything.
 
 `--minimal` and `--full` are mutually exclusive.
 
-#### `crds ai fill <deck> [-t <text>] [-f <file>] [-F <from>] [-T <to>] [--msg <text>] [--dry-run]`
+#### `crds ai fill [<deck>] [-t <text>] [-f <file>] [-F <from>] [-T <to>] [--msg <text>] [--dry-run]`
 
 Complete partial YAML entries (e.g. just a `term` + translations) into full
 entries: at least 4 language-appropriate example sentences, a `notes` field,
@@ -308,7 +308,10 @@ deck's existing tag list. `-F`/`-T` override the deck's language pair; `--msg`
 passes an extra instruction to the model. Prints the completed YAML; nothing
 is written.
 
-#### `crds ai add <deck> [-t <text>] [-f <file>] [-F <from>] [-T <to>] [--msg <text>]`
+When `<deck>` is omitted, the deck is guessed from your deck list and resolved
+interactively (see below). `--dry-run` requires `<deck>`.
+
+#### `crds ai add [<deck>] [-t <text>] [-f <file>] [-F <from>] [-T <to>] [--msg <text>]`
 
 Interpret words (or YAML) and fill them out in one step, then let you review
 before appending: `[a]ppend`, `[e]dit` (re-open in `$EDITOR`), or `[d]iscard`.
@@ -316,6 +319,14 @@ before appending: `[a]ppend`, `[e]dit` (re-open in `$EDITOR`), or `[d]iscard`.
 instruction to the model in both steps. Appends go through the full
 parser/validation chain via the storage `AppendEntries` and are synced with
 auto-generated IDs.
+
+**Deck resolution.** When `<deck>` is omitted, the model guesses which existing
+deck the input belongs to. If it suggests one you are asked to confirm
+(`[y/N]`); on `no` (or no match) you can create a deck with the proposed name,
+type a new deck name, or pick an existing deck (tab completes deck ids). Deck
+creation uses the resolved language pair (`-F`/`-T` win, else the proposal,
+else a prompt). Note: this adds a third API call, so on the default
+Pollinations provider (~1 request / 15 s) the flow can take ~45 s.
 
 **AI configuration.** The default provider is Pollinations.AI (keyless,
 model `openai`). Configure via `~/.config/crds/config.yaml`:

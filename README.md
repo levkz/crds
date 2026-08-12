@@ -70,6 +70,18 @@ Display today's learning statistics: reviewed count and accuracy percentage. Wit
 
 ### Deck Management
 
+#### `crds deck create <name> -F <from> -T <to> [--edit]`
+
+Create a new empty deck as `<name>.yaml` with the minimum YAML: `id`, `name`, and both language fields, no entries.
+
+| Flag         | Description |
+|--------------|-------------|
+| `-F <lang>`  | Source language for terms (e.g. `fr`) — required |
+| `-T <lang>`  | Target language for translations (e.g. `en`) — required |
+| `--edit`     | Open the new deck in `$EDITOR` after creating it (same flow as `crds deck edit <name>`) |
+
+The deck is synced to the SQLite cache immediately, so it appears in `crds deck list` and the TUI. The name argument is used for both the deck `id` and `name:`.
+
 #### `crds deck list`
 
 List all decks with entry counts, language, and translation language. Outputs a formatted table. Shows "No decks found." if the cache is empty.

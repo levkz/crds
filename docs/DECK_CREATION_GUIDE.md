@@ -16,6 +16,14 @@ Each `.yaml` file in this directory is treated as a single deck. You can also sp
 
 Decks are plain YAML — version-control them with Git, share them, edit them in any text editor.
 
+### Creating a Deck with the CLI
+
+`crds deck create <name> -F <from> -T <to> [--edit]` writes a minimal
+`<name>.yaml` (id, name, both languages, no entries) and syncs it to the cache.
+The name argument is used for both the deck `id` and `name:`. Pass `--edit` to
+open the file in `$EDITOR` immediately after creation. See the CLI reference in
+`README.md`.
+
 ---
 
 ## Minimal Deck

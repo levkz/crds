@@ -27,6 +27,7 @@ Flat commands (Quiz, Stats, Completion) remain at root. Deck, state, and profile
 
 ```go
 type DeckCmd struct {
+    Create CreateCmd   `cmd:"" help:"Create a new empty deck."`
     List   ListCmd     `cmd:"" help:"List all decks with entry counts."`
     Import ImportCmd   `cmd:"" help:"Import a deck from a YAML file."`
     Export ExportCmd   `cmd:"" help:"Export a deck to a YAML file."`
@@ -85,6 +86,7 @@ crds                              → CLI.Run(a, ctx)           → TUI
 crds quiz --deck foo              → CLI.Quiz.Run(a)           → TUI with pre-selected deck
 crds state sync                   → StateCmd.Sync.Run(a)      → sync
 crds deck list                    → DeckCmd.List.Run(a)       → list decks
+crds deck create <name> -F <from> -T <to> [--edit] → DeckCmd.Create.Run(a) → create empty deck
 crds deck import <file> --replace → DeckCmd.Import.Run(a)     → import (with replace)
 crds deck export <deck>           → DeckCmd.Export.Run(a)     → export
 crds deck export --all            → DeckCmd.Export.Run(a)     → export all

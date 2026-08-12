@@ -258,7 +258,7 @@ func (c *AiInterpretCmd) Run(a *app.App) error {
 // --- fill ---
 
 type AiFillCmd struct {
-	Deck          string `arg:"" required:"" help:"Deck to fill for (languages + existing tags)." completion-predictor:"deck"`
+	Deck          string `arg:"" optional:"" help:"Deck to fill for (languages + existing tags); guessed when omitted." completion-predictor:"deck"`
 	Text          string `short:"t" help:"Partial YAML entries (inline)."`
 	File          string `short:"f" help:"Path to a YAML file (use - for stdin)."`
 	TranslateFrom string `short:"F" help:"Source language for terms/examples (overrides the deck)."`
@@ -277,7 +277,26 @@ func (c *AiFillCmd) Run(a *app.App) error {
 		return fmt.Errorf("parse input: %w", err)
 	}
 
-	ctx, err := deckContextForFill(a, c.Deck)
+	var client ai.Client
+	deckID := c.Deck
+	if deckID == "" {
+		if c.DryRun {
+			return fmt.Errorf("--dry-run requires --deck: resolving a deck needs an API call or an interactive prompt, which dry-run skips")
+		}
+		client, err = resolveAIClient()
+		if err != nil {
+			return err
+		}
+		deckID, err = resolveDeck(a, client, raw, c.Msg, c.TranslateFrom, c.TranslateTo)
+		if errIsAbort(err) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+	}
+
+	ctx, err := deckContextForFill(a, deckID)
 	if err != nil {
 		return err
 	}
@@ -288,9 +307,11 @@ func (c *AiFillCmd) Run(a *app.App) error {
 		return printPrompt(system, user)
 	}
 
-	client, err := resolveAIClient()
-	if err != nil {
-		return err
+	if client == nil {
+		client, err = resolveAIClient()
+		if err != nil {
+			return err
+		}
 	}
 	filled, err := ai.Fill(context.Background(), client, entries, ctx, c.Msg)
 	if err != nil {
@@ -302,7 +323,7 @@ func (c *AiFillCmd) Run(a *app.App) error {
 // --- add ---
 
 type AiAddCmd struct {
-	Deck          string `arg:"" required:"" help:"Deck to append entries to." completion-predictor:"deck"`
+	Deck          string `arg:"" optional:"" help:"Deck to append entries to; guessed and confirmed when omitted." completion-predictor:"deck"`
 	Text          string `short:"t" help:"Words or YAML entries (inline)."`
 	File          string `short:"f" help:"Path to an input file (use - for stdin)."`
 	TranslateFrom string `short:"F" help:"Source language for terms/examples (overrides the deck)."`
@@ -316,15 +337,27 @@ func (c *AiAddCmd) Run(a *app.App) error {
 		return err
 	}
 
-	deck, err := loadDeckModel(a, c.Deck)
-	if err != nil {
-		return err
-	}
-
 	client, err := resolveAIClient()
 	if err != nil {
 		return err
 	}
+
+	deckID := c.Deck
+	if deckID == "" {
+		deckID, err = resolveDeck(a, client, raw, c.Msg, c.TranslateFrom, c.TranslateTo)
+		if errIsAbort(err) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+	}
+
+	deck, err := loadDeckModel(a, deckID)
+	if err != nil {
+		return err
+	}
+
 	ctx := context.Background()
 
 	var entries []model.Entry
@@ -341,7 +374,7 @@ func (c *AiAddCmd) Run(a *app.App) error {
 		}
 	}
 
-	tags, err := a.Store.ListDeckTags(c.Deck)
+	tags, err := a.Store.ListDeckTags(deckID)
 	if err != nil {
 		return fmt.Errorf("list deck tags: %w", err)
 	}
@@ -358,7 +391,7 @@ func (c *AiAddCmd) Run(a *app.App) error {
 		return err
 	}
 
-	return reviewAndAppend(a, c.Deck, filled)
+	return reviewAndAppend(a, deckID, filled)
 }
 
 // reviewAndAppend shows the proposed entries and lets the user append, edit
@@ -369,10 +402,12 @@ func reviewAndAppend(a *app.App, deckID string, entries []model.Entry) error {
 			return err
 		}
 
-		fmt.Print("[a]ppend / [e]dit / [d]iscard: ")
-		var answer string
-		if _, err := fmt.Scanln(&answer); err != nil {
-			return fmt.Errorf("read choice: %w", err)
+		answer, err := promptReadLine("[a]ppend / [e]dit / [d]iscard: ", nil)
+		if errIsAbort(err) {
+			return nil
+		}
+		if err != nil {
+			return err
 		}
 
 		switch strings.ToLower(strings.TrimSpace(answer)) {

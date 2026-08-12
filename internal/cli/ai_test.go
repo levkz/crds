@@ -8,22 +8,37 @@ import (
 	"testing"
 
 	"crds/internal/ai"
+	"crds/internal/model"
+	"crds/internal/ui"
 )
 
 type fakeAIClient struct {
 	reply       string
+	replies     []string
 	system, user string
+	systems, users []string
 }
 
 func (f *fakeAIClient) Complete(_ context.Context, system, user string) (string, error) {
 	f.system = system
 	f.user = user
+	f.systems = append(f.systems, system)
+	f.users = append(f.users, user)
+	if len(f.replies) > 0 {
+		r := f.replies[0]
+		f.replies = f.replies[1:]
+		return r, nil
+	}
 	return f.reply, nil
 }
 
 func stubAIClient(t *testing.T, reply string) *fakeAIClient {
 	t.Helper()
-	fake := &fakeAIClient{reply: reply}
+	return stubAIClientInstance(t, &fakeAIClient{reply: reply})
+}
+
+func stubAIClientInstance(t *testing.T, fake *fakeAIClient) *fakeAIClient {
+	t.Helper()
 	orig := resolveAIClient
 	resolveAIClient = func() (ai.Client, error) {
 		return fake, nil
@@ -361,6 +376,150 @@ func TestAiAddCmd_Run_Discard(t *testing.T) {
 	}
 }
 
+func TestAiAddCmd_NoDeck_ConfirmSuggested(t *testing.T) {
+	a := newTestApp(t)
+	writeTestDeck(t, a.DataDir, "spanish")
+	syncDecks(t, a)
+
+	fake := stubAIClientInstance(t, &fakeAIClient{
+		replies: []string{`{"deck": "spanish"}`, fillReply, fillReply},
+	})
+	feedStdin(t, "y\na\n")
+
+	cmd := &AiAddCmd{Text: "hoy wait"}
+	if err := cmd.Run(a); err != nil {
+		t.Fatalf("AiAddCmd.Run: %v", err)
+	}
+	if !strings.Contains(strings.Join(fake.users, "\n"), "id: spanish") {
+		t.Fatalf("deck suggestion should receive the deck list, got users:\n%s", strings.Join(fake.users, "\n"))
+	}
+
+	deck, err := a.Store.LoadDeck("spanish")
+	if err != nil {
+		t.Fatalf("LoadDeck: %v", err)
+	}
+	if !hasCard(deck, "hoy") {
+		t.Fatal("entry 'hoy' was not appended to the confirmed deck")
+	}
+}
+
+func TestAiAddCmd_NoDeck_RejectThenSelectExisting(t *testing.T) {
+	a := newTestApp(t)
+	writeTestDeck(t, a.DataDir, "spanish")
+	writeTestDeck(t, a.DataDir, "french")
+	syncDecks(t, a)
+
+	// Model suggests spanish; user declines, selects french by name.
+	stubAIClientInstance(t, &fakeAIClient{
+		replies: []string{`{"deck": "spanish"}`, fillReply, fillReply},
+	})
+	feedStdin(t, "n\ns\nfrench\na\n")
+
+	cmd := &AiAddCmd{Text: "hoy wait"}
+	if err := cmd.Run(a); err != nil {
+		t.Fatalf("AiAddCmd.Run: %v", err)
+	}
+
+	spanish, err := a.Store.LoadDeck("spanish")
+	if err != nil {
+		t.Fatalf("LoadDeck(spanish): %v", err)
+	}
+	if hasCard(spanish, "hoy") {
+		t.Fatal("entry 'hoy' should not be appended to the declined deck spanish")
+	}
+	french, err := a.Store.LoadDeck("french")
+	if err != nil {
+		t.Fatalf("LoadDeck(french): %v", err)
+	}
+	if !hasCard(french, "hoy") {
+		t.Fatal("entry 'hoy' was not appended to the selected deck french")
+	}
+}
+
+func TestAiAddCmd_NoDeck_CreateProposed(t *testing.T) {
+	a := newTestApp(t)
+
+	stubAIClientInstance(t, &fakeAIClient{
+		replies: []string{
+			`{"deck": null, "proposed": {"name": "French Basics", "from": "fr", "to": "en"}}`,
+			fillReply,
+			fillReply,
+		},
+	})
+	feedStdin(t, "c\ny\na\n")
+
+	cmd := &AiAddCmd{Text: "hoy wait"}
+	if err := cmd.Run(a); err != nil {
+		t.Fatalf("AiAddCmd.Run: %v", err)
+	}
+
+	deck, err := loadDeckModel(a, "French Basics")
+	if err != nil {
+		t.Fatalf("loadDeckModel: %v", err)
+	}
+	if deck.Language != "fr" || deck.TranslationLanguage != "en" {
+		t.Fatalf("deck languages = %s -> %s, want fr -> en", deck.Language, deck.TranslationLanguage)
+	}
+	if !hasCardByID(deck, "hoy") {
+		t.Fatal("entry 'hoy' was not appended to the created deck")
+	}
+}
+
+func TestAiAddCmd_NoDeck_Abort(t *testing.T) {
+	a := newTestApp(t)
+	writeTestDeck(t, a.DataDir, "spanish")
+	syncDecks(t, a)
+
+	stubAIClientInstance(t, &fakeAIClient{
+		replies: []string{`{"deck": "spanish"}`},
+	})
+	feedStdin(t, "n\na\n")
+
+	cmd := &AiAddCmd{Text: "hoy wait"}
+	if err := cmd.Run(a); err != nil {
+		t.Fatalf("AiAddCmd.Run: %v", err)
+	}
+
+	deck, err := a.Store.LoadDeck("spanish")
+	if err != nil {
+		t.Fatalf("LoadDeck: %v", err)
+	}
+	if hasCard(deck, "hoy") {
+		t.Fatal("entry 'hoy' should not be appended after abort")
+	}
+}
+
+func TestAiFillCmd_NoDeck_DryRunErrors(t *testing.T) {
+	a := newTestApp(t)
+	stubAIClient(t, "")
+
+	cmd := &AiFillCmd{Text: "term: hola\ntranslations:\n  - text: hello", DryRun: true}
+	if err := cmd.Run(a); err == nil {
+		t.Fatal("expected error for --dry-run without a deck")
+	}
+}
+
+func TestAiFillCmd_NoDeck_ResolvesAndFills(t *testing.T) {
+	a := newTestApp(t)
+	writeTestDeck(t, a.DataDir, "spanish")
+	syncDecks(t, a)
+
+	stubAIClientInstance(t, &fakeAIClient{
+		replies: []string{`{"deck": "spanish"}`, fillReply},
+	})
+	feedStdin(t, "y\n")
+
+	cmd := &AiFillCmd{Text: "term: hola\ntranslations:\n  - text: hello"}
+	out := captureStdout(t, func() {
+		if err := cmd.Run(a); err != nil {
+			t.Fatalf("AiFillCmd.Run: %v", err)
+		}
+	})
+	if !strings.Contains(out, "hoy") || !strings.Contains(out, "today") {
+		t.Fatalf("expected filled entries in output, got:\n%s", out)
+	}
+}
+
 func TestTagListCmd_DeckWide(t *testing.T) {
 	a := newTestApp(t)
 	writeTestDeck(t, a.DataDir, "greek")
@@ -390,5 +549,23 @@ func TestTagListCmd_SingleTerm(t *testing.T) {
 	if !strings.Contains(out, "No tags") {
 		t.Fatalf("expected 'No tags' message, got:\n%s", out)
 	}
+}
+
+func hasCard(deck ui.DeckData, id string) bool {
+	for _, card := range deck.Cards {
+		if card.ID == id {
+			return true
+		}
+	}
+	return false
+}
+
+func hasCardByID(deck *model.Deck, id string) bool {
+	for _, e := range deck.Entries {
+		if e.ID == id {
+			return true
+		}
+	}
+	return false
 }
 

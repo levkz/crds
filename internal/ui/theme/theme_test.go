@@ -1026,6 +1026,29 @@ func TestDefaultStoreConvenience(t *testing.T) {
 	}
 }
 
+func TestBuiltinNamesAndYAML(t *testing.T) {
+	names := BuiltinNames()
+	if len(names) != 5 {
+		t.Fatalf("expected 5 built-in names, got %d: %v", len(names), names)
+	}
+	for _, name := range names {
+		data, ok := BuiltinYAML(name)
+		if !ok {
+			t.Errorf("BuiltinYAML(%q) not found", name)
+			continue
+		}
+		if len(data) == 0 {
+			t.Errorf("BuiltinYAML(%q) returned empty content", name)
+		}
+		if _, err := ParseTheme(data); err != nil {
+			t.Errorf("built-in %q YAML does not parse: %v", name, err)
+		}
+	}
+	if _, ok := BuiltinYAML("nonexistent"); ok {
+		t.Error("BuiltinYAML(nonexistent) should be false")
+	}
+}
+
 func TestBuiltinsParse(t *testing.T) {
 	expected := map[string]string{
 		"default":    "39",

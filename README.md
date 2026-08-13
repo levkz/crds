@@ -210,6 +210,51 @@ List all tags on an entry, sorted alphabetically. Omit the entry ID to list all 
 
 ---
 
+### Theme Management
+
+Themes are YAML files in `~/.config/crds/themes/`. Each file's name (minus
+extension) is the theme name shown in the Settings screen. The 5 built-in
+themes (default, dark, light, tokyonight, mocha) ship embedded in the binary;
+a user theme with the same name overrides it at runtime.
+
+#### `crds theme add <name> [-p <preset>]`
+
+Create a new theme file `<name>.yaml`.
+
+| Flag            | Description                                                                                   |
+| --------------- | --------------------------------------------------------------------------------------------- |
+| `-p <preset>`   | Start from a built-in preset (`default`, `dark`, `light`, `tokyonight`, `mocha`)              |
+
+Without `-p`, writes a commented template showing every configurable field
+(18 palette slots, `icons`, `typography`); unset fields inherit the default
+theme's values. The resulting YAML is validated before saving.
+
+#### `crds theme delete <name> [-f]`
+
+Delete a user theme file.
+
+| Flag | Description              |
+| ---- | ------------------------ |
+| `-f` | Skip confirmation prompt |
+
+Deleting a file that overrides a built-in just removes the override — the
+built-in theme remains available.
+
+#### `crds theme edit <name>`
+
+Open the theme's YAML in `$EDITOR`. If `<name>` is a built-in with no user
+file yet, a copy is first written to `~/.config/crds/themes/<name>.yaml` so
+it can be edited. After the editor exits, the YAML is validated:
+
+- **Parse fails** — prompts `[d]iscard`, `[c]ontinue` editing, or `[s]ave anyway`
+- **Parse succeeds** — writes the file
+
+#### `crds theme list`
+
+List all user themes in `~/.config/crds/themes/`, sorted alphabetically.
+
+---
+
 ### State Management (Backups)
 
 #### `crds state reserve [-o <dir>] [-n <name>]`

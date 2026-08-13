@@ -169,7 +169,7 @@ Deferred until a concrete trigger appears:
 
 - [ ] `--theme` CLI flag → `app.Config.ThemePath` for custom YAML themes
 - [ ] Expose underline, strikethrough, background, padding in `ConfigTextRole`
-- [ ] Plugin themes from `~/.config/crds/themes/`
+- [x] Plugin themes from `~/.config/crds/themes/` — loaded at startup and managed via `crds theme add/delete/edit/list`
 - [ ] Icon-aware style markers (`SelectedItemIcon()`, etc.)
 - [ ] `FocusedInput(active bool)` variant for unfocused state
 - [ ] Style composition helpers if duplication emerges

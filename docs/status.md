@@ -22,11 +22,11 @@ Ran `go test ./...` from the repo root. Results are stable and current:
 | `internal/stats/` | 5 | Stats aggregation, streak, word stats |
 | `internal/scheduler/` | 7 | SM-2 spaced-repetition algorithm |
 | `internal/storage/` | 88 | SQLite Store (goose + sqlc) |
-| `internal/cli/` | 34 | Kong command wiring |
+| `internal/cli/` | 45 | Kong command wiring (incl. theme add/delete/edit/list) |
 | `internal/ai/` | 69 | AI agent: providers, config, prompts, parsing |
 | `internal/ui/` | 7 | Quiz modes, card sorting |
 | `internal/ui/app/` | 5 | Config apply, deck merging, session finalize on shutdown |
-| `internal/ui/theme/` | 62 | Design system, 6 fixtures |
+| `internal/ui/theme/` | 63 | Design system, 6 fixtures |
 | `internal/ui/styles/` | 14 | Semantic styles |
 | `internal/ui/layout/` | 10 | Layout primitives |
 | `internal/ui/renderer/` | 9 | Rendering utilities |
@@ -36,7 +36,7 @@ Ran `go test ./...` from the repo root. Results are stable and current:
 | `internal/ui/components/display/` | 5 | Graph bar chart |
 | `internal/ui/screens/` | 24 | Statistics logic (metric grid fits content width), search detail (tags + examples carried through to Detail), typing quiz input mappings (incl. parse toggle + legend) + grading |
 
-Total: **488 test functions**, all passing.
+Total: **500 test functions**, all passing.
 
 ---
 
@@ -54,9 +54,9 @@ Total: **488 test functions**, all passing.
 | `internal/stats/` | Stats aggregation for statistics screen, word-level stats, streak from review history | 5 |
 | `internal/scheduler/` | SM-2 spaced-repetition algorithm: ease, interval, lapse penalty, grade→interval mapping | 7 |
 | `internal/editor/` | `$EDITOR`/nano/vim invocation with YAML buffer handling | — |
-| `internal/cli/` | Kong commands: quiz, stats, deck (create/list/import/export/delete/search/edit), term (add/rm/edit), tag (add/rm/list), state (reserve/revert/sync), profile (export/import), ai (interpret/fill/add, incl. `--full`/`--minimal`/`--msg`/`--translate-from`/`--translate-to`; `ai add`/`ai fill` resolve an omitted deck via a model guess + confirm/create/select prompts) | 34 |
+| `internal/cli/` | Kong commands: quiz, stats, deck (create/list/import/export/delete/search/edit), term (add/rm/edit), tag (add/rm/list), state (reserve/revert/sync), profile (export/import), theme (add from preset or empty template/delete/edit with built-in seeding/list), ai (interpret/fill/add, incl. `--full`/`--minimal`/`--msg`/`--translate-from`/`--translate-to`; `ai add`/`ai fill` resolve an omitted deck via a model guess + confirm/create/select prompts) | 45 |
 | `internal/ai/` | Agent: 7 provider presets (pollinations, ollama, openai, gemini, openrouter, groq, nvidia), OpenAI-compatible client, prompts (minimal/full interpret, fill, deck-suggestion, structural+proficiency+theme `tagRules`, `--msg` passthrough), YAML parsing (examples validated for both languages), interpret/fill/suggest-deck agents | 69 |
-| `internal/ui/theme/` | Design system: 18-field palette (15 colors + 3 semantic overrides), typography, icons, borders, spacing, 5 built-in themes as embedded YAML (`themes/*.yaml`, `//go:embed`), YAML loading, store | 62 |
+| `internal/ui/theme/` | Design system: 18-field palette (15 colors + 3 semantic overrides), typography, icons, borders, spacing, 5 built-in themes as embedded YAML (`themes/*.yaml`, `//go:embed`), YAML loading, store, `BuiltinNames`/`BuiltinYAML` preset accessors | 63 |
 | `internal/ui/styles/` | Semantic style definitions | 14 |
 | `internal/ui/components/` | 29 components (20 display + 9 interactive) | — |
 | `internal/ui/components/display/` | Graph bar chart, confidence coloring | 5 |

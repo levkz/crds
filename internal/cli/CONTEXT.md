@@ -21,7 +21,7 @@ type CLI struct {
 }
 ```
 
-Flat commands (Quiz, Stats, Completion) remain at root. Deck, state, and profile operations are grouped under `DeckCmd`, `StateCmd`, and `ProfileCmd`.
+Flat commands (Quiz, Stats, Completion) remain at root. Deck, state, theme, and profile operations are grouped under `DeckCmd`, `StateCmd`, `ThemeCmd`, and `ProfileCmd`.
 
 ### Command groups (`deck.go`, `state.go`, `term.go`, `profile.go`)
 
@@ -59,6 +59,13 @@ type StateCmd struct {
 type ProfileCmd struct {
     Export ProfileExportCmd `cmd:"" help:"Export full profile for device migration."`
     Import ProfileImportCmd `cmd:"" help:"Import a profile from another device."`
+}
+
+type ThemeCmd struct {
+    Add    ThemeAddCmd    `cmd:"" help:"Create a new theme."`
+    Delete ThemeDeleteCmd `cmd:"" help:"Delete a theme."`
+    Edit   ThemeEditCmd   `cmd:"" help:"Edit a theme by opening its YAML file."`
+    List   ThemeListCmd   `cmd:"" help:"List all user themes."`
 }
 
 ```
@@ -101,6 +108,10 @@ crds deck tag list <deck> <id>    → DeckCmd.Tag.List.Run(a)  → list tags
 crds stats --deck <deck>          → CLI.Stats.Run(a)          → per-deck stats
 crds profile export               → ProfileCmd.Export.Run(a)  → profile export
 crds profile import <file>        → ProfileCmd.Import.Run(a)  → profile import
+crds theme add <name> -p dark     → ThemeCmd.Add.Run(a)       → create theme from preset
+crds theme delete <name> -f       → ThemeCmd.Delete.Run(a)    → delete theme
+crds theme edit <name>            → ThemeCmd.Edit.Run(a)      → edit theme (seeds built-in copy)
+crds theme list                   → ThemeCmd.List.Run(a)      → list themes
 ```
 
 When a subcommand is matched, Kong's `RunNode` walks from the selected node up to the root calling every `Run()` it finds. Subcommand `Run()` executes first, then `CLI.Run()` receives `ctx.Selected() != nil` and returns immediately without launching the TUI.
@@ -224,6 +235,8 @@ Three predictors are registered in `main.go`:
 | `"deck"` | `*deckPredictor` | Lists deck IDs from SQLite `Store.ListDecks()` |
 | `"reserve"` | `*reservePredictor` | Lists `.tar.gz` files from default `reserve-copies/` directory |
 | `"term"` | `*entryPredictor` | Lists entry IDs for the deck typed before the cursor (from `Store.LoadDeck()`) |
+| `"theme"` | `*themePredictor` | Lists theme names from `config.DiscoverThemeFiles()` |
+| `"preset"` | `*presetPredictor` | Lists built-in preset names via `theme.BuiltinNames()` (used by `theme add -p`) |
 
 Used via `completion-predictor:"deck"` / `completion-predictor:"reserve"` / `completion-predictor:"term"` on struct field tags.
 
@@ -232,7 +245,7 @@ Used via `completion-predictor:"deck"` / `completion-predictor:"reserve"` / `com
 ## Adding a new command — step by step
 
 1. **Create the file** `internal/cli/<name>.go` with a struct and `Run` method.
-2. **Register** the struct as a field on the appropriate group (`DeckCmd`, `StateCmd`, `TermCmd`, or root `CLI`) in `*.go` with `cmd:"" help:"..."` tag.
+2. **Register** the struct as a field on the appropriate group (`DeckCmd`, `StateCmd`, `ThemeCmd`, `TermCmd`, or root `CLI`) in `*.go` with `cmd:"" help:"..."` tag.
 3. **Implement Run**: parse args, call store methods, print or edit.
 4. **Add `completion-predictor:"deck"`** for any deck-name argument, `completion-predictor:"term"` for entry IDs.
 5. **If using the editor**: import `crds/internal/editor` and call `editor.Edit` or `editor.EditEntry`.

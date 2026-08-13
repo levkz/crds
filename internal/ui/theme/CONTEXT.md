@@ -91,6 +91,9 @@ Implemented and tested. See `docs/status.md` for the test baseline.
   `TokyonightPalette`/`MochaPalette` variables are thin wrappers over the
   embedded YAML in `themes/` (`builtins.go`). The YAML files are the single
   source of truth for the five built-ins; edit a file and rebuild to change it.
+  `BuiltinNames()` lists them (usable as CLI presets) and
+  `BuiltinYAML(name)` returns a built-in's raw YAML (used by `crds theme add
+  -p` / `edit`).
 
 - **Store & Switching** `store.go` — `Store` is a named‑theme registry:
   `Register(name, Theme)`, `Switch(name)` (returns the Theme),
@@ -156,7 +159,8 @@ automatically pick up the switched theme.
 theme/
 ├── CONTEXT.md
 ├── DESIGN.md          Design language documentation
-├── builtins.go       go:embed of themes/*.yaml + parseBuiltin
+├── builtins.go       go:embed of themes/*.yaml + parseBuiltin,
+│                     BuiltinNames, BuiltinYAML
 ├── theme.go          Theme struct, NewTheme, NewTerminalTheme,
 │                     WithIconSource, WithFallbackIcons, Default,
 │                     BorderFor method

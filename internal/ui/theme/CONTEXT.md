@@ -86,9 +86,11 @@ Implemented and tested. See `docs/status.md` for the test baseline.
   color principles, semantic style roles, icon semantics, spacing scale,
   border role usage, theme switching, and YAML configuration format.
 
-- **Built-in presets** `presets.go` — `DarkPalette`/`DarkTheme()`,
-  `LightPalette`/`LightTheme()`, and `TokyonightPalette`/`TokyonightTheme()`
-  presets for dark, light, and TokyoNight backgrounds.
+- **Built-in presets** `presets.go` — `DarkTheme()`/`LightTheme()`/
+  `TokyonightTheme()`/`MochaTheme()` and the `DarkPalette`/`LightPalette`/
+  `TokyonightPalette`/`MochaPalette` variables are thin wrappers over the
+  embedded YAML in `themes/` (`builtins.go`). The YAML files are the single
+  source of truth for the five built-ins; edit a file and rebuild to change it.
 
 - **Store & Switching** `store.go` — `Store` is a named‑theme registry:
   `Register(name, Theme)`, `Switch(name)` (returns the Theme),
@@ -154,6 +156,7 @@ automatically pick up the switched theme.
 theme/
 ├── CONTEXT.md
 ├── DESIGN.md          Design language documentation
+├── builtins.go       go:embed of themes/*.yaml + parseBuiltin
 ├── theme.go          Theme struct, NewTheme, NewTerminalTheme,
 │                     WithIconSource, WithFallbackIcons, Default,
 │                     BorderFor method
@@ -174,9 +177,8 @@ theme/
 │                     YAML structs, LoadTheme, ParseTheme,
 │                     Config.Build, paletteColor, resolveDirectColor,
 │                     applyTextRole
-├── presets.go        DarkPalette, LightPalette, TokyonightPalette,
-│                     MochaPalette, DarkTheme, LightTheme,
-│                     TokyonightTheme, MochaTheme
+├── presets.go        YAML-backed wrappers: DarkTheme, LightTheme,
+│                     TokyonightTheme, MochaTheme + palette vars
 ├── store.go          Store (Register, Switch, Current, Names,
 │                     etc.), DefaultStore, package-level convs
 └── testdata/
@@ -187,6 +189,13 @@ theme/
     ├── typography.yaml   Only typography overrides (color/bold/italic)
     ├── invalid_icons.yaml  Unknown icon source "nope"
     └── malformed.yaml    Broken YAML
+
+themes/  (embedded via //go:embed in builtins.go)
+    ├── default.yaml    ANSI 256, matches DefaultPalette
+    ├── dark.yaml       ANSI 256 dark palette
+    ├── light.yaml      ANSI 256 light palette
+    ├── tokyonight.yaml Hex values from folke/tokyonight.nvim
+    └── mocha.yaml      Hex values
 ```
 
 ---

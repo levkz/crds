@@ -67,7 +67,7 @@ and re-commit.
 ## Theme specifics
 
 - `Palette` struct has 15 named colors + 3 semantic overrides (Primary, Secondary, Accent)
-- 5 built-in themes: default (ANSI 256), dark, light, tokyonight (hex values from folke/tokyonight.nvim), mocha
+- 5 built-in themes: default (ANSI 256), dark, light, tokyonight (hex values from folke/tokyonight.nvim), mocha — defined as YAML in `internal/ui/theme/themes/*.yaml`, embedded via `//go:embed` in `builtins.go` (edit a file + rebuild to change a built-in)
 - `theme.Store` pre-registers "default", "dark", "light", "tokyonight", "mocha"
 - Config supports custom themes via YAML with named palette references or direct ANSI/hex values
 - `fillBackground()` wraps every line with the theme background — handles ANSI reset codes by splitting and re-wrapping segments

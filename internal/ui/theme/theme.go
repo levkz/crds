@@ -111,4 +111,4 @@ func (t Theme) BorderFor(role BorderRole) lipgloss.Border {
 	}
 }
 
-var Default = NewTheme(DefaultPalette)
+var Default = parseBuiltin("default")

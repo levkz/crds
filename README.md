@@ -467,7 +467,7 @@ Location: `~/.config/crds/`
 
 ### Built-in Themes
 
-Default, dark, light, tokyonight (hex values from [folke/tokyonight.nvim](https://github.com/folke/tokyonight.nvim)), mocha. The palette has 18 fields: 15 named colors plus 3 semantic overrides (Primary, Secondary, Accent).
+Default, dark, light, tokyonight (hex values from [folke/tokyonight.nvim](https://github.com/folke/tokyonight.nvim)), mocha. The palette has 18 fields: 15 named colors plus 3 semantic overrides (Primary, Secondary, Accent). Built-in themes are defined as YAML in `internal/ui/theme/themes/*.yaml`, embedded into the binary via `//go:embed` — edit the file and rebuild to change them, or override per name with a file in `~/.config/crds/themes/`.
 
 ## Data Locations
 

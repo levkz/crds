@@ -207,13 +207,18 @@ Use `Theme.BorderFor(role)` rather than selecting a border directly. This keeps 
 
 Themes are registered by name and stored in `Store`. Built-in themes:
 
-| Name       | Palette              |
-| ---------- | -------------------- |
-| default    | `DefaultPalette`     |
-| dark       | `DarkPalette`        |
-| light      | `LightPalette`       |
-| tokyonight | `TokyonightPalette`  |
-| mocha      | `MochaPalette`       |
+| Name       | Palette              | YAML file                      |
+| ---------- | -------------------- | ------------------------------ |
+| default    | `DefaultPalette`     | `themes/default.yaml`          |
+| dark       | `DarkPalette`        | `themes/dark.yaml`             |
+| light      | `LightPalette`       | `themes/light.yaml`            |
+| tokyonight | `TokyonightPalette`  | `themes/tokyonight.yaml`       |
+| mocha      | `MochaPalette`       | `themes/mocha.yaml`            |
+
+The built-in themes are defined as YAML files under `internal/ui/theme/themes/`
+and embedded into the binary at compile time (`//go:embed` in `builtins.go`).
+Edit a file and rebuild to change a built-in. The Go presets in `presets.go`
+are wrappers over the embedded YAML.
 
 Custom themes can be registered from YAML files via `store.RegisterPath()`.
 

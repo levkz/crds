@@ -14,11 +14,9 @@ func NewStore() *Store {
 	s := &Store{
 		themes: make(map[string]Theme),
 	}
-	s.themes["default"] = Default
-	s.themes["dark"] = DarkTheme()
-	s.themes["light"] = LightTheme()
-	s.themes["tokyonight"] = TokyonightTheme()
-	s.themes["mocha"] = MochaTheme()
+	for _, name := range builtinNames {
+		s.themes[name] = parseBuiltin(name)
+	}
 	s.current = "default"
 	return s
 }

@@ -1026,6 +1026,36 @@ func TestDefaultStoreConvenience(t *testing.T) {
 	}
 }
 
+func TestBuiltinsParse(t *testing.T) {
+	expected := map[string]string{
+		"default":    "39",
+		"dark":       "75",
+		"light":      "27",
+		"tokyonight": "#7aa2f7",
+		"mocha":      "#89b4fa",
+	}
+	if len(builtinNames) != len(expected) {
+		t.Fatalf("expected %d built-in themes, got %d: %v", len(expected), len(builtinNames), builtinNames)
+	}
+	for _, name := range builtinNames {
+		wantBlue, ok := expected[name]
+		if !ok {
+			t.Errorf("unexpected built-in theme %q", name)
+			continue
+		}
+		th := parseBuiltin(name)
+		if th.Palette.Blue == "" {
+			t.Errorf("built-in %q has empty palette", name)
+		}
+		if got := string(th.Palette.Blue); got != wantBlue {
+			t.Errorf("built-in %q Blue = %q, want %q", name, got, wantBlue)
+		}
+		if th.Icons.Check == "" {
+			t.Errorf("built-in %q has empty icons", name)
+		}
+	}
+}
+
 func TestLoadThemeWithOSEnv(t *testing.T) {
 	// Create a temp file to test LoadTheme reads from actual filesystem
 	dir := t.TempDir()

@@ -12,13 +12,22 @@ import (
 
 // ParseEntries converts a model reply into validated entries. It tolerates a
 // single surrounding markdown fence and accepts a bare entry or a deck-shaped
-// document as well as a plain list.
+// document as well as a plain list. Every parse or validation failure is
+// wrapped with a snippet of the model's reply so the error is actionable.
 func ParseEntries(output string) ([]model.Entry, error) {
 	yamlText := extractYAML(output)
 	if strings.TrimSpace(yamlText) == "" {
 		return nil, fmt.Errorf("ai: empty model reply")
 	}
 
+	entries, err := parseEntries(yamlText)
+	if err != nil {
+		return nil, fmt.Errorf("%s — model returned: %s", err, snippet(yamlText))
+	}
+	return entries, nil
+}
+
+func parseEntries(yamlText string) ([]model.Entry, error) {
 	var entries []model.Entry
 	if err := yaml.Unmarshal([]byte(yamlText), &entries); err != nil {
 		// Fall back to a single entry or a deck document.
@@ -43,6 +52,16 @@ func ParseEntries(output string) ([]model.Entry, error) {
 	}
 
 	return entries, nil
+}
+
+// snippet renders a short single-line preview of a model reply for error text.
+func snippet(s string) string {
+	const max = 140
+	s = strings.TrimSpace(s)
+	if len(s) > max {
+		s = s[:max] + "…"
+	}
+	return fmt.Sprintf("%q", s)
 }
 
 func validateEntry(entry *model.Entry) error {

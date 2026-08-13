@@ -1,6 +1,7 @@
 package ai
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -84,6 +85,17 @@ func TestParseEntries_MissingTerm(t *testing.T) {
 	out := "- translations:\n    - text: hello\n"
 	if _, err := ParseEntries(out); err == nil {
 		t.Fatal("expected error for missing term")
+	}
+}
+
+func TestParseEntries_ErrorShowsReplySnippet(t *testing.T) {
+	out := "- term: bonjour\n  translations:\n    - text: hello\n- translations:\n    - text: oops\n"
+	_, err := ParseEntries(out)
+	if err == nil {
+		t.Fatal("expected error for entry with empty term")
+	}
+	if !strings.Contains(err.Error(), "model returned") || !strings.Contains(err.Error(), "bonjour") {
+		t.Fatalf("error should quote the model reply, got: %v", err)
 	}
 }
 

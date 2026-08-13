@@ -11,7 +11,9 @@ import (
 
 	"crds/internal/app"
 	"crds/internal/cli"
+	"crds/internal/config"
 	"crds/internal/storage"
+	"crds/internal/ui/theme"
 )
 
 type deckPredictor struct {
@@ -50,6 +52,26 @@ type entryPredictor struct {
 
 func newEntryPredictor(store *storage.Store) *entryPredictor {
 	return &entryPredictor{store: store}
+}
+
+type themePredictor struct{}
+
+func (p *themePredictor) Predict(_ complete.Args) []string {
+	files, err := config.DiscoverThemeFiles()
+	if err != nil {
+		return nil
+	}
+	names := make([]string, len(files))
+	for i, tf := range files {
+		names[i] = tf.Name
+	}
+	return names
+}
+
+type presetPredictor struct{}
+
+func (p *presetPredictor) Predict(_ complete.Args) []string {
+	return theme.BuiltinNames()
 }
 
 func (p *entryPredictor) Predict(args complete.Args) []string {
@@ -114,6 +136,8 @@ func main() {
 		kongcompletion.WithPredictor("deck", newDeckPredictor(sqliteStore)),
 		kongcompletion.WithPredictor("reserve", &reservePredictor{}),
 		kongcompletion.WithPredictor("term", newEntryPredictor(sqliteStore)),
+		kongcompletion.WithPredictor("theme", &themePredictor{}),
+		kongcompletion.WithPredictor("preset", &presetPredictor{}),
 	)
 
 	ctx, err := parser.Parse(os.Args[1:])

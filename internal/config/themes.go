@@ -19,7 +19,12 @@ func DiscoverThemeFiles() ([]ThemeFile, error) {
 	if err != nil {
 		return nil, err
 	}
+	return DiscoverThemeFilesIn(td)
+}
 
+// DiscoverThemeFilesIn lists theme YAML files in a specific directory,
+// returning each file's stem as the theme name.
+func DiscoverThemeFilesIn(td string) ([]ThemeFile, error) {
 	entries, err := os.ReadDir(td)
 	if err != nil {
 		if os.IsNotExist(err) {

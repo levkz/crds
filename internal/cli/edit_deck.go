@@ -1,11 +1,9 @@
 package cli
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"crds/internal/app"
 	"crds/internal/editor"
@@ -159,21 +157,5 @@ func (c *EditDeckCmd) edit(raw []byte) ([]byte, error) {
 }
 
 func (c *EditDeckCmd) prompt(message string, options ...string) string {
-	valid := make(map[string]bool, len(options))
-	for _, o := range options {
-		valid[o] = true
-	}
-
-	scanner := bufio.NewScanner(os.Stdin)
-	for {
-		fmt.Fprintf(os.Stderr, "%s [%s]: ", message, strings.Join(options, "/"))
-		if !scanner.Scan() {
-			return options[0]
-		}
-		answer := strings.TrimSpace(strings.ToLower(scanner.Text()))
-		if valid[answer] {
-			return answer
-		}
-		fmt.Fprintf(os.Stderr, "Invalid choice. Valid options: %s\n", strings.Join(options, ", "))
-	}
+	return promptChoice(message, options...)
 }

@@ -13,6 +13,7 @@ type CLI struct {
 	Quiz       QuizCmd                   `cmd:"" help:"Start a quiz."`
 	Stats      StatsCmd                  `cmd:"" help:"Show learning statistics."`
 	Deck       DeckCmd                   `cmd:"" help:"Deck operations (import, export, search, delete, edit, term)."`
+	Theme      ThemeCmd                  `cmd:"" help:"Theme operations (add, delete, edit, list)."`
 	State      StateCmd                  `cmd:"" help:"State management (reserve, revert, sync)."`
 	Profile    ProfileCmd                `cmd:"" help:"Profile operations (export, import)."`
 	Ai         AiCmd                     `cmd:"" help:"AI agent (interpret, fill, add)."`
